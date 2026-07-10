@@ -1,0 +1,16 @@
+# Simulation build artifacts
+*.vvp
+*.vcd
+sim/work/
+
+# KiCad backups/locks (added once PCB work starts)
+*.kicad_pcb-bak
+*.kicad_sch-bak
+fp-info-cache
+*-backups/
+*.lck
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
