@@ -7,6 +7,7 @@ name = "pcbinsight"
 version = "0.4.0"
 description = "Automated KiCad PCB design review: a deterministic engineering-check engine plus an evidence-grounded AI review layer."
 requires-python = ">=3.11"
+license = { file = "../LICENSE" }
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
