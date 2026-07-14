@@ -1,5 +1,11 @@
 # PCB Design Review Platform
 
+[![Tests](https://github.com/CyrilKafle/SiliconArm/actions/workflows/tests.yml/badge.svg)](https://github.com/CyrilKafle/SiliconArm/actions/workflows/tests.yml)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![KiCad](https://img.shields.io/badge/KiCad-.kicad__pcb-orange.svg)](https://www.kicad.org/)
+[![AI](https://img.shields.io/badge/AI-Claude%20Sonnet%205-8A63D2.svg)](https://www.anthropic.com/)
+
 An AI-augmented engineering design review tool for KiCad PCB projects — a lightweight, local analog of the automated design-review tooling used inside hardware companies (NVIDIA, AMD, Apple, Intel). It does not replace KiCad's Design Rule Check (DRC); it sits a level above DRC, producing the kind of higher-level engineering judgment an experienced PCB reviewer would give in a design review: *why* something could be a problem, *what engineering principle* is involved, a *suggested fix*, a *severity*, and a *confidence level*.
 
 Full design rationale, phased plan, and engineering-check catalogue: [`DESIGN.md`](DESIGN.md).
