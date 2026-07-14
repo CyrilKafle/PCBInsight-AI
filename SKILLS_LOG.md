@@ -2,25 +2,34 @@
 
 Running log of tools, languages, and concepts learned while building this project. Feeds resume updates via the InternPilot project — copy new entries over when updating application materials.
 
-## 2026-07-10 — Phase 0: simulation-first single-joint control
+Note: this log restarts for the AI PCB Design Review Platform (pivoted 2026-07-13 from a prior FPGA/PCB robotic-arm project — that project's own skills log covered SystemVerilog, Icarus Verilog, and closed-loop control simulation, and remains in this repo's git history).
 
-**Languages/tools learned or used:**
-- **SystemVerilog** (RTL design): wrote synchronous FSMs (`always_ff`), parameterized modules, fixed-point arithmetic (Q8 fixed-point gain in `p_controller.sv`), signed/unsigned arithmetic handling.
-- **Icarus Verilog** (`iverilog` + `vvp`): open-source HDL simulator toolchain — compiling SystemVerilog to a simulation executable and running it, `-g2012` mode for SystemVerilog-2012 language features.
-- **Self-checking testbenches**: wrote testbenches with independent reference models (computing "expected" values in the testbench itself, separate from the RTL under test) rather than just eyeballing waveforms — the standard verification discipline in real ASIC/FPGA workflows.
-- **Behavioral modeling**: wrote a behavioral SPI slave model (`mcp3208_model.sv`) standing in for a real MCP3208 ADC chip, to test the SPI master without needing real hardware yet.
+## Phase 0 — parser + internal board model
 
-**Concepts learned or reinforced:**
-- **PWM (pulse-width modulation)** generation for hobby servo control: 50 Hz period, 1-2 ms pulse width mapping to position.
-- **SPI protocol** (Mode 0): command/response shape for reading a 12-bit ADC conversion, MSB-first bit ordering, chip-select framing.
-- **Closed-loop proportional (P) control**: discrete-time formula `command = measured + Kp*(target-measured)`, and its real limitation — non-zero steady-state error, which is exactly why real controllers add an integral term (PID). Traced this by hand in simulation rather than just reading about it — see `docs/PHASE0_NOTES.md`.
-- **Fixed-point arithmetic in hardware**: using power-of-two shifts (`>>>`) instead of general dividers to keep arithmetic synthesizable, and the precision/truncation tradeoffs that come with it.
-- **Classic FSM race condition**: a status flag (`busy`) that drops one cycle before the state machine can actually accept new input — found and fixed by tracing exact clock-cycle timing, not by guessing. Full writeup in `docs/PHASE0_NOTES.md`.
-- **Verilog signed/unsigned gotcha**: mixing a signed and an unsigned operand in one expression silently makes the *entire* expression unsigned, which can turn a small negative result into a huge wrapped-around number. Hit this in a testbench comparison, not the RTL — a good reminder that verification code needs the same rigor as design code.
-- **Windows dev environment**: installed a native Windows HDL toolchain (Icarus Verilog via `winget`) and safely diagnosed/repaired a Windows user PATH environment variable issue (`setx` doesn't expand `%PATH%` the way `cmd.exe` does when invoked from a non-cmd shell — learned to reconstruct and verify the correct value via the registry directly instead of trusting the naive one-liner).
+- **KiCad `.kicad_pcb` file format**: modern KiCad board files are plain S-expressions (`(token child1 child2 ...)`), while `.kicad_pro` project files are JSON. Learned the grammar (footprints, `fp_text`/`property` refdes and value fields, `segment`/`via`/`zone`/`gr_rect` graphic and copper elements, per-net `(net id "name")` declarations referenced by id elsewhere in the file) well enough to write a parser without needing a KiCad install.
+- **Hand-rolled S-expression parsing**: wrote a small tokenizer + recursive-descent reader (`app/parser/sexpr.py`) producing a plain nested-list tree, plus `find_all`/`find_first`/`child_values` helpers for walking KiCad's tag-first-element convention. Chose this over the `pcbnew` Python bindings specifically to avoid requiring a full KiCad desktop install as a runtime dependency — a deliberate "runs anywhere" tradeoff, not just the path of least resistance (`pcbnew` wasn't available on the dev machine either).
+- **Pydantic v2 mutable defaults**: confirmed `list[X] = []` field defaults are per-instance (not shared) in Pydantic v2, unlike a plain dataclass — this simplified the `Net.traces`/`Net.vias` accumulation logic in the parser.
+- **Test-fixture authoring for a binary-ish/DSL file format**: rather than depending on exporting a real board from a KiCad install, hand-authored a minimal-but-valid `.kicad_pcb` fixture (`examples/simple_board/`) covering every construct the parser needs (board outline, two copper layers, four component kinds, three nets, traces, a via, a copper pour) — deliberately exercises the parser's edge cases rather than being a realistic board.
 
-**Not yet started (Phase 1+):**
-- KiCad schematic capture / PCB layout.
-- Real hardware bring-up on a Tang Nano 9K (or similar) FPGA board.
-- PCB fabrication ordering (JLCPCB).
-- Multi-joint custom communication protocol (Phase 2).
+## Phase 1 — deterministic engineering-check engine
+
+- **PCB engineering heuristics as code**: translated real design-review judgment calls (acute-angle bends causing acid traps, decoupling-cap loop length, daisy-chained vs. planar power distribution, differential-pair skew, thermal relief copper, annular ring / trace-width fab minimums) into explicit, tunable thresholds in each `app/analysis/*.py` module — the kind of heuristics normally kept as tribal knowledge in a senior engineer's head.
+- **Geometry from raw coordinates**: implemented endpoint-adjacency detection (shared trace endpoints within a tolerance) and bend-angle computation via the dot-product formula (`cos θ = (v1·v2)/(|v1||v2|)`) to detect acute-angle routing and branch points, without any CAD/geometry library.
+- **Net-name convention parsing**: auto-identifying power/ground/clock nets and differential pairs from naming convention alone (`+3V3`, `_P`/`_N`, `NET+`/`NET-`) rather than requiring an explicit schematic-level declaration — a deliberate scope tradeoff, documented inline, since the parser doesn't carry full schematic semantics.
+- **Deliberately transparent thresholds over ML**: every check is a named constant (e.g. `LONG_TRACE_WARN_MM = 60.0`) rather than a learned/black-box score — makes "why did this fire" a one-line answer, which matters for the project's "defensible in an interview" goal.
+- **Honest scope boundaries**: manufacturability's silkscreen-over-pad / copper-sliver checks from `DESIGN.md`'s catalogue were *not* implemented, because the board model doesn't capture silkscreen text bounding boxes or full pour polygon shape — documented as a gap in the module docstring rather than stubbing a check that could never actually fire on real data.
+- **Test design for heuristic checks**: each of the 9 categories gets synthetic-board unit tests (via a small `tests/factories.py` builder module) proving both the positive case (check fires on a deliberately bad board) and the negative case (stays silent on a clean one) — geometry hand-computed (e.g. constructing an exact 30° bend via `cos`/`sin`) rather than eyeballed.
+
+## Phase 2 — scoring + first HTML report
+
+- **Transparent scoring over ML**: implemented the engineering score as a plain, auditable deduction formula (start at 100, subtract `severity_weight × confidence` per issue, floor at 0, overall = average of subscores) rather than any kind of learned model — the explicit goal being that "how was this score computed" has a one-line, defensible answer.
+- **Matplotlib in a headless/non-interactive context**: used the `Agg` backend (`matplotlib.use("Agg")` before importing `pyplot`) to render charts to an in-memory buffer with no display/GUI dependency, then embedded them as base64 `data:image/png;base64,...` URIs directly in the HTML — keeps the report a single self-contained file with no external asset references, which matters for emailing it or feeding it into a future PDF export step.
+- **XSS-safe HTML generation without a templating engine**: every user/board-derived string (board name, issue text, refdes references) goes through `html.escape()` before interpolation into the report string — verified with a dedicated test that injects `<script>` into an issue summary and asserts it comes out escaped.
+- **Visual QA on generated static HTML**: rather than trusting "tests pass" for a human-facing report, served the generated file over a local `http.server` and screenshotted it with Playwright to actually look at spacing, chart rendering, and color-coding before calling the phase done — caught nothing broken this time, but confirmed the practice is worth doing for any future UI-facing output.
+
+## Not yet started
+
+- FastAPI backend architecture.
+- Claude API integration for structured-digest-based engineering review.
+- React + TypeScript + Tailwind dashboard.
+- ReportLab (PDF) export (Phase 4).

@@ -1,42 +1,53 @@
-# SiliconArm
+# PCB Design Review Platform
 
-An FPGA-controlled robotic arm on a custom-designed PCB — a portfolio project built to demonstrate both ASIC-design-adjacent skills (SystemVerilog RTL, closed-loop control, simulation/verification) and PCB-hardware-engineering skills (schematic capture, layout, fabrication, bring-up), without committing to either career track ahead of internship season.
+An AI-augmented engineering design review tool for KiCad PCB projects — a lightweight, local analog of the automated design-review tooling used inside hardware companies (NVIDIA, AMD, Apple, Intel). It does not replace KiCad's Design Rule Check (DRC); it sits a level above DRC, producing the kind of higher-level engineering judgment an experienced PCB reviewer would give in a design review: *why* something could be a problem, *what engineering principle* is involved, a *suggested fix*, a *severity*, and a *confidence level*.
 
-Full design rationale, alternatives considered, and phased plan: [`DESIGN.md`](DESIGN.md).
+Full design rationale, phased plan, and engineering-check catalogue: [`DESIGN.md`](DESIGN.md).
 
-## Status: Phase 0 complete (simulation), Phase 1 not yet started
+## Status: Phase 2 complete (scoring + HTML report); Phase 3 next
 
-Phase 0 — a single joint's closed-loop control datapath — is designed and fully verified in simulation, with no physical hardware purchased yet (deliberately: validate in simulation first, buy parts second). See [`docs/PHASE0_NOTES.md`](docs/PHASE0_NOTES.md) for two real bugs found and fixed along the way, and [`SKILLS_LOG.md`](SKILLS_LOG.md) for what was learned.
+This is a from-scratch rebuild of what was previously a separate FPGA/PCB robotic-arm project. See [`DESIGN.md`](DESIGN.md) for the full phased plan and [`SKILLS_LOG.md`](SKILLS_LOG.md) for tools/concepts learned as the project progresses.
 
-![PWM generator waveform: position command changing from 0 to 800 (hex) visibly widens the pwm_out pulse](docs/images/phase0_pwm_waveform.png)
+## What it does
 
-`position[11:0]` steps from `000` to `800` mid-simulation — note `pwm_out`'s pulse width visibly widening right after, proving the commanded position actually controls servo pulse width. Captured in [EDA Playground](https://www.edaplayground.com) running the same Icarus Verilog testbench as `scripts/run_sims.sh`.
+1. **Parse** — drag-and-drop a full KiCad project (`.kicad_pcb`, `.kicad_sch`, netlist, project metadata); the parser builds an internal representation of components, nets, traces, vias, copper pours, footprints, and board dimensions.
+2. **Analyze** — run dozens of deterministic engineering checks across routing, power, ground integrity, differential pairs, decoupling placement, component placement, manufacturability, thermal risk, and signal integrity.
+3. **AI review** — send a *summarized structured digest* of the board (never raw PCB files) to Claude for a senior-engineer-style narrative review that explains and contextualizes what the deterministic checks found.
+4. **Score** — compute an overall 0-100 engineering score plus subscores (routing, power, signal integrity, manufacturability, placement, thermals, documentation), color-coded green/yellow/orange/red.
+5. **Report** — generate a professional HTML report (exportable to PDF) with an executive summary, board statistics, engineering metrics, warnings, recommendations, the AI review, and charts/visualizations.
+
+## Architecture
 
 ```
-rtl/pwm_generator.sv           50 Hz servo PWM generator
-rtl/spi_adc_reader.sv          SPI master reading position feedback (MCP3208-class ADC)
-rtl/p_controller.sv            Discrete-time proportional position controller
-rtl/single_joint_controller.sv Top-level: wires the above into one closed control loop
-
-sim/*_tb.sv                    Self-checking testbenches (one per module + one integration test)
-sim/mcp3208_model.sv           Behavioral ADC model used only in simulation
-
-scripts/run_sims.sh            Compiles and runs every testbench, prints a pass/fail summary
+backend/    FastAPI service: parser, analysis engine, AI integration, report generation, SQLite storage
+frontend/   React + TypeScript + Tailwind dashboard: upload, board visualizations, issue browser, AI chat panel
+examples/   Sample KiCad projects used for development and regression-testing the analysis engine
+docs/       Architecture notes, screenshots, example reports
 ```
 
-## Running the simulations
+See [`DESIGN.md`](DESIGN.md) for the full architecture rationale and the catalogue of engineering checks.
 
-Requires [Icarus Verilog](https://bleyer.org/icarus/) (`iverilog` + `vvp`) on PATH.
+## Running it
+
+Not yet runnable end-to-end — see `DESIGN.md`'s phased plan for what's being built first.
 
 ```sh
-./scripts/run_sims.sh
-```
+# Backend (once Phase 0 lands)
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 
-Expected: `4/4 testbenches passed`.
+# Frontend (once a Phase exists with a UI)
+cd frontend
+npm install
+npm run dev
+```
 
 ## Roadmap
 
-- **Phase 0 (done):** simulate the single-joint closed-loop control datapath before buying anything.
-- **Phase 1 (next):** buy an FPGA dev board + servo/ADC, design and fab PCB rev 1 (single joint), bring up real hardware against the simulated behavior.
-- **Phase 2:** multi-joint arm with a custom communication protocol, PCB rev 2.
-- **Phase 3 (stretch):** real-time vision tracking implemented directly in HDL.
+- **Phase 0 (done):** Hand-rolled S-expression parser for `.kicad_pcb` (no `pcbnew`/KiCad-install dependency), internal Pydantic board model, proven against an `examples/` fixture board with unit tests.
+- **Phase 1 (done):** Deterministic engineering-check engine — all nine categories (routing, power, ground, differential pairs, decoupling, placement, manufacturability, thermal, signal integrity) implemented as independent `check(board) -> list[Issue]` modules, orchestrated by `app/analysis/run_all_checks`. 78 tests passing (24 parser + 54 analysis), each check proven on a synthetic bad-case board and silent on a clean one. Manufacturability intentionally covers only trace width / annular ring / via density — silkscreen-over-pad and copper-sliver checks are deferred since the board model doesn't yet capture silkscreen text geometry or full pour polygon shape.
+- **Phase 2 (done):** Transparent scoring engine (`app/analysis/scoring.py` — severity-weighted deductions per subscore, overall = average) and a self-contained HTML report renderer (`app/reports/html_report.py`) with embedded matplotlib charts, color-coded score badges, and a full issues table. No AI dependency yet — see [`docs/example_report.html`](docs/example_report.html) for a real generated report off the `examples/simple_board` fixture. 93 tests passing.
+- **Phase 3 (next):** AI integration — summarize board state into structured data, send to Claude for a narrative senior-engineer review; add the optional AI chat panel.
+- **Phase 4:** React/TypeScript dashboard (drag-and-drop upload, board visualizations, issue browser, search/filter, AI chat) and PDF export.
+- **Stretch:** multi-board comparison, revision history, BOM analysis, Altium/EasyEDA import support, plugin architecture.

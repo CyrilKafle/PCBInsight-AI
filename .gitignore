@@ -1,9 +1,25 @@
-# Simulation build artifacts
-*.vvp
-*.vcd
-sim/work/
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
 
-# KiCad backups/locks (added once PCB work starts)
+# Node / frontend
+node_modules/
+dist/
+build/
+.vite/
+
+# Env / secrets
+.env
+.env.local
+
+# Data
+*.db
+*.sqlite3
+
+# KiCad backups/locks
 *.kicad_pcb-bak
 *.kicad_sch-bak
 fp-info-cache
@@ -14,3 +30,6 @@ fp-info-cache
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Playwright MCP QA-session artifacts
+.playwright-mcp/
