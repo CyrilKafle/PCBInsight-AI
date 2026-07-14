@@ -4,7 +4,7 @@ An AI-augmented engineering design review tool for KiCad PCB projects — a ligh
 
 Full design rationale, phased plan, and engineering-check catalogue: [`DESIGN.md`](DESIGN.md).
 
-## Status: Phase 2 complete (scoring + HTML report); Phase 3 next
+## Status: Phase 3 complete (AI Engineering Review Layer); Phase 4 next
 
 This is a from-scratch rebuild of what was previously a separate FPGA/PCB robotic-arm project. See [`DESIGN.md`](DESIGN.md) for the full phased plan and [`SKILLS_LOG.md`](SKILLS_LOG.md) for tools/concepts learned as the project progresses.
 
@@ -48,6 +48,6 @@ npm run dev
 - **Phase 0 (done):** Hand-rolled S-expression parser for `.kicad_pcb` (no `pcbnew`/KiCad-install dependency), internal Pydantic board model, proven against an `examples/` fixture board with unit tests.
 - **Phase 1 (done):** Deterministic engineering-check engine — all nine categories (routing, power, ground, differential pairs, decoupling, placement, manufacturability, thermal, signal integrity) implemented as independent `check(board) -> list[Issue]` modules, orchestrated by `app/analysis/run_all_checks`. 78 tests passing (24 parser + 54 analysis), each check proven on a synthetic bad-case board and silent on a clean one. Manufacturability intentionally covers only trace width / annular ring / via density — silkscreen-over-pad and copper-sliver checks are deferred since the board model doesn't yet capture silkscreen text geometry or full pour polygon shape.
 - **Phase 2 (done):** Transparent scoring engine (`app/analysis/scoring.py` — severity-weighted deductions per subscore, overall = average) and a self-contained HTML report renderer (`app/reports/html_report.py`) with embedded matplotlib charts, color-coded score badges, and a full issues table. No AI dependency yet — see [`docs/example_report.html`](docs/example_report.html) for a real generated report off the `examples/simple_board` fixture. 93 tests passing.
-- **Phase 3 (next):** AI integration — summarize board state into structured data, send to Claude for a narrative senior-engineer review; add the optional AI chat panel.
-- **Phase 4:** React/TypeScript dashboard (drag-and-drop upload, board visualizations, issue browser, search/filter, AI chat) and PDF export.
+- **Phase 3 (done):** AI Engineering Review Layer — `app/ai/summarizer.py` builds a structured digest (scores, a deterministically-computed evidence block, issue list, board statistics; never raw geometry) and `app/ai/review.py` sends it to Claude under a strict system prompt that forbids inventing findings and requires citing issue IDs (e.g. `PWR-004`, assigned by `run_all_checks`). Claude is a technical writer over the deterministic engine's output, never a second analysis engine. `answer_question()` grounds the (Phase 4) AI chat panel the same way. The digest carries a `schema_version`, and `find_unsupported_citations()` code-checks (not just prompt-asks) that any issue ID Claude cites actually exists, logging a warning otherwise. 115 tests passing, all using a dependency-injected fake Anthropic client — no live API key needed to prove the code is correct, since none was available in this environment. See `DESIGN.md`'s "AI Integration Architecture" section for the full spec.
+- **Phase 4 (next):** React/TypeScript dashboard (drag-and-drop upload, board visualizations, issue browser, search/filter, AI chat) and PDF export.
 - **Stretch:** multi-board comparison, revision history, BOM analysis, Altium/EasyEDA import support, plugin architecture.

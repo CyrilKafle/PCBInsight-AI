@@ -43,6 +43,30 @@ Organized into categories, each producing structured `Issue` objects (category, 
 
 Overall Engineering Score (0-100) plus subscores: Routing, Power, Signal Integrity, Manufacturability, Placement, Thermals, Documentation. Color-coded green/yellow/orange/red thresholds. Subscores are simple weighted aggregates of per-category issue severity — deliberately transparent/explainable rather than a black-box ML score, since "how was this score computed" needs a clean answer in an interview.
 
+## AI Integration Architecture (Phase 3) — "AI Engineering Review Layer" (DONE)
+
+Operating name for this feature is **AI Engineering Review Layer**, not "AI Integration" — the framing matters: Claude is a technical writer over the deterministic engine's output, never a second analysis engine. Implemented in `app/ai/summarizer.py` (digest) and `app/ai/review.py` (Claude calls), with 21 tests covering the digest shape, the raw-geometry boundary, and prompt/citation behavior via a dependency-injected fake client. Concretely:
+
+- **Issue IDs.** Every `Issue` gets a stable, category-prefixed ID (e.g. `PWR-004`, `SIG-003`), assigned once per report generation in the orchestrator (`app/analysis/__init__.py`'s `run_all_checks`, not per check module, so numbering stays consistent across categories regardless of which checks fired). This is a real `Issue` model change, not just a display trick — makes every AI sentence traceable back to a specific deterministic finding.
+- **Evidence-grounding block, computed deterministically — never by Claude.** Computed in `app/ai/summarizer.py`'s `_evidence()`: severity counts, highest-impact categories (subscores below 90, worst-first, capped at 3), most common recommendation (most frequent `suggested_fix` string among the issues). Travels in the digest alongside the raw issues; Claude synthesizes from it rather than inventing its own summary statistics.
+- **Strict system prompt** (`REVIEW_SYSTEM_PROMPT` in `review.py`): "You are acting as a senior PCB design reviewer. You are NOT performing design analysis... Do not invent problems or recommendations that are not supported by the supplied data. Reference issue IDs... when discussing specific findings. Every recommendation you make must be directly supported by at least one supplied issue — if the evidence is insufficient to draw a conclusion, say so explicitly rather than guessing. When an issue's confidence value is low (below 0.5), say so and note that it should be manually verified rather than treated as certain." The chat prompt (`CHAT_SYSTEM_PROMPT`) carries the same grounding and confidence-hedging requirements for the (Phase 4) AI chat panel.
+- **Digest shape sent to Claude** — never the board, never raw files. Carries a `schema_version` field so a future field rename/addition can't silently desync the prompt from what the digest actually contains:
+  ```json
+  {
+    "schema_version": 1,
+    "overall_score": 78,
+    "subscores": {"routing": 63, "power": 55, "thermal": 94},
+    "evidence": {
+      "severity_counts": {"critical": 5, "medium": 12, "low": 4},
+      "highest_impact_categories": ["power", "signal_integrity"],
+      "most_common_recommendation": "Reduce unnecessary vias in clock routing"
+    },
+    "issues": [{"id": "PWR-004", "category": "power", "severity": "high", "confidence": 0.42, "summary": "..."}],
+    "statistics": {"component_count": 42, "net_count": 18}
+  }
+  ```
+- **Traceability requirement, enforced in code, not just prompt.** `review.find_unsupported_citations(review_text, digest)` regex-extracts issue-ID-shaped tokens (`[A-Z]{2,6}-\d{3}`) from Claude's output and diffs them against the digest's real issue IDs. `generate_review`/`answer_question` call this automatically and log a warning (not a hard failure — the review is still usable, but the mismatch is now observable) if the model cites an ID that doesn't exist. Same defense-in-depth pattern as the raw-geometry boundary: a prompt instruction plus a code-enforced check behind it, not one or the other alone.
+
 ## Approaches Considered
 
 ### Approach A: Deterministic-only tool, AI as a stretch layer
@@ -71,7 +95,7 @@ Cons: No working intermediate state — high risk of an unfinished, unpolished p
 
 **Phase 2 — Scoring + first HTML report. (DONE)** Aggregated issues into the overall/subscore engineering scores; rendered a first professional, self-contained HTML report (board stats, warnings, recommendations, embedded matplotlib charts) with no AI involved yet, proving the deterministic pipeline end-to-end before adding any LLM dependency. See `docs/example_report.html` for a real generated example, visually verified via a Playwright screenshot rather than tests alone.
 
-**Phase 3 — AI integration.** Build the board-state summarizer (structured digest, not raw files) and the Claude-based narrative review layer; add the optional AI chat panel, grounded in the same digest plus the specific board's findings so answers reference the actual uploaded board rather than generic explanations.
+**Phase 3 — AI integration ("AI Engineering Review Layer"). (DONE)** Built the board-state summarizer (`app/ai/summarizer.py`, structured digest, not raw files) and the Claude-based narrative review layer (`app/ai/review.py`) per the architecture above (issue IDs, evidence-grounding block, strict system prompt, issue-ID traceability); `answer_question()` grounds the optional AI chat panel in the same digest so answers reference the actual uploaded board rather than generic explanations. Tested via a dependency-injected fake Anthropic client (no `ANTHROPIC_API_KEY` was available in this dev environment) — proves prompt construction and the raw-geometry boundary are correct without needing a live API call.
 
 **Phase 4 — React/TypeScript dashboard.** Drag-and-drop upload, animated analysis progress, summary cards, board visualizations (routing/via/power-density heatmaps, net-length histograms, layer utilization), issue browser with search/filter (by refdes, net name, category), clickable board locations, and PDF export via the backend's ReportLab pipeline.
 
@@ -80,6 +104,14 @@ Cons: No working intermediate state — high risk of an unfinished, unpolished p
 **Stretch — Phase 5: Design Rule Authoring SDK.** Replace the hardcoded `_CHECK_MODULES` list in `app/analysis/__init__.py` with dynamic discovery: define a `Check` base class/protocol (`name`, `run(board) -> list[Issue]`), drop check implementations into a `checks/` directory, and have the engine auto-discover and load every module there at startup. Lets third parties add a custom check (e.g. `my_signal_integrity_check.py`) without touching engine code. Demonstrates plugin-architecture/dynamic-module-loading/inversion-of-control design — genuinely interesting to build, but deliberately sequenced after Phases 2-4 so there's always a demoable, working state first.
 
 **Stretch — Rule Explanation UI.** A "Why does this matter?" affordance on each issue card in the Phase 4 dashboard. Mostly already satisfied by the existing `Issue` model (`backend/app/models/issue.py`), which already carries both `explanation` ("why this matters") and `principle` (the engineering principle involved) on every issue emitted by every Phase 1 check — this is UI surfacing of data that already exists, not new backend logic. Confirms the `Issue` schema was designed right the first time.
+
+**Stretch — Structured threshold/measured-value drill-down.** A step beyond the Rule Explanation UI above: clicking an issue shows *Threshold* (e.g. "expected < 25mm"), *Measured* (e.g. "62mm"), and the formula/logic used, not just prose. This requires a real model change the current `Issue` doesn't have — `measured_value: float | None` and `threshold_value: float | None` fields populated by each check module alongside the existing free-text `explanation`. Worth doing once there's a UI to show it (Phase 4), since it turns the deterministic engine into something closer to what commercial EDA review tools expose.
+
+**Stretch — Design History Comparison.** Upload two revisions of the same board (`Board_v1.kicad_pcb`, `Board_v2.kicad_pcb`) and diff them: subscore deltas (e.g. Routing 72→88, Power 61→90), issues fixed vs. newly introduced, via count delta, total trace length change, ground pour coverage change. Mirrors an actual PCB design review workflow (comparing revisions) more directly than any single-board feature does — high demo value, but real scope: needs a diffing layer that matches components/nets across two independently-parsed boards, which isn't trivial when refdes or net names shift between revisions.
+
+**Stretch — Review-session workflow.** Instead of a static report, let an engineer mark each issue Fixed / Ignored / False Positive on the dashboard, and recompute the score live as issues get dispositioned — closer to an internal engineering review tool than a one-shot report generator. Needs persistence (the `db/` SQLite layer already scaffolded but unused) and a real API surface (Phase 4's job), so this is naturally sequenced after the dashboard exists, not before.
+
+**Stretch — Phase 4 visual direction.** Dashboard should read as professional engineering software, not a marketing site: dark theme, dense information layout, tables/filters/search, expandable issue cards, minimal animation — closer to GitHub/Linear/JetBrains IDEs/KiCad 8 than a typical AI-demo landing page. No glassmorphism, no large gradients. Noted here so it's a decision made in the design doc before Phase 4 starts, not an afterthought once component code already exists.
 
 ## Folder Structure
 

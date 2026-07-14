@@ -218,6 +218,7 @@ def _issues_section(issues: list[Issue]) -> str:
       <table class="issues-table">
         <thead>
           <tr>
+            <th>ID</th>
             <th>Severity</th>
             <th>Category</th>
             <th>Finding</th>
@@ -238,6 +239,7 @@ def _issue_row(issue: Issue) -> str:
     refs = f" ({escape(', '.join(issue.refs))})" if issue.refs else ""
     return f"""
           <tr>
+            <td><code>{escape(issue.id)}</code></td>
             <td><span class="severity-badge" style="background:{color}">{escape(issue.severity.value)}</span></td>
             <td>{escape(issue.category.replace('_', ' ').title())}</td>
             <td><strong>{escape(issue.summary)}</strong>{refs}</td>
@@ -251,7 +253,7 @@ def _ai_review_section(ai_review: str | None) -> str:
     if ai_review:
         content = f"<p>{escape(ai_review)}</p>"
     else:
-        content = '<p class="muted">AI narrative review not yet available (Phase 3) — this report was generated entirely by the deterministic check engine.</p>'
+        content = '<p class="muted">No AI narrative review was generated for this report — findings below are entirely from the deterministic check engine.</p>'
     return f"""
     <section class="card">
       <h2>AI Review</h2>
@@ -384,6 +386,9 @@ def _wrap_document(title: str, body: str) -> str:
     border-bottom: 1px solid #eaeef2;
     vertical-align: top;
     font-size: 0.9rem;
+  }}
+  .issues-table td code {{
+    white-space: nowrap;
   }}
   .severity-badge {{
     color: #fff;

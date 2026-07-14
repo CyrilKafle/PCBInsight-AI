@@ -18,6 +18,7 @@ class Severity(str, Enum):
 
 
 class Issue(BaseModel):
+    id: str = ""  # category-prefixed, e.g. "PWR-004" -- assigned by run_all_checks, not by individual check modules
     category: str  # e.g. "routing", "power", "decoupling"
     severity: Severity
     confidence: float  # 0.0-1.0

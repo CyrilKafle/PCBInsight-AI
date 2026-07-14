@@ -58,7 +58,7 @@ def test_render_without_ai_review_notes_deferred():
     board = make_board(name="board")
     score = compute_score([])
     html = render(board, [], score)
-    assert "not yet available" in html
+    assert "No AI narrative review was generated" in html
 
 
 def test_render_with_ai_review_includes_it():

@@ -109,6 +109,9 @@
     vertical-align: top;
     font-size: 0.9rem;
   }
+  .issues-table td code {
+    white-space: nowrap;
+  }
   .severity-badge {
     color: #fff;
     padding: 0.15rem 0.55rem;
@@ -128,7 +131,7 @@
     <header class="report-header">
       <div>
         <h1>PCB Design Review Report</h1>
-        <p class="subtitle">simple_board &middot; generated 2026-07-14 01:37 UTC</p>
+        <p class="subtitle">simple_board &middot; generated 2026-07-14 02:01 UTC</p>
       </div>
       <div class="overall-score" style="border-color:#1a7f37; color:#1a7f37">
         <span class="overall-score-value">100</span>
@@ -225,6 +228,7 @@
       <table class="issues-table">
         <thead>
           <tr>
+            <th>ID</th>
             <th>Severity</th>
             <th>Category</th>
             <th>Finding</th>
@@ -235,6 +239,7 @@
         <tbody>
           
           <tr>
+            <td><code>SIG-001</code></td>
             <td><span class="severity-badge" style="background:#9a6700">low</span></td>
             <td>Signal Integrity</td>
             <td><strong>Clock net /SCLK totals 40.0mm</strong> (/SCLK)</td>
@@ -249,7 +254,7 @@
 
     <section class="card">
       <h2>AI Review</h2>
-      <p class="muted">AI narrative review not yet available (Phase 3) — this report was generated entirely by the deterministic check engine.</p>
+      <p class="muted">No AI narrative review was generated for this report — findings below are entirely from the deterministic check engine.</p>
     </section>
     
 
