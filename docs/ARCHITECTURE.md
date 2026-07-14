@@ -1,6 +1,8 @@
 # Architecture
 
-See `DESIGN.md` at the repo root for the full rationale and phased plan. This file will hold a diagram and deeper implementation notes once Phase 0 (parser) is underway.
+See `DESIGN.md` at the repo root for the full rationale and phased plan.
+
+![Architecture diagram](images/architecture.png)
 
 ## Pipeline
 
