@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pcbinsight"
+version = "0.4.0"
+description = "Automated KiCad PCB design review: a deterministic engineering-check engine plus an evidence-grounded AI review layer."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "pydantic>=2.9",
+    "python-multipart>=0.0.12",
+    "reportlab>=4.2",
+    "matplotlib>=3.9",
+    "anthropic>=0.40",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3", "httpx>=0.28"]
+
+# `pip install -e .` from backend/ registers a real `pcbinsight` command
+# (see app/cli.py) instead of only `python -m app.cli`.
+[project.scripts]
+pcbinsight = "app.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
