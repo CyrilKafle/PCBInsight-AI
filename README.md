@@ -1,6 +1,8 @@
-# PCB Design Review Platform
+# PCBInsight AI
 
-[![Tests](https://github.com/CyrilKafle/SiliconArm/actions/workflows/tests.yml/badge.svg)](https://github.com/CyrilKafle/SiliconArm/actions/workflows/tests.yml)
+### PCB Design Review Platform
+
+[![Tests](https://github.com/CyrilKafle/PCBInsight-AI/actions/workflows/tests.yml/badge.svg)](https://github.com/CyrilKafle/PCBInsight-AI/actions/workflows/tests.yml)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![KiCad](https://img.shields.io/badge/KiCad-.kicad__pcb-orange.svg)](https://www.kicad.org/)
