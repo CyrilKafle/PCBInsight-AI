@@ -12,7 +12,7 @@ An AI-augmented engineering design review tool for KiCad PCB projects — a ligh
 
 Full design rationale, phased plan, and engineering-check catalogue: [`DESIGN.md`](DESIGN.md).
 
-## Status: Phase 3 complete (AI Engineering Review Layer) + CLI; Phase 4 (web dashboard) next
+## Status: Phase 4 complete — full local dashboard (FastAPI + React) with board visualization, AI chat, and PDF export
 
 This is a from-scratch rebuild of what was previously a separate FPGA/PCB robotic-arm project. See [`DESIGN.md`](DESIGN.md) for the full phased plan and [`SKILLS_LOG.md`](SKILLS_LOG.md) for tools/concepts learned as the project progresses.
 
@@ -45,18 +45,18 @@ Real numbers, computed from the codebase as of this commit — not estimates:
 |---|---|
 | Analysis categories | 9 |
 | Deterministic checks | 28 |
-| Unit tests (all passing) | 120 |
-| Lines of Python — `backend/app/` | 2,489 |
-| Lines of Python — `backend/tests/` | 1,176 |
+| Unit tests (all passing, backend) | 135 |
+| Lines of Python — `backend/app/` | 2,938 |
+| Lines of Python — `backend/tests/` | 1,353 |
 | KiCad parser | Custom S-expression parser, 0 `pcbnew`/CAD dependencies |
 | Supported input format | KiCad `.kicad_pcb` |
-| Interfaces | CLI (`pcbinsight review`, single-board or batch-folder) today; web dashboard in Phase 4 |
+| Interfaces | CLI (`pcbinsight review`, single-board or batch-folder) and a local React/FastAPI web dashboard |
 | AI model | Claude Sonnet 5 (narrative review layer only — never the analysis engine) |
-| Report format | Self-contained HTML (embedded charts, no external assets); PDF export planned for Phase 4 |
+| Report format | Self-contained HTML (embedded charts, no external assets) and downloadable PDF (ReportLab) |
 
 ## Running it
 
-The CLI is runnable end-to-end today (parse → analyze → score → report); the web dashboard/API is Phase 4, not yet built.
+Both the CLI and the web dashboard are runnable today.
 
 ```sh
 cd backend
@@ -79,10 +79,17 @@ pcbinsight review ../examples/simple_board
 ```
 
 ```sh
-# Frontend (once Phase 4 lands)
+# Web dashboard (local-only -- see DESIGN.md's "Public Positioning & Audience")
+
+# Terminal 1: backend API
+cd backend
+uvicorn app.main:app --port 8000
+
+# Terminal 2: frontend dev server
 cd frontend
 npm install
 npm run dev
+# -> open http://localhost:5173, drag in a KiCad project folder
 ```
 
 ## Roadmap
@@ -92,5 +99,5 @@ npm run dev
 - **Phase 2 (done):** Transparent scoring engine (`app/analysis/scoring.py` — severity-weighted deductions per subscore, overall = average) and a self-contained HTML report renderer (`app/reports/html_report.py`) with embedded matplotlib charts, color-coded score badges, and a full issues table. No AI dependency yet — see [`docs/example_report.html`](docs/example_report.html) for a real generated report off the `examples/simple_board` fixture. 93 tests passing.
 - **Phase 3 (done):** AI Engineering Review Layer — `app/ai/summarizer.py` builds a structured digest (scores, a deterministically-computed evidence block, issue list, board statistics; never raw geometry) and `app/ai/review.py` sends it to Claude under a strict system prompt that forbids inventing findings and requires citing issue IDs (e.g. `PWR-004`, assigned by `run_all_checks`). Claude is a technical writer over the deterministic engine's output, never a second analysis engine. `answer_question()` grounds the (Phase 4) AI chat panel the same way. The digest carries a `schema_version`, and `find_unsupported_citations()` code-checks (not just prompt-asks) that any issue ID Claude cites actually exists, logging a warning otherwise. 115 tests passing, all using a dependency-injected fake Anthropic client — no live API key needed to prove the code is correct, since none was available in this environment. See `DESIGN.md`'s "AI Integration Architecture" section for the full spec.
 - **CLI (done):** `app/cli.py` — `pcbinsight review <path>` runs the full parse → analyze → score → (optional AI) → report pipeline for one board, or auto-detects a folder of boards and batch-processes all of them into per-board reports plus a `summary.html` index. Installable as a real command via `backend/pyproject.toml`'s `[project.scripts]`. Batch mode catches per-board failures so one malformed `.kicad_pcb` doesn't abort the run. 120 tests passing.
-- **Phase 4 (next):** React/TypeScript dashboard (drag-and-drop upload, board visualizations, issue browser, search/filter, AI chat) and PDF export.
+- **Phase 4 (done):** Local-only FastAPI service (`POST /api/review` with streamed/size-capped uploads and a path-traversal guard; `POST /api/chat`; `POST /api/report/pdf`) plus a React/TypeScript dashboard: drag-and-drop/folder upload, color-coded score cards, searchable/filterable issue browser with expandable "why does this matter" detail, an **SVG board visualization** (outline, per-layer traces, vias, components, zoom/pan, layer toggles, clickable issue markers that cross-highlight the issue browser), a **net-length histogram** and **issue-by-category chart**, a **grounded AI chat panel** (reuses the Phase 3 `answer_question()`; fails gracefully without an API key), and **PDF export** (ReportLab, reusing the HTML report's charts). Verified end-to-end in a real browser against the running backend. 135 tests passing (backend).
 - **Stretch:** multi-board comparison, revision history, BOM analysis, Altium/EasyEDA import support, plugin architecture (see `DESIGN.md` for the full stretch list, including the review-session workflow and Design Rule Authoring SDK).
