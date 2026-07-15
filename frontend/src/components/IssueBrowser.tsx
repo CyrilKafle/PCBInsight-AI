@@ -4,7 +4,15 @@ import { IssueCard } from "./IssueCard";
 
 const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low", "info"];
 
-export function IssueBrowser({ issues }: { issues: Issue[] }) {
+export function IssueBrowser({
+  issues,
+  selectedIssueId = null,
+  onSelectIssue,
+}: {
+  issues: Issue[];
+  selectedIssueId?: string | null;
+  onSelectIssue?: (id: string) => void;
+}) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [severityFilter, setSeverityFilter] = useState("all");
@@ -17,6 +25,9 @@ export function IssueBrowser({ issues }: { issues: Issue[] }) {
       .filter((issue) => categoryFilter === "all" || issue.category === categoryFilter)
       .filter((issue) => severityFilter === "all" || issue.severity === severityFilter)
       .filter((issue) => {
+        // Always keep the selected issue visible so a board-marker click can
+        // never point at a card that the current filters have hidden.
+        if (issue.id === selectedIssueId) return true;
         if (!q) return true;
         return (
           issue.summary.toLowerCase().includes(q) ||
@@ -25,7 +36,7 @@ export function IssueBrowser({ issues }: { issues: Issue[] }) {
         );
       })
       .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity));
-  }, [issues, query, categoryFilter, severityFilter]);
+  }, [issues, query, categoryFilter, severityFilter, selectedIssueId]);
 
   if (issues.length === 0) {
     return (
@@ -75,7 +86,12 @@ export function IssueBrowser({ issues }: { issues: Issue[] }) {
       </p>
       <div className="space-y-2">
         {filtered.map((issue) => (
-          <IssueCard key={issue.id} issue={issue} />
+          <IssueCard
+            key={issue.id}
+            issue={issue}
+            selected={issue.id === selectedIssueId}
+            onSelect={onSelectIssue}
+          />
         ))}
       </div>
     </div>
