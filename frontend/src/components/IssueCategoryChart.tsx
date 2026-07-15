@@ -1,14 +1,6 @@
 import { useMemo } from "react";
+import { SEVERITY_COLORS, SEVERITY_ORDER } from "../severity";
 import type { Issue, Severity } from "../types";
-
-const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low", "info"];
-const SEVERITY_COLORS: Record<Severity, string> = {
-  critical: "#ef4444",
-  high: "#f87171",
-  medium: "#fb923c",
-  low: "#facc15",
-  info: "#9ca3af",
-};
 
 // Issue count per category, each bar segmented by severity. Answers "where are
 // the problems concentrated?" at a glance -- counts only, no new judgement.

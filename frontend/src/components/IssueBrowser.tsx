@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
-import type { Issue, Severity } from "../types";
+import { SEVERITY_ORDER } from "../severity";
+import type { Issue } from "../types";
 import { IssueCard } from "./IssueCard";
-
-const SEVERITY_ORDER: Severity[] = ["critical", "high", "medium", "low", "info"];
 
 export function IssueBrowser({
   issues,
