@@ -19,6 +19,18 @@ def _project_files() -> list[tuple[str, tuple[str, bytes]]]:
     ]
 
 
+def _chat_payload(question: str) -> dict:
+    # Reuse a real review response so the board/issues/score echoed into the
+    # chat request are exactly what the dashboard would send back.
+    review = client.post("/api/review", files=_project_files()).json()
+    return {
+        "board": review["board"],
+        "issues": review["issues"],
+        "score": review["score"],
+        "question": question,
+    }
+
+
 def test_health_endpoint():
     response = client.get("/health")
     assert response.status_code == 200
@@ -110,3 +122,45 @@ def test_review_endpoint_rejects_oversized_total_upload(monkeypatch):
     )
     assert response.status_code == 413
     assert "total limit" in response.json()["detail"]
+
+
+def test_chat_endpoint_returns_grounded_answer(monkeypatch):
+    captured = {}
+
+    def fake_answer_question(digest, question):
+        captured["digest"] = digest
+        captured["question"] = question
+        return "The most severe issue is SIG-001."
+
+    monkeypatch.setattr(main, "answer_question", fake_answer_question)
+    response = client.post("/api/chat", json=_chat_payload("What is the worst issue?"))
+
+    assert response.status_code == 200
+    assert response.json()["answer"] == "The most severe issue is SIG-001."
+    # The endpoint must rebuild the digest itself and pass the question through
+    # unchanged -- never let the client supply the digest directly.
+    assert captured["question"] == "What is the worst issue?"
+    assert captured["digest"]["schema_version"] == 1
+    assert any(issue["id"] == "SIG-001" for issue in captured["digest"]["issues"])
+
+
+def test_chat_endpoint_empty_question_returns_422(monkeypatch):
+    monkeypatch.setattr(main, "answer_question", lambda *a, **k: "unused")
+    response = client.post("/api/chat", json=_chat_payload("   "))
+    assert response.status_code == 422
+
+
+def test_chat_endpoint_overlong_question_returns_413(monkeypatch):
+    monkeypatch.setattr(main, "answer_question", lambda *a, **k: "unused")
+    response = client.post(
+        "/api/chat", json=_chat_payload("x" * (main.MAX_QUESTION_CHARS + 1))
+    )
+    assert response.status_code == 413
+    assert "character limit" in response.json()["detail"]
+
+
+def test_chat_endpoint_without_api_key_returns_502(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    response = client.post("/api/chat", json=_chat_payload("What is the worst issue?"))
+    assert response.status_code == 502
+    assert "ANTHROPIC_API_KEY" in response.json()["detail"]
