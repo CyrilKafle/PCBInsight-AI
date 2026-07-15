@@ -1,6 +1,6 @@
 # PCBInsight AI — Project Knowledge File
 
-Purpose of this file: a complete, current snapshot of the project for an outside reviewer (ChatGPT) to read and then propose the next work session's step-by-step plan. Everything below is factual and verified as of 2026-07-14.
+Purpose of this file: a complete, current snapshot of the project so a fresh work session can pick up with zero re-discovery. Everything below is factual and verified as of 2026-07-14.
 
 > **Session continuity note:** `CLAUDE.md` at the repo root auto-loads every Claude Code session and points here. Keep this file current at the end of each session so a fresh session inherits state with zero re-discovery.
 
@@ -10,9 +10,9 @@ Purpose of this file: a complete, current snapshot of the project for an outside
 
 **PCBInsight AI** — an automated PCB design review platform for KiCad projects. It parses `.kicad_pcb` files with a custom parser, runs 28 deterministic engineering checks across 9 categories, computes a transparent 0–100 engineering score, and generates professional HTML reports. Claude AI sits on top as a strictly-bounded "technical writer" layer that narrates the deterministic findings — it never analyzes the board itself and never sees raw geometry.
 
-- **Repo (public):** https://github.com/CyrilKafle/PCBInsight-AI (renamed from the pre-pivot `SiliconArm`; description updated)
-- **Owner:** Cyril Kafle, undergraduate, building this as the centerpiece resume project for EE/PCB/EDA/embedded internships
-- **Positioning (decided, locked in DESIGN.md):** personal tool, *not* a public multi-tenant service. No public upload endpoint (Claude API cost + unhardened parser = two real reasons). Interview narrative: "I design PCBs as a hobby in KiCad and built my own AI-augmented reviewer to check them before fab — I built the reviewer myself." GitHub repo is the public artifact; interested parties email for access/demo.
+- **Repo (public):** https://github.com/CyrilKafle/PCBInsight-AI (renamed from the pre-pivot `SiliconArm`)
+- **Owner:** Cyril Kafle, undergraduate; a portfolio project in the EE/PCB/EDA/embedded space.
+- **Positioning (decided, in DESIGN.md):** personal/local tool, *not* a public multi-tenant service. No public upload endpoint (Claude API cost + an unhardened parser = two real reasons). The GitHub repo is the public artifact; interested parties email for a demo. The honest and sufficient story is the tool itself: a substantial deterministic PCB-review engine with a strictly-bounded AI layer on top — that's the real, defensible accomplishment to talk about.
 
 ## 2. Architecture (all implemented and working)
 
@@ -89,5 +89,5 @@ Stretch backlog (documented in DESIGN.md, post-v1.0): review-session workflow (m
 
 - **No ANTHROPIC_API_KEY in the dev environment.** Anything needing live Claude output (e.g., observing real AI review prose quality, screenshotting the chat panel with a real answer) requires the user to set a key first — plan around it or ask the user.
 - **User's stated preferences:** doesn't want everything done in one giant burst; wants professional-not-AI-looking visuals; keep the "AI reviews, never designs" positioning intact; static landing page (already argued and settled — don't re-litigate 3D).
-- **Windows dev machine**, Python 3.12, Node 24. Playwright available for browser QA. gh CLI authenticated (repo rename/description already done with it).
-- The user relays outside feedback (ChatGPT) each round; several of its past suggestions were adopted (issue IDs, evidence block, citation validation, schema_version, CLI, GIF/website ideas) and several were pushed back on with reasons (fake metrics, coverage badge before CI existed, CONTRIBUTING.md boilerplate). Honest pushback is expected and valued — don't rubber-stamp.
+- **Windows dev machine**, Python 3.12, Node 24. Playwright/headless-browser available for QA. gh CLI authenticated.
+- **Honest pushback is expected and valued — don't rubber-stamp.** Past calls that held up: real (computed) metrics over estimates, no coverage badge without live coverage tooling, no fabricated "time saved" numbers. Keep claims in the repo tied to what the code actually does.
