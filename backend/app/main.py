@@ -18,7 +18,7 @@ from fastapi import FastAPI, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.ai.review import generate_review
+from app.ai.review import answer_question, generate_review
 from app.ai.summarizer import summarize
 from app.analysis import run_all_checks
 from app.analysis.scoring import score as compute_score
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 MAX_UPLOAD_FILES = 100
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB total across all files
 _READ_CHUNK_BYTES = 1024 * 1024
+MAX_QUESTION_CHARS = 2000
 
 app = FastAPI(
     title="PCB Design Review Platform",
@@ -51,6 +52,21 @@ class ReviewResponse(BaseModel):
     issues: list[Issue]
     score: EngineeringScore
     ai_review: str | None = None
+
+
+class ChatRequest(BaseModel):
+    # The dashboard sends back the board/issues/score it already holds from
+    # /api/review, so the chat endpoint stays stateless -- no server-side
+    # session store to grow or evict. Conversation history is kept in the
+    # browser (each question is answered against the digest, not the thread).
+    board: Board
+    issues: list[Issue]
+    score: EngineeringScore
+    question: str
+
+
+class ChatResponse(BaseModel):
+    answer: str
 
 
 @app.get("/health")
@@ -129,3 +145,28 @@ async def review(files: list[UploadFile], include_ai_review: bool = Form(False))
         time.perf_counter() - started,
     )
     return ReviewResponse(board=board, issues=issues, score=score, ai_review=ai_review)
+
+
+@app.post("/api/chat", response_model=ChatResponse)
+def chat(request: ChatRequest) -> ChatResponse:
+    """Answer a grounded follow-up question about an already-reviewed board.
+
+    Rebuilds the same digest summarize() feeds the review layer and hands it to
+    the existing answer_question() -- the deterministic engine stays the sole
+    source of findings; Claude only narrates over the digest."""
+    question = request.question.strip()
+    if not question:
+        raise HTTPException(status_code=422, detail="Question must not be empty.")
+    if len(question) > MAX_QUESTION_CHARS:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Question exceeds the {MAX_QUESTION_CHARS} character limit.",
+        )
+
+    digest = summarize(request.board, request.issues, request.score)
+    try:
+        answer = answer_question(digest, question)
+    except Exception as exc:  # noqa: BLE001 -- missing key (RuntimeError) or live API failure both map to 502
+        raise HTTPException(status_code=502, detail=f"AI chat failed: {exc}") from exc
+
+    return ChatResponse(answer=answer)
