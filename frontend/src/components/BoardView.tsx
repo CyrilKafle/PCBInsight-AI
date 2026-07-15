@@ -201,10 +201,13 @@ export function BoardView({
       <svg
         ref={svgRef}
         viewBox={viewBox}
-        className="block w-full touch-none select-none bg-neutral-950"
+        className="mx-auto block w-full touch-none select-none bg-neutral-950"
         style={{
           aspectRatio: `${bounds.width} / ${bounds.height}`,
           maxHeight: 520,
+          // Cap width to the height-limited aspect so a wide/short board fills
+          // the panel instead of letterboxing with empty side margins.
+          maxWidth: (520 * bounds.width) / bounds.height,
           cursor: dragRef.current ? "grabbing" : "grab",
         }}
         onPointerDown={onPointerDown}

@@ -73,7 +73,12 @@ export default function App() {
               />
               Also generate a Claude narrative review (requires ANTHROPIC_API_KEY, costs an API call)
             </label>
-            {status === "loading" && <p className="text-neutral-400">Analyzing board...</p>}
+            {status === "loading" && (
+              <div className="flex items-center justify-center gap-3 py-8 text-neutral-400">
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-700 border-t-blue-500" />
+                Analyzing board...
+              </div>
+            )}
             {status === "error" && error && (
               <p className="rounded-md border border-red-900 bg-red-950/50 p-3 text-sm text-red-300">{error}</p>
             )}
