@@ -69,8 +69,17 @@ def render(board: Board, issues: list[Issue], score: EngineeringScore, ai_review
     story += _issues(issues, styles)
     story += _ai_review(ai_review, styles)
 
-    doc.build(story)
+    doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
     return buffer.getvalue()
+
+
+def _footer(canvas, doc) -> None:
+    canvas.saveState()
+    canvas.setFont("Helvetica", 8)
+    canvas.setFillColor(colors.HexColor("#57606a"))
+    canvas.drawString(0.75 * inch, 0.5 * inch, "PCBInsight AI - PCB Design Review")
+    canvas.drawRightString(LETTER[0] - 0.75 * inch, 0.5 * inch, f"Page {doc.page}")
+    canvas.restoreState()
 
 
 def _styles() -> dict[str, ParagraphStyle]:
@@ -215,36 +224,40 @@ def _issues(issues: list[Issue], styles: dict) -> list:
     ordered = sorted(issues, key=lambda issue: _SEVERITY_ORDER.index(issue.severity))
     header = [Paragraph(f"<b>{h}</b>", styles["cellHead"]) for h in ("ID", "Sev", "Category", "Finding", "Why it matters / fix")]
     data = [header]
-    style_cmds = [
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#24292f")),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d0d7de")),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("TOPPADDING", (0, 0), (-1, -1), 4),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-    ]
-    for row_index, issue in enumerate(ordered, start=1):
+    for issue in ordered:
         refs = f" ({escape(', '.join(issue.refs))})" if issue.refs else ""
         finding = f"<b>{escape(issue.summary)}</b>{refs}"
         detail = (
             f"{escape(issue.explanation)} <i>{escape(issue.principle)}</i>"
             f"<br/><b>Fix:</b> {escape(issue.suggested_fix)}"
         )
+        # Severity reads as compact colored bold text (matching the HTML
+        # report's badge color) rather than a heavy full-cell fill.
+        severity = (
+            f'<b><font color="{_SEVERITY_COLORS[issue.severity]}">{escape(issue.severity.value)}</font></b>'
+        )
         data.append(
             [
                 Paragraph(escape(issue.id), styles["cell"]),
-                Paragraph(escape(issue.severity.value), styles["cell"]),
+                Paragraph(severity, styles["cell"]),
                 Paragraph(escape(issue.category.replace("_", " ").title()), styles["cell"]),
                 Paragraph(finding, styles["cell"]),
                 Paragraph(detail, styles["cell"]),
             ]
         )
-        # Tint the severity cell to match the HTML report's badge color.
-        sev_color = colors.HexColor(_SEVERITY_COLORS[issue.severity])
-        style_cmds.append(("BACKGROUND", (1, row_index), (1, row_index), sev_color))
-        style_cmds.append(("TEXTCOLOR", (1, row_index), (1, row_index), colors.white))
 
     table = Table(data, colWidths=[0.7 * inch, 0.5 * inch, 0.9 * inch, 2.0 * inch, 2.9 * inch], repeatRows=1)
-    table.setStyle(TableStyle(style_cmds))
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#24292f")),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d0d7de")),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]
+        )
+    )
     return title + [table]
 
 
