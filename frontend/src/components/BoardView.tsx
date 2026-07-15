@@ -202,7 +202,11 @@ export function BoardView({
         ref={svgRef}
         viewBox={viewBox}
         className="block w-full touch-none select-none bg-neutral-950"
-        style={{ height: 460, cursor: dragRef.current ? "grabbing" : "grab" }}
+        style={{
+          aspectRatio: `${bounds.width} / ${bounds.height}`,
+          maxHeight: 520,
+          cursor: dragRef.current ? "grabbing" : "grab",
+        }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
