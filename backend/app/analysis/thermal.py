@@ -4,7 +4,7 @@ congestion, insufficient copper pour near power devices."""
 from __future__ import annotations
 
 from app.analysis.util import distance
-from app.models.board import Board, Component
+from app.models.board import Board, Component, Point
 from app.models.issue import Issue, Severity
 
 POUR_PROXIMITY_MM = 5.0
@@ -53,7 +53,7 @@ def _check_pour_proximity(component: Component, board: Board) -> list[Issue]:
     ]
 
 
-def _within_proximity(point, outline, tolerance_mm: float) -> bool:
+def _within_proximity(point: Point, outline: list[Point], tolerance_mm: float) -> bool:
     if not outline:
         return False
     xs = [p.x for p in outline]

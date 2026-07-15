@@ -11,7 +11,7 @@ from app.models.issue import Issue, Severity
 
 CLOCK_VIA_WARN = 2
 CLOCK_LENGTH_WARN_MM = 40.0
-_ENDPOINT_ROUNDING_MM = 3
+_ENDPOINT_ROUND_NDIGITS = 3  # round() decimal places for endpoint coincidence matching
 
 
 def check(board: Board) -> list[Issue]:
@@ -28,8 +28,8 @@ def check(board: Board) -> list[Issue]:
 def _check_branch_points(net: Net) -> list[Issue]:
     endpoint_counts: Counter[tuple[float, float]] = Counter()
     for trace in net.traces:
-        endpoint_counts[(round(trace.start.x, _ENDPOINT_ROUNDING_MM), round(trace.start.y, _ENDPOINT_ROUNDING_MM))] += 1
-        endpoint_counts[(round(trace.end.x, _ENDPOINT_ROUNDING_MM), round(trace.end.y, _ENDPOINT_ROUNDING_MM))] += 1
+        endpoint_counts[(round(trace.start.x, _ENDPOINT_ROUND_NDIGITS), round(trace.start.y, _ENDPOINT_ROUND_NDIGITS))] += 1
+        endpoint_counts[(round(trace.end.x, _ENDPOINT_ROUND_NDIGITS), round(trace.end.y, _ENDPOINT_ROUND_NDIGITS))] += 1
 
     issues = []
     for (x, y), count in endpoint_counts.items():

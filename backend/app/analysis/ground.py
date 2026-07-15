@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections import Counter
 
 from app.analysis.util import is_ground_net
-from app.models.board import Board
+from app.models.board import Board, Net
 from app.models.issue import Issue, Severity
 
 MIN_GROUND_TRACE_WIDTH_MM = 0.30
@@ -24,7 +24,7 @@ def check(board: Board) -> list[Issue]:
     return issues
 
 
-def _check_fragmentation(ground_nets) -> list[Issue]:
+def _check_fragmentation(ground_nets: list[Net]) -> list[Issue]:
     if len(ground_nets) <= 1:
         return []
     names = ", ".join(sorted(net.name for net in ground_nets))
@@ -46,7 +46,7 @@ def _check_fragmentation(ground_nets) -> list[Issue]:
     ]
 
 
-def _check_missing_pour(ground_nets, board: Board) -> list[Issue]:
+def _check_missing_pour(ground_nets: list[Net], board: Board) -> list[Issue]:
     if not ground_nets:
         return []
     grounded_pour_nets = {pour.net for pour in board.pours if is_ground_net(pour.net)}
@@ -72,7 +72,7 @@ def _check_missing_pour(ground_nets, board: Board) -> list[Issue]:
     return issues
 
 
-def _check_islands(ground_nets, board: Board) -> list[Issue]:
+def _check_islands(ground_nets: list[Net], board: Board) -> list[Issue]:
     issues = []
     pour_key_counts = Counter(
         (pour.net, pour.layer) for pour in board.pours if is_ground_net(pour.net)
@@ -95,7 +95,7 @@ def _check_islands(ground_nets, board: Board) -> list[Issue]:
     return issues
 
 
-def _check_thin_traces(net) -> list[Issue]:
+def _check_thin_traces(net: Net) -> list[Issue]:
     issues = []
     for trace in net.traces:
         if trace.width >= MIN_GROUND_TRACE_WIDTH_MM:
