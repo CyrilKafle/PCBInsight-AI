@@ -14,7 +14,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, Form, HTTPException, UploadFile
+from fastapi import FastAPI, Form, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -25,6 +25,7 @@ from app.analysis.scoring import score as compute_score
 from app.models.board import Board
 from app.models.issue import EngineeringScore, Issue
 from app.parser.kicad_project import find_project_files, parse_board
+from app.reports import pdf_report
 
 logger = logging.getLogger(__name__)
 
@@ -170,3 +171,17 @@ def chat(request: ChatRequest) -> ChatResponse:
         raise HTTPException(status_code=502, detail=f"AI chat failed: {exc}") from exc
 
     return ChatResponse(answer=answer)
+
+
+@app.post("/api/report/pdf")
+def report_pdf(review: ReviewResponse) -> Response:
+    """Render the already-computed review (board/issues/score/ai_review the
+    dashboard holds) to a downloadable PDF. Reuses app/reports/pdf_report,
+    which in turn reuses the HTML report's charts -- no re-analysis here."""
+    pdf_bytes = pdf_report.render(review.board, review.issues, review.score, review.ai_review)
+    filename = _safe_upload_name(f"{review.board.name}_report.pdf")
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { submitReview } from "./api";
+import { downloadReportPdf, submitReview } from "./api";
 import { BoardView } from "./components/BoardView";
 import { ChatPanel } from "./components/ChatPanel";
 import { IssueBrowser } from "./components/IssueBrowser";
@@ -17,6 +17,20 @@ export default function App() {
   const [result, setResult] = useState<ReviewResponse | null>(null);
   const [includeAiReview, setIncludeAiReview] = useState(false);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [pdfStatus, setPdfStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  async function handleDownloadPdf(review: ReviewResponse) {
+    setPdfStatus("loading");
+    setPdfError(null);
+    try {
+      await downloadReportPdf(review);
+      setPdfStatus("idle");
+    } catch (err) {
+      setPdfError(err instanceof Error ? err.message : "Could not generate the PDF.");
+      setPdfStatus("error");
+    }
+  }
 
   async function handleFiles(files: File[]) {
     setStatus("loading");
@@ -70,14 +84,27 @@ export default function App() {
           <>
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">{result.board.name}</h2>
-              <button
-                type="button"
-                onClick={reset}
-                className="rounded-md bg-neutral-800 px-3 py-1.5 text-sm text-neutral-100 hover:bg-neutral-700"
-              >
-                Analyze another board
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleDownloadPdf(result)}
+                  disabled={pdfStatus === "loading"}
+                  className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+                >
+                  {pdfStatus === "loading" ? "Generating PDF..." : "Download PDF"}
+                </button>
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="rounded-md bg-neutral-800 px-3 py-1.5 text-sm text-neutral-100 hover:bg-neutral-700"
+                >
+                  Analyze another board
+                </button>
+              </div>
             </div>
+            {pdfStatus === "error" && pdfError && (
+              <p className="rounded-md border border-red-900 bg-red-950/50 p-3 text-sm text-red-300">{pdfError}</p>
+            )}
             <ScoreCards score={result.score} />
             {result.ai_review && (
               <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-6">

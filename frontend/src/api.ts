@@ -33,3 +33,25 @@ export async function askQuestion(
   const { answer } = await unwrap<{ answer: string }>(response);
   return answer;
 }
+
+export async function downloadReportPdf(review: ReviewResponse): Promise<void> {
+  const response = await fetch("/api/report/pdf", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(review),
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail ?? `Request failed with status ${response.status}`);
+  }
+  // Trigger a browser download from the returned bytes.
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${review.board.name}_report.pdf`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}

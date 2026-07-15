@@ -164,3 +164,14 @@ def test_chat_endpoint_without_api_key_returns_502(monkeypatch):
     response = client.post("/api/chat", json=_chat_payload("What is the worst issue?"))
     assert response.status_code == 502
     assert "ANTHROPIC_API_KEY" in response.json()["detail"]
+
+
+def test_report_pdf_returns_downloadable_pdf():
+    review = client.post("/api/review", files=_project_files()).json()
+    response = client.post("/api/report/pdf", json=review)
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.headers["content-disposition"].startswith("attachment")
+    assert "simple_board_report.pdf" in response.headers["content-disposition"]
+    assert response.content[:4] == b"%PDF"
