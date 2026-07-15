@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { boardBounds } from "../geometry";
-import type { Board, Issue, Point, Severity } from "../types";
+import { SEVERITY_COLORS } from "../severity";
+import type { Board, Issue, Point } from "../types";
 
 // KiCad-ish layer colors, tuned for a dark background. Unknown layers fall
 // back to a small palette keyed by discovery order so any stackup stays
@@ -14,14 +15,6 @@ const LAYER_COLORS: Record<string, string> = {
   "In4.Cu": "#4bb0c8",
 };
 const FALLBACK_COLORS = ["#d08770", "#a3be8c", "#b48ead", "#88c0d0", "#ebcb8b", "#bf616a"];
-
-const SEVERITY_MARKER: Record<Severity, string> = {
-  critical: "#ef4444",
-  high: "#f87171",
-  medium: "#fb923c",
-  low: "#facc15",
-  info: "#9ca3af",
-};
 
 interface Transform {
   k: number;
@@ -320,7 +313,7 @@ export function BoardView({
                   cx={loc.x}
                   cy={loc.y}
                   r={selected ? markerR * 1.5 : markerR}
-                  fill={SEVERITY_MARKER[issue.severity]}
+                  fill={SEVERITY_COLORS[issue.severity]}
                   fillOpacity={0.85}
                   stroke={selected ? "#ffffff" : "#0c0c0d"}
                   strokeWidth={markerR * (selected ? 0.35 : 0.2)}
