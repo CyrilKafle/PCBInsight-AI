@@ -24,13 +24,17 @@ KiCad Project (.kicad_pcb)
   → Issue list (each: id like PWR-004, severity, confidence, explanation, engineering principle, suggested fix, refs, board location)
   → Transparent Scoring (severity×confidence deductions from 100; overall = average of 7 subscores)  [analysis/scoring.py]
   → ├─ Self-contained HTML report (embedded matplotlib charts, XSS-escaped)  [reports/html_report.py]
+    ├─ PDF report (ReportLab, reuses html_report's charts + score-color logic)  [reports/pdf_report.py]
     ├─ Structured AI Digest (schema_version, evidence block, issues, stats — NO raw geometry, test-enforced)  [ai/summarizer.py]
-    │    → Claude review under strict system prompt + code-enforced citation validation  [ai/review.py]
+    │    → Claude review + grounded chat answers under strict system prompt + code-enforced citation validation  [ai/review.py]
     ├─ CLI: `pcbinsight review <path>` single-board + auto-detected batch folder mode  [app/cli.py]
-    └─ FastAPI `POST /api/review` + React/TS/Tailwind dashboard (local-only)  [app/main.py, frontend/src/]
+    └─ FastAPI (local-only)  [app/main.py]: POST /api/review, /api/chat, /api/report/pdf
+         → React/TS/Tailwind dashboard  [frontend/src/]: upload · score cards · issue browser ·
+           SVG board view (zoom/pan, layer toggles, clickable issue markers) · net-length histogram ·
+           issue-by-category chart · grounded AI chat panel · Download PDF
 ```
 
-Architecture diagram image: `docs/images/architecture.png` (also embedded in README).
+Architecture diagram image: `docs/images/architecture.png` (also embedded in README; predates the chat/board-view/PDF additions above — regenerate before the landing page).
 
 ## 3. Phase status
 
@@ -41,22 +45,18 @@ Architecture diagram image: `docs/images/architecture.png` (also embedded in REA
 | 2 — Scoring + HTML report | DONE | Transparent deduction scoring; self-contained HTML report w/ base64 matplotlib charts; visually QA'd via Playwright screenshot, example at `docs/example_report.html`. |
 | 3 — AI Engineering Review Layer | DONE | Digest has `schema_version`; evidence block (severity counts, highest-impact categories, most common recommendation) computed in Python, never by Claude; strict system prompt (no invented findings, must cite issue IDs, hedge low-confidence <0.5); `find_unsupported_citations()` code-checks cited IDs against real ones and logs warnings. All tested via dependency-injected fake Anthropic client (no API key in dev env — plumbing proven, live prose quality not yet observed). |
 | CLI (bonus, pre-Phase-4) | DONE | Single + batch mode, `pip install -e .` gives real `pcbinsight` command via pyproject. Batch keyed by folder name (not board name) to avoid collisions; per-board failure isolation. |
-| 4 — Dashboard | **DONE (all Phase 4 features)** | Backend `POST /api/review` (multipart upload, streamed/capped uploads, path-traversal guard, CORS scoped). React dashboard: upload, score cards, searchable/filterable issue browser. **Now also done (session 2026-07-14, Opus):** (a) **AI chat panel** — `POST /api/chat` reuses `answer_question()` (stateless, client sends back board/issues/score; history client-side; graceful 502 when no key), `ChatPanel.tsx` with loading/suggestions/in-thread error. (b) **Board visualization** — `BoardView.tsx` SVG (outline/pours/traces-by-layer/vias/components), scroll-zoom + drag-pan, layer/component/via/label toggles, severity-colored issue markers with two-way cross-highlight to the issue browser; plus `NetLengthHistogram.tsx` and `IssueCategoryChart.tsx`. (c) **PDF export** — `POST /api/report/pdf` via `app/reports/pdf_report.py` (reuses html_report's charts + score-color logic, escapes all text, page-numbered footer), "Download PDF" button. All verified end-to-end in a real browser (gstack browse) against the running backend, no console errors. |
-| Landing page | NOT STARTED | Decided: static professional page (GitHub/Linear/JetBrains aesthetic — dark, dense, no glassmorphism/gradients; NOT 3D/interactive — argued and user accepted). Dashboard is now feature-complete, so screenshots can be real. Could be served free via GitHub Pages from `/docs`. **This is the top candidate for the next session.** |
+| 4 — Dashboard | **DONE (complete feature set)** | Backend: `POST /api/review` (streamed/size-capped uploads, `.`/`..` traversal guard, CORS scoped to local Vite), `POST /api/chat` (reuses `answer_question()`, stateless, graceful 502 without a key), `POST /api/report/pdf` (ReportLab). React dashboard: upload, color-coded score cards, searchable/filterable issue browser with expandable "why it matters" cards, SVG board view (outline/pours/per-layer traces/vias/components, zoom/pan, layer toggles, clickable issue markers that cross-highlight the browser), net-length histogram, issue-by-category chart, grounded AI chat panel, and Download PDF. Verified end-to-end in a real browser. Full narrative: `docs/devlogs/2026-07-14-phase4-completion.md`. |
+| Landing page | NOT STARTED | Decided: static professional page (GitHub/Linear/JetBrains aesthetic — dark, dense, no glassmorphism/gradients; NOT 3D/interactive — argued and user accepted). Dashboard is now feature-complete, so screenshots can be real. Free via GitHub Pages from `/docs`. Highest-value remaining coding task (see §7). |
 
-## 4. Verified state right now (end of session 2026-07-14, Opus)
+## 4. Verified state (as of 2026-07-14)
 
-- **Backend: 135/135 tests passing** (pytest, ~3s) — was 127; +8 new tests in `tests/test_api.py` covering the `/api/review` hardening, `/api/chat`, and `/api/report/pdf`.
+- **Backend: 135/135 tests passing** (pytest, ~3s). Tests in `tests/test_api.py` cover the `/api/review` hardening, `/api/chat`, and `/api/report/pdf`.
 - **Frontend: `tsc -b` clean + `npm run build` succeeds** (React 18 + TS + Vite + Tailwind).
-- **No secrets in repo**; `.env` gitignored; still **no ANTHROPIC_API_KEY in the dev env** (AI paths tested via fake client / verified to return graceful 502 live).
+- **~2,938 LOC** in `backend/app/`, **~1,353** in `backend/tests/`.
+- **No secrets in repo**; `.env` gitignored; still **no ANTHROPIC_API_KEY in the dev env** — AI paths tested via fake client and verified to return a graceful 502 live; **live Claude prose quality remains unobserved**.
 - **CI live:** GitHub Actions runs pytest on every push to master.
-- **8 unpushed commits on `master`** (ahead of `origin/master`). Last pushed commit is still `c5c8249`. **Nothing pushed this session** — see "next session" below. New commits, oldest first: backend hardening → `/api/chat` → dashboard frontend → board viz → viz fixes → PDF export → polish → severity dedup.
-- **`CLAUDE.md`** (new, untracked) auto-loads each session and points at this file; **`knowledge.md`** kept current (this file).
-
-### What this session did (2026-07-14, Opus 4.8)
-- **Verified + hardened `/api/review`** and found a *real* incomplete-fix bug: the "." / ".." upload-name guard let bare `..` through (`Path("..").name` is `".."`, not `""`), which would write to the temp dir itself (500). Fixed + regression-tested.
-- Built all three remaining Phase 4 features (chat, board viz, PDF) + a polish pass, each committed as its own checkpoint and browser-verified.
-- Ran a final AI-smell review: consolidated triplicated frontend severity ordering/colors into `src/severity.ts`. Considered-and-kept: `pdf_report.py` importing a few underscore-private helpers from `html_report.py` (same package, documented, and the alternative is duplicating the matplotlib chart code) — a candidate for extracting a shared `app/reports/theme.py` later if desired.
+- **9 unpushed commits on `master`** (ahead of `origin/master`); last pushed commit is `c5c8249`. Pushing is the first item in §7. See `docs/devlogs/2026-07-14-phase4-completion.md` for the commit list and rationale.
+- Docs (README/DESIGN) reflect Phase 4 complete with recomputed real metrics. `CLAUDE.md` auto-loads each session and points here.
 
 ## 5. Repo hygiene (all done)
 
@@ -74,17 +74,16 @@ Deliberately skipped (with reasoning): CONTRIBUTING.md (solo repo, reads as boil
 6. **Every phase ends demoable** — gated phases; v0.3.0 and v0.4.0 tags as rollback points.
 7. **Local-only backend posture** — CORS scoped, path-traversal guarded, but explicitly NOT hardened for public internet (documented, deliberate).
 
-## 7. What remains (candidate work for next session)
+## 7. Next milestone — v1.0 Release Candidate
 
-In rough dependency order:
-1. **Push + release housekeeping (do first):** 8 commits are unpushed. Push `master`, update `CHANGELOG.md` (Unreleased → the Phase 4 features), and consider a `v0.5.0` tag. **Backend hardening polish items from the old list are now DONE** (upload size/count caps, chat question-length cap all shipped this session).
-2. **README/DESIGN accuracy sweep:** README's roadmap still says "Phase 4 (in progress)... Still open: board visualizations, the AI chat panel, and PDF export" — that's now false, all three shipped. Update the Phase 4 line, the metrics table (test count 127→135), and the "Report format: PDF export planned" note. (README/DESIGN/SKILLS_LOG had uncommitted prior-session edits at session start — reconcile, don't clobber.)
-3. **Landing page** (`docs/index.html`, static, professional; the dashboard is now feature-complete so screenshots can be real; free via GitHub Pages on `/docs`). Top feature candidate.
-4. **Optional refactor:** extract the shared report theme (score-color bands + chart renderers) out of `html_report.py` into `app/reports/theme.py` so `pdf_report.py` stops importing privates. Low urgency.
+The engineering is ~90–95% done; what remains is productization, not architecture. Framing question: *"If I handed this repo to a senior engineer at Cadence/NVIDIA tomorrow, would anything make them think it was unfinished?"* Work the four buckets, then cut v1.0.0.
 
-Stretch backlog unchanged (see DESIGN.md): review-session workflow (Fixed/Ignored/False-Positive + live rescore), plugin SDK, design-history diffing, multi-board compare, Altium/EasyEDA import.
+1. **Release engineering (do first):** push the 9 commits; finalize `CHANGELOG.md` (Unreleased → the Phase 4 features); tag `v0.5.0`; confirm GitHub Actions is green on the new commits.
+2. **Landing page** — highest-priority coding task. `docs/index.html`, static, GitHub/Linear/JetBrains aesthetic, **real** screenshots + **real** metrics, no buzzwords. Serve free via GitHub Pages on `/docs`. Regenerate `docs/images/architecture.png` first (it predates the chat/board-view/PDF work).
+3. **Live AI validation** (needs an `ANTHROPIC_API_KEY`): run several real PCB reviews; verify the AI never invents issues (citations must resolve to real IDs); check tone/usefulness; adjust the system prompts based on actual output, not assumptions.
+4. **Final repository audit:** inconsistent naming, duplicate utilities, TODO/FIXME, stale docs, unnecessary dependencies, unused imports, dead files, outdated screenshots — anything that still reads as a prototype. Optional here: extract a shared `app/reports/theme.py` (score-color bands + chart renderers) so `pdf_report.py` stops importing `html_report` privates.
 
-Stretch backlog (documented in DESIGN.md, not started): review-session workflow (mark Fixed/Ignored/False-Positive, live rescoring), plugin SDK (dynamic check discovery), threshold/measured-value structured fields, design history comparison (board-rev diffing), Markdown report export, multi-board compare, Altium/EasyEDA import.
+Stretch backlog (documented in DESIGN.md, post-v1.0): review-session workflow (mark Fixed/Ignored/False-Positive, live rescoring), plugin SDK (dynamic check discovery), threshold/measured-value structured fields, design-history comparison (board-rev diffing), Markdown report export, multi-board compare, Altium/EasyEDA import.
 
 ## 8. Constraints and cautions for whoever plans next steps
 
