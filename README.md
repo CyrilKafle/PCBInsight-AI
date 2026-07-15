@@ -29,8 +29,8 @@ This is a from-scratch rebuild of what was previously a separate FPGA/PCB roboti
 ![Architecture diagram](docs/images/architecture.png)
 
 ```
-backend/    FastAPI service: parser, analysis engine, AI integration, report generation, SQLite storage
-frontend/   React + TypeScript + Tailwind dashboard: upload, board visualizations, issue browser, AI chat panel
+backend/    FastAPI service + CLI: parser, analysis engine, AI integration, HTML/PDF report generation
+frontend/   React + TypeScript + Tailwind dashboard: upload, board visualization, issue browser, AI chat panel
 examples/   Sample KiCad projects used for development and regression-testing the analysis engine
 docs/       Architecture notes, screenshots, example reports
 ```
