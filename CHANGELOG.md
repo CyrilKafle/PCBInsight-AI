@@ -4,19 +4,39 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v0.5.0] — 2026-07-14 — Phase 4 dashboard: board visualization, AI chat, PDF export
+
+Completes Phase 4: a local FastAPI + React dashboard with an interactive board viewer, a grounded AI chat panel, and PDF export, plus the CLI and repo hygiene accumulated since v0.4.0. 135 backend tests passing; the full dashboard is verified end-to-end in a real browser.
+
 ### Added
-- CLI (`backend/app/cli.py`): `pcbinsight review <path>` for a single board, with auto-detected batch mode for a folder of board projects (per-board reports plus a `summary.html` index). Packaged via `backend/pyproject.toml` so `pip install -e .` gives a real `pcbinsight` command.
-- `docs/images/architecture.png`, a rendered pipeline diagram.
-- README project-metrics table, computed from the codebase rather than estimated.
-- `LICENSE` (MIT), this changelog, and a GitHub Actions workflow running the test suite on every push/PR.
+- **FastAPI backend** (`app/main.py`, local-only): `POST /api/review`, `POST /api/chat`, `POST /api/report/pdf`.
+- **React/TS/Tailwind dashboard**: drag-and-drop/folder upload, color-coded overall/subscore cards, and a searchable/filterable issue browser with expandable "why it matters" cards.
+- **Interactive SVG board visualization**: board outline, copper pours, per-layer traces, vias, and components, with scroll-to-zoom, drag-to-pan, per-layer/component/via/label toggles, and severity-colored issue markers that cross-highlight the issue browser (click a marker to open its card, and vice versa).
+- **Net-length histogram** and **issue-by-category chart**.
+- **Grounded AI chat panel** — `POST /api/chat` reuses the Phase 3 `answer_question()`; conversation history is client-side; degrades gracefully when no API key is configured.
+- **PDF report export** — `POST /api/report/pdf` via `app/reports/pdf_report.py` (ReportLab), reusing the HTML report's charts and score-color logic, with a page-numbered footer; "Download PDF" button in the dashboard.
+- **CLI** (`app/cli.py`): `pcbinsight review <path>` single-board + auto-detected batch mode (`summary.html` index); packaged via `pyproject.toml` (`pip install -e .`).
+- `find_unsupported_citations()` — code-enforced check that any issue ID Claude cites actually exists in the digest.
+- Repo hygiene: `docs/images/architecture.png`, README metrics table (computed, not estimated), `LICENSE` (MIT), this changelog, GitHub Actions CI, and `CLAUDE.md` + `docs/devlogs/` session-continuity docs.
 
 ### Changed
-- AI review system prompts tightened: every recommendation must be backed by a supplied issue, and low-confidence findings must be explicitly hedged.
-- `app/ai/summarizer.py`'s digest now carries a `schema_version` field.
-- Corrected a stale "27 deterministic checks" figure to the actual count (28) throughout the docs.
+- AI review system prompts tightened: every recommendation must be backed by a supplied issue; low-confidence findings must be explicitly hedged.
+- Digest (`app/ai/summarizer.py`) now carries a `schema_version` field.
+- Consolidated frontend severity ordering/colors into a single `src/severity.ts`.
+- Corrected a stale "27 deterministic checks" figure to the actual count (28).
 
-### Added (validation)
-- `app/ai/review.find_unsupported_citations()` — code-enforced check that any issue ID Claude cites in its review actually exists in the digest, logging a warning on mismatch rather than only relying on the system prompt.
+### Fixed
+- Incomplete upload-filename guard: a bare `..` slipped the empty-name check (`Path("..").name` is `".."`, not `""`) and could target the temp directory itself (HTTP 500); now any name resolving to `.`/`..` falls back to a safe name. Regression-tested.
+- Net-length histogram bars rendering at ~0px (percentage height against an auto-height parent); now deterministic pixel heights.
+- Board view letterboxing; the SVG now fills the panel.
+
+### Security
+- Uploads are streamed to disk against a 50 MB total budget (413 before buffering) with a 100-file cap — resource-exhaustion guards for the local tool.
+- Upload filenames flattened to their basename to defeat `../` path traversal; chat question length capped.
+- CORS scoped to the local Vite dev origin, not wildcarded.
+- AI failures (including a missing `ANTHROPIC_API_KEY`) map to a clean 502 instead of a raw 500 traceback.
 
 ## [v0.4.0] — AI Engineering Review Layer complete
 
