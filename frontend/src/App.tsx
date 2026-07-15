@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { submitReview } from "./api";
+import { BoardView } from "./components/BoardView";
 import { ChatPanel } from "./components/ChatPanel";
 import { IssueBrowser } from "./components/IssueBrowser";
+import { IssueCategoryChart } from "./components/IssueCategoryChart";
+import { NetLengthHistogram } from "./components/NetLengthHistogram";
 import { ScoreCards } from "./components/ScoreCards";
 import { UploadZone } from "./components/UploadZone";
 import type { ReviewResponse } from "./types";
@@ -13,10 +16,12 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ReviewResponse | null>(null);
   const [includeAiReview, setIncludeAiReview] = useState(false);
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
 
   async function handleFiles(files: File[]) {
     setStatus("loading");
     setError(null);
+    setSelectedIssueId(null);
     try {
       const response = await submitReview(files, includeAiReview);
       setResult(response);
@@ -31,6 +36,7 @@ export default function App() {
     setResult(null);
     setError(null);
     setStatus("idle");
+    setSelectedIssueId(null);
   }
 
   return (
@@ -79,7 +85,21 @@ export default function App() {
                 <p className="whitespace-pre-wrap text-sm text-neutral-200">{result.ai_review}</p>
               </div>
             )}
-            <IssueBrowser issues={result.issues} />
+            <BoardView
+              board={result.board}
+              issues={result.issues}
+              selectedIssueId={selectedIssueId}
+              onSelectIssue={setSelectedIssueId}
+            />
+            <div className="grid gap-6 md:grid-cols-2">
+              <NetLengthHistogram board={result.board} />
+              <IssueCategoryChart issues={result.issues} />
+            </div>
+            <IssueBrowser
+              issues={result.issues}
+              selectedIssueId={selectedIssueId}
+              onSelectIssue={setSelectedIssueId}
+            />
             <ChatPanel result={result} />
           </>
         )}
