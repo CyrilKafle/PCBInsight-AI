@@ -1,0 +1,9 @@
+{
+  "board": {
+    "design_settings": {}
+  },
+  "meta": {
+    "filename": "stm32_usb_dev.kicad_pro",
+    "version": 1
+  }
+}
