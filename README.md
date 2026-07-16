@@ -7,6 +7,9 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![KiCad](https://img.shields.io/badge/KiCad-.kicad__pcb-orange.svg)](https://www.kicad.org/)
 [![AI](https://img.shields.io/badge/AI-Claude%20Sonnet%205-8A63D2.svg)](https://www.anthropic.com/)
+[![Landing page](https://img.shields.io/badge/site-cyrilkafle.github.io%2FPCBInsight--AI-2FD9C4.svg)](https://cyrilkafle.github.io/PCBInsight-AI/)
+
+**[View the landing page →](https://cyrilkafle.github.io/PCBInsight-AI/)**
 
 An AI-augmented engineering design review tool for KiCad PCB projects — a lightweight, local analog of the automated design-review tooling used inside hardware companies (NVIDIA, AMD, Apple, Intel). It does not replace KiCad's Design Rule Check (DRC); it sits a level above DRC, producing the kind of higher-level engineering judgment an experienced PCB reviewer would give in a design review: *why* something could be a problem, *what engineering principle* is involved, a *suggested fix*, a *severity*, and a *confidence level*.
 
@@ -23,6 +26,23 @@ This is a from-scratch rebuild of what was previously a separate FPGA/PCB roboti
 3. **AI review** — send a *summarized structured digest* of the board (never raw PCB files) to Claude for a senior-engineer-style narrative review that explains and contextualizes what the deterministic checks found.
 4. **Score** — compute an overall 0-100 engineering score plus subscores (routing, power, signal integrity, manufacturability, placement, thermals, documentation), color-coded green/yellow/orange/red.
 5. **Report** — generate a professional HTML report (exportable to PDF) with an executive summary, board statistics, engineering metrics, warnings, recommendations, the AI review, and charts/visualizations.
+
+## Screenshots
+
+Real output from a live run against `examples/stm32_usb_dev` — including a real Claude review and a real grounded chat answer, not mockups.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/screenshots/score-and-ai-review.png" alt="Overall engineering score, subscores, and AI narrative review"></td>
+<td width="50%"><img src="docs/images/screenshots/board-view.png" alt="Interactive SVG board visualization with issue markers"></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/images/screenshots/issue-detail.png" alt="Expanded issue card with severity, explanation, principle, and suggested fix"></td>
+<td width="50%"><img src="docs/images/screenshots/ai-chat.png" alt="Grounded AI chat panel answering a question about the board"></td>
+</tr>
+</table>
+
+More screenshots (PDF export, upload flow) on the [landing page](https://cyrilkafle.github.io/PCBInsight-AI/).
 
 ## Architecture
 
