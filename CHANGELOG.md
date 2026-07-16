@@ -8,6 +8,10 @@ All notable changes to this project are documented here. Format loosely follows 
 - **"Try it" demo** (`docs/try-it-demo.html`), linked from the landing page nav and as the primary hero CTA — a real, unedited report for `examples/stm32_usb_dev`. `backend/scripts/generate_try_it_demo.py` re-runs the deterministic pipeline locally and reuses the AI review text already captured in `reports/ai_validation.json`, so regenerating it makes zero new Anthropic API calls. Carries a disclosure banner explaining what it is and linking back to the landing page and repo.
 - **Demo GIF** (`docs/images/demo/demo.gif`), embedded at the top of the landing page's dashboard showcase — six real, screen-captured frames from a live run against `examples/stm32_usb_dev` (upload, deterministic score + AI review, board visualization, an expanded issue, a real AI chat answer, and PDF export). No synthetic or AI-generated visuals.
 
+### Security
+- Ran a real audit, not just a claim: `.env`/secrets were never committed (checked git history), no `eval`/`exec`/`pickle`/`shell=True` anywhere in the codebase, `npm audit` and `pip-audit` (against an isolated venv scoped to `backend/requirements.txt`, not the noisy global Python install) both report zero known vulnerabilities in every dependency the app actually uses.
+- `.github/workflows/tests.yml` now declares `permissions: contents: read` explicitly instead of relying on the repo-default GITHUB_TOKEN scope.
+
 ## [v1.0.0] — 2026-07-16 — Engineering complete + public landing page
 
 v1.0.0: the deterministic engine, AI review layer, validation corpus, live AI validation, and public-facing landing page are all complete. This is the first tagged release with a public site.
