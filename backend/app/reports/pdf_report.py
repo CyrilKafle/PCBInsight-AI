@@ -2,9 +2,10 @@
 
 Content mirrors the HTML report (app/reports/html_report.py); rather than
 duplicate the chart drawing and the score-color band logic, this module reuses
-html_report's matplotlib chart renderers and `_score_color` directly -- the
-HTML report stays the single source of truth for how a score maps to a color
-and how the subscore/severity charts look. Only the page layout is PDF-specific."""
+html_report's matplotlib chart renderers and app/reports/theme.py's
+`score_color` -- theme.py is the single source of truth for how a score maps
+to a color, and html_report stays the source of truth for how the
+subscore/severity charts look. Only the page layout is PDF-specific."""
 
 from __future__ import annotations
 
@@ -30,13 +31,8 @@ from reportlab.platypus import (
 
 from app.models.board import Board
 from app.models.issue import EngineeringScore, Issue
-from app.reports.html_report import (
-    _SEVERITY_COLORS,
-    _SEVERITY_ORDER,
-    _render_severity_chart,
-    _render_subscore_chart,
-    _score_color,
-)
+from app.reports.html_report import render_severity_chart, render_subscore_chart
+from app.reports.theme import SEVERITY_COLORS, SEVERITY_ORDER, score_color
 
 # Figure aspect ratios (figsize in html_report), used to size the embedded
 # chart images without distorting them.
@@ -103,12 +99,12 @@ def _section_title(text: str, styles: dict) -> list:
 
 
 def _header(board: Board, score: EngineeringScore, generated_at: str, styles: dict) -> list:
-    color = colors.HexColor(_score_color(score.overall))
+    color = colors.HexColor(score_color(score.overall))
     left = [
         Paragraph("PCB Design Review Report", styles["title"]),
         Paragraph(f"{escape(board.name)} &middot; generated {escape(generated_at)}", styles["subtitle"]),
     ]
-    score_cell = Paragraph(f'<font color="{_score_color(score.overall)}"><b>{score.overall}</b>/100</font>', styles["h2"])
+    score_cell = Paragraph(f'<font color="{score_color(score.overall)}"><b>{score.overall}</b>/100</font>', styles["h2"])
     table = Table([[left, score_cell]], colWidths=[5.2 * inch, 1.8 * inch])
     table.setStyle(
         TableStyle(
@@ -127,7 +123,7 @@ def _executive_summary(
     board: Board, issues: list[Issue], score: EngineeringScore, severity_counts: Counter, styles: dict
 ) -> list:
     counts_line = (
-        ", ".join(f"{severity_counts[sev]} {sev.value}" for sev in _SEVERITY_ORDER if severity_counts[sev])
+        ", ".join(f"{severity_counts[sev]} {sev.value}" for sev in SEVERITY_ORDER if severity_counts[sev])
         or "no issues found"
     )
     text = (
@@ -141,7 +137,7 @@ def _executive_summary(
 def _scores(score: EngineeringScore, styles: dict) -> list:
     cells = [
         Paragraph(
-            f'<para align="center"><font size="13" color="{_score_color(s.score)}"><b>{s.score}</b></font><br/>'
+            f'<para align="center"><font size="13" color="{score_color(s.score)}"><b>{s.score}</b></font><br/>'
             f'<font size="7" color="#57606a">{escape(s.category)}</font></para>',
             styles["cell"],
         )
@@ -171,8 +167,8 @@ def _charts(score: EngineeringScore, severity_counts: Counter) -> list:
     # Reuse html_report's matplotlib renderers (base64 PNG) so the PDF charts
     # are identical to the HTML report's -- no second chart implementation.
     width = 3.3 * inch
-    subscore_img = _image_from_base64(_render_subscore_chart(score), width, width / _SUBSCORE_ASPECT)
-    severity_b64 = _render_severity_chart(severity_counts)
+    subscore_img = _image_from_base64(render_subscore_chart(score), width, width / _SUBSCORE_ASPECT)
+    severity_b64 = render_severity_chart(severity_counts)
     severity_img = (
         _image_from_base64(severity_b64, width, width / _SEVERITY_ASPECT) if severity_b64 else Paragraph("", getSampleStyleSheet()["Normal"])
     )
@@ -221,7 +217,7 @@ def _issues(issues: list[Issue], styles: dict) -> list:
     if not issues:
         return title + [Paragraph("No issues found by the deterministic check engine.", styles["muted"])]
 
-    ordered = sorted(issues, key=lambda issue: _SEVERITY_ORDER.index(issue.severity))
+    ordered = sorted(issues, key=lambda issue: SEVERITY_ORDER.index(issue.severity))
     header = [Paragraph(f"<b>{h}</b>", styles["cellHead"]) for h in ("ID", "Sev", "Category", "Finding", "Why it matters / fix")]
     data = [header]
     for issue in ordered:
@@ -234,7 +230,7 @@ def _issues(issues: list[Issue], styles: dict) -> list:
         # Severity reads as compact colored bold text (matching the HTML
         # report's badge color) rather than a heavy full-cell fill.
         severity = (
-            f'<b><font color="{_SEVERITY_COLORS[issue.severity]}">{escape(issue.severity.value)}</font></b>'
+            f'<b><font color="{SEVERITY_COLORS[issue.severity]}">{escape(issue.severity.value)}</font></b>'
         )
         data.append(
             [

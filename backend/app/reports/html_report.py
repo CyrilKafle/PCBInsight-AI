@@ -21,26 +21,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from app.models.board import Board
-from app.models.issue import EngineeringScore, Issue, Severity, SubScore
-
-_SEVERITY_ORDER = [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO]
-
-_SEVERITY_COLORS = {
-    Severity.CRITICAL: "#8b0000",
-    Severity.HIGH: "#cf222e",
-    Severity.MEDIUM: "#bc4c00",
-    Severity.LOW: "#9a6700",
-    Severity.INFO: "#57606a",
-}
-
-# (minimum score, hex color) bands, checked highest-first — DESIGN.md calls
-# for green/yellow/orange/red color-coded thresholds.
-_SCORE_BANDS = [
-    (90, "#1a7f37"),
-    (75, "#9a6700"),
-    (50, "#bc4c00"),
-    (0, "#cf222e"),
-]
+from app.models.issue import EngineeringScore, Issue, SubScore
+from app.reports.theme import SEVERITY_COLORS, SEVERITY_ORDER, score_color
 
 
 def render(board: Board, issues: list[Issue], score: EngineeringScore, ai_review: str | None = None) -> str:
@@ -62,15 +44,8 @@ def render(board: Board, issues: list[Issue], score: EngineeringScore, ai_review
     return _wrap_document(board.name, body)
 
 
-def _score_color(value: int) -> str:
-    for minimum, color in _SCORE_BANDS:
-        if value >= minimum:
-            return color
-    return _SCORE_BANDS[-1][1]
-
-
 def _header(board: Board, score: EngineeringScore, generated_at: str) -> str:
-    color = _score_color(score.overall)
+    color = score_color(score.overall)
     return f"""
     <header class="report-header">
       <div>
@@ -87,7 +62,7 @@ def _header(board: Board, score: EngineeringScore, generated_at: str) -> str:
 
 def _executive_summary(board: Board, issues: list[Issue], score: EngineeringScore, severity_counts: Counter) -> str:
     counts_line = ", ".join(
-        f"{severity_counts[sev]} {sev.value}" for sev in _SEVERITY_ORDER if severity_counts[sev]
+        f"{severity_counts[sev]} {sev.value}" for sev in SEVERITY_ORDER if severity_counts[sev]
     ) or "no issues found"
     return f"""
     <section class="card">
@@ -114,7 +89,7 @@ def _score_section(score: EngineeringScore) -> str:
 
 
 def _subscore_badge(subscore: SubScore) -> str:
-    color = _score_color(subscore.score)
+    color = score_color(subscore.score)
     return f"""
         <div class="subscore-badge" style="border-color:{color}">
           <span class="subscore-value" style="color:{color}">{subscore.score}</span>
@@ -124,8 +99,8 @@ def _subscore_badge(subscore: SubScore) -> str:
 
 
 def _charts_section(score: EngineeringScore, severity_counts: Counter) -> str:
-    subscore_chart = _render_subscore_chart(score)
-    severity_chart = _render_severity_chart(severity_counts)
+    subscore_chart = render_subscore_chart(score)
+    severity_chart = render_severity_chart(severity_counts)
     return f"""
     <section class="card">
       <h2>Charts</h2>
@@ -137,10 +112,10 @@ def _charts_section(score: EngineeringScore, severity_counts: Counter) -> str:
     """
 
 
-def _render_subscore_chart(score: EngineeringScore) -> str:
+def render_subscore_chart(score: EngineeringScore) -> str:
     names = [s.category for s in score.subscores]
     values = [s.score for s in score.subscores]
-    colors = [_score_color(v) for v in values]
+    colors = [score_color(v) for v in values]
 
     fig, ax = plt.subplots(figsize=(5.5, 3.2), dpi=150)
     ax.barh(names, values, color=colors)
@@ -152,8 +127,8 @@ def _render_subscore_chart(score: EngineeringScore) -> str:
     return _figure_to_base64(fig)
 
 
-def _render_severity_chart(severity_counts: Counter) -> str | None:
-    present = [sev for sev in _SEVERITY_ORDER if severity_counts[sev]]
+def render_severity_chart(severity_counts: Counter) -> str | None:
+    present = [sev for sev in SEVERITY_ORDER if severity_counts[sev]]
     if not present:
         return None
 
@@ -161,7 +136,7 @@ def _render_severity_chart(severity_counts: Counter) -> str | None:
     ax.pie(
         [severity_counts[sev] for sev in present],
         labels=[sev.value.title() for sev in present],
-        colors=[_SEVERITY_COLORS[sev] for sev in present],
+        colors=[SEVERITY_COLORS[sev] for sev in present],
         autopct="%1.0f%%",
         startangle=90,
     )
@@ -210,7 +185,7 @@ def _issues_section(issues: list[Issue]) -> str:
         </section>
         """
 
-    ordered = sorted(issues, key=lambda issue: _SEVERITY_ORDER.index(issue.severity))
+    ordered = sorted(issues, key=lambda issue: SEVERITY_ORDER.index(issue.severity))
     rows_html = "\n".join(_issue_row(issue) for issue in ordered)
     return f"""
     <section class="card">
@@ -235,7 +210,7 @@ def _issues_section(issues: list[Issue]) -> str:
 
 
 def _issue_row(issue: Issue) -> str:
-    color = _SEVERITY_COLORS[issue.severity]
+    color = SEVERITY_COLORS[issue.severity]
     refs = f" ({escape(', '.join(issue.refs))})" if issue.refs else ""
     return f"""
           <tr>

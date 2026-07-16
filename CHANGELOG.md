@@ -13,6 +13,11 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 - `examples/README.md` reframed as the "Engineering Validation Corpus" with a per-board purpose table.
+- Extracted `backend/app/reports/theme.py`: score-color bands, severity order/colors, and `score_color()` now live in one shared module instead of `pdf_report.py` importing `html_report.py`'s private (underscore-prefixed) state. `html_report.py`'s chart renderers are now public (`render_subscore_chart`/`render_severity_chart`) since another module legitimately imports them.
+- README metrics table recomputed against the current codebase (147 tests, 2,957/1,386 LOC).
+
+### Removed
+- Unused frontend dependencies `plotly.js-dist-min` and `d3` (zero usages in `frontend/src` — the dashboard's charts are hand-rolled SVG).
 
 ## [v0.5.0] — 2026-07-14 — Phase 4 dashboard: board visualization, AI chat, PDF export
 
