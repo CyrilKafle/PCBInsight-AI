@@ -19,6 +19,9 @@ All notable changes to this project are documented here. Format loosely follows 
 ### Removed
 - Unused frontend dependencies `plotly.js-dist-min` and `d3` (zero usages in `frontend/src` — the dashboard's charts are hand-rolled SVG).
 
+### Changed (docs)
+- Regenerated `docs/images/architecture.png` to reflect the full current pipeline (AI chat, board visualization, PDF export, the CLI as an alternate entry point) — it previously predated all three. Now backed by a real, editable source for the first time: `docs/images/architecture.mmd` (Mermaid) and `docs/images/architecture.excalidraw`.
+
 ## [v0.5.0] — 2026-07-14 — Phase 4 dashboard: board visualization, AI chat, PDF export
 
 Completes Phase 4: a local FastAPI + React dashboard with an interactive board viewer, a grounded AI chat panel, and PDF export, plus the CLI and repo hygiene accumulated since v0.4.0. 135 backend tests passing; the full dashboard is verified end-to-end in a real browser.

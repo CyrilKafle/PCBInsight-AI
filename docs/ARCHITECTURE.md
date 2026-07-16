@@ -4,6 +4,8 @@ See `DESIGN.md` at the repo root for the full rationale and phased plan.
 
 ![Architecture diagram](images/architecture.png)
 
+Source: [`images/architecture.mmd`](images/architecture.mmd) (Mermaid — edit and re-render this, not the PNG directly) and [`images/architecture.excalidraw`](images/architecture.excalidraw) (open at [excalidraw.com](https://excalidraw.com) for a quick manual tweak).
+
 ## Pipeline
 
 ```
