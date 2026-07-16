@@ -19,7 +19,10 @@ class FakeMessages:
 
     def create(self, **kwargs):
         self.last_call = kwargs
-        return SimpleNamespace(content=[SimpleNamespace(type="text", text=self.response_text)])
+        return SimpleNamespace(
+            content=[SimpleNamespace(type="text", text=self.response_text)],
+            usage=SimpleNamespace(input_tokens=123, output_tokens=45),
+        )
 
 
 class FakeClient:
@@ -101,6 +104,21 @@ def test_generate_review_logs_warning_on_hallucinated_citation(caplog):
     with caplog.at_level(logging.WARNING):
         generate_review(_DIGEST, client=client)
     assert any("SIG-099" in record.message for record in caplog.records)
+
+
+def test_generate_review_return_usage_returns_text_and_token_counts():
+    client = FakeClient("This board looks solid overall.")
+    result = generate_review(_DIGEST, client=client, return_usage=True)
+    assert result == ("This board looks solid overall.", {"input_tokens": 123, "output_tokens": 45})
+
+
+def test_answer_question_return_usage_returns_text_and_token_counts():
+    client = FakeClient("Because decoupling caps filter high-frequency noise close to the IC.")
+    result = answer_question(_DIGEST, "Why?", client=client, return_usage=True)
+    assert result == (
+        "Because decoupling caps filter high-frequency noise close to the IC.",
+        {"input_tokens": 123, "output_tokens": 45},
+    )
 
 
 def test_generate_review_no_warning_when_citations_are_valid(caplog):
