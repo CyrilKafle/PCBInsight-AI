@@ -45,9 +45,10 @@ Real numbers, computed from the codebase as of this commit — not estimates:
 |---|---|
 | Analysis categories | 9 |
 | Deterministic checks | 28 |
-| Unit tests (all passing, backend) | 135 |
-| Lines of Python — `backend/app/` | 2,938 |
-| Lines of Python — `backend/tests/` | 1,353 |
+| Unit tests (all passing, backend) | 147 |
+| Lines of Python — `backend/app/` | 2,957 |
+| Lines of Python — `backend/tests/` | 1,386 |
+| Engineering Validation Corpus | 10 purpose-built boards, see `examples/README.md` |
 | KiCad parser | Custom S-expression parser, 0 `pcbnew`/CAD dependencies |
 | Supported input format | KiCad `.kicad_pcb` |
 | Interfaces | CLI (`pcbinsight review`, single-board or batch-folder) and a local React/FastAPI web dashboard |
