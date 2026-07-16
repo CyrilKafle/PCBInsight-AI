@@ -12,7 +12,7 @@ deterministic-first tool:
   - adversarial net names (XML-hostile, unicode) don't break prompting or leak
 
 It is a manual QA tool, not part of the CI suite: it needs a real API key and
-makes ~8 billed calls per run.
+makes ~10 billed calls per run.
 
 Usage
 -----
@@ -20,19 +20,35 @@ Usage
 2. From the repo root:            python backend/scripts/validate_ai.py
 
 Exit code is non-zero if any board produced an unsupported citation.
+
+Output
+------
+Every run overwrites two evidence files at the repo root:
+
+  reports/ai_validation.md    human-readable summary + full AI prose per board
+  reports/ai_validation.json  structured results: usage, cost, timestamps
+
+These are committed (not gitignored) -- they are the record that the AI layer
+was validated against a real model, not just against the fake test client.
+Re-run this script and recommit the outputs whenever the prompts, model, or
+digest schema change.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import re
+import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 REPO = Path(__file__).resolve().parents[2]
 BACKEND = REPO / "backend"
+REPORTS_DIR = REPO / "reports"
 
 # --- load backend/.env without printing the key -----------------------------
 env_path = BACKEND / ".env"
@@ -49,7 +65,7 @@ if not os.environ.get("ANTHROPIC_API_KEY"):
 sys.path.insert(0, str(BACKEND))
 sys.path.insert(0, str(BACKEND / "tests"))
 
-from app.ai.review import answer_question, find_unsupported_citations, generate_review  # noqa: E402
+from app.ai.review import DEFAULT_MODEL, answer_question, find_unsupported_citations, generate_review  # noqa: E402
 from app.ai.summarizer import summarize  # noqa: E402
 from app.analysis import run_all_checks  # noqa: E402
 from app.analysis.scoring import score as compute_score  # noqa: E402
@@ -57,6 +73,24 @@ from app.parser.kicad_project import find_project_files, parse_board  # noqa: E4
 from factories import make_board, make_component, make_net, make_trace, make_via  # noqa: E402
 
 ISSUE_ID_RE = re.compile(r"\b[A-Z]{2,6}-\d{3}\b")
+
+# Standard per-MTok pricing for DEFAULT_MODEL (see backend/app/ai/review.py).
+# Anthropic runs a temporary lower intro rate for claude-sonnet-5 through
+# 2026-08-31 ($2.00/$10.00) -- this table uses the standard post-intro rate so
+# reported cost stays correct after that date rather than silently
+# under-reporting once the intro pricing lapses.
+PRICING_PER_MTOK = {
+    "claude-sonnet-5": {"input": 3.00, "output": 15.00},
+}
+
+
+def _cost_usd(usage: dict, model: str) -> float:
+    rates = PRICING_PER_MTOK.get(model)
+    if rates is None:
+        return 0.0
+    return (usage["input_tokens"] / 1_000_000) * rates["input"] + (usage["output_tokens"] / 1_000_000) * rates[
+        "output"
+    ]
 
 
 def clean_board():
@@ -112,7 +146,7 @@ def load_example(name: str):
     return parse_board(find_project_files(REPO / "examples" / name)["pcb"])
 
 
-def check_board(label, board):
+def check_board(label, board) -> dict:
     print("\n" + "=" * 78)
     print(f"BOARD: {label}  (name={board.name!r})")
     print("=" * 78)
@@ -126,24 +160,126 @@ def check_board(label, board):
 
     digest = summarize(board, issues, score)
 
-    review = generate_review(digest)
-    print("\n--- AI REVIEW ---\n" + review)
-    unsupported = find_unsupported_citations(review, digest)
+    review_text, review_usage = generate_review(digest, return_usage=True)
+    print("\n--- AI REVIEW ---\n" + review_text)
+    unsupported = find_unsupported_citations(review_text, digest)
     print("\n--- CHECKS ---")
-    print(f"  cited ids: {sorted(set(ISSUE_ID_RE.findall(review))) or 'none'}")
+    print(f"  cited ids: {sorted(set(ISSUE_ID_RE.findall(review_text))) or 'none'}")
     print(f"  HALLUCINATED citations (must be empty): {unsupported or 'NONE'}")
     if len(issues) == 0:
         print("  clean-board invented-issue watch: read the prose above for fabricated findings")
+    hedged = None
     if low_conf_ids:
-        hedged = any(w in review.lower() for w in ("verify", "manual", "confirm", "uncertain", "low confidence", "may "))
+        hedged = any(
+            w in review_text.lower() for w in ("verify", "manual", "confirm", "uncertain", "low confidence", "may ")
+        )
         print(f"  hedging present for low-confidence findings: {'yes' if hedged else 'NO -- REVIEW'}")
 
     question = "What is the single most important thing to fix on this board, and why?"
-    answer = answer_question(digest, question)
-    print(f"\n--- CHAT Q: {question}\n{answer}")
-    chat_unsupported = find_unsupported_citations(answer, digest)
+    answer_text, chat_usage = answer_question(digest, question, return_usage=True)
+    print(f"\n--- CHAT Q: {question}\n{answer_text}")
+    chat_unsupported = find_unsupported_citations(answer_text, digest)
     print(f"  chat hallucinated citations (must be empty): {chat_unsupported or 'NONE'}")
-    return {"label": label, "issues": len(issues), "unsupported": unsupported + chat_unsupported}
+
+    review_cost = _cost_usd(review_usage, DEFAULT_MODEL)
+    chat_cost = _cost_usd(chat_usage, DEFAULT_MODEL)
+
+    return {
+        "label": label,
+        "board_name": board.name,
+        "deterministic": {"score": score.overall, "issue_count": len(issues), "issue_ids": sorted(real_ids)},
+        "low_confidence_issue_ids": sorted(low_conf_ids),
+        "low_confidence_hedged": hedged,
+        "review": {"text": review_text, "usage": review_usage, "cost_usd": round(review_cost, 6)},
+        "chat": {
+            "question": question,
+            "answer": answer_text,
+            "usage": chat_usage,
+            "cost_usd": round(chat_cost, 6),
+        },
+        "unsupported_citations": unsupported + chat_unsupported,
+    }
+
+
+def _git(*args: str) -> str | None:
+    try:
+        return subprocess.run(
+            ["git", *args], cwd=REPO, capture_output=True, text=True, check=True
+        ).stdout.strip() or None
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+def write_reports(results: list[dict]) -> None:
+    REPORTS_DIR.mkdir(exist_ok=True)
+    timestamp = datetime.now(timezone.utc).isoformat()
+    total_cost = sum(r["review"]["cost_usd"] + r["chat"]["cost_usd"] for r in results)
+    total_hallucinated = sum(len(r["unsupported_citations"]) for r in results)
+
+    payload = {
+        "schema_version": 1,
+        "generated_at": timestamp,
+        "model": DEFAULT_MODEL,
+        "git_commit": _git("rev-parse", "HEAD"),
+        "git_tag": _git("describe", "--tags", "--abbrev=0"),
+        "pricing_per_mtok_usd": PRICING_PER_MTOK.get(DEFAULT_MODEL),
+        "boards": results,
+        "summary": {
+            "total_boards": len(results),
+            "total_cost_usd": round(total_cost, 6),
+            "boards_with_hallucinated_citations": sum(1 for r in results if r["unsupported_citations"]),
+            "total_hallucinated_citations": total_hallucinated,
+        },
+    }
+    (REPORTS_DIR / "ai_validation.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    lines = [
+        "# AI Validation Report",
+        "",
+        f"Generated {timestamp} against `{DEFAULT_MODEL}` via `backend/scripts/validate_ai.py`.",
+        f"Repo state: commit `{(payload['git_commit'] or 'unknown')[:12]}`"
+        + (f", tag `{payload['git_tag']}`" if payload["git_tag"] else "") + ".",
+        "",
+        "This is evidence the AI review layer was validated against the real Anthropic API "
+        "(not just the dependency-injected fake client used in the unit tests) -- see "
+        "`backend/scripts/validate_ai.py` for what each check verifies.",
+        "",
+        "| Board | Score | Issues | Hallucinated citations | Low-conf. hedged | Review cost | Chat cost |",
+        "|---|---:|---:|---:|:---:|---:|---:|",
+    ]
+    for r in results:
+        hedged = "n/a" if r["low_confidence_hedged"] is None else ("yes" if r["low_confidence_hedged"] else "NO")
+        lines.append(
+            f"| {r['label']} | {r['deterministic']['score']} | {r['deterministic']['issue_count']} | "
+            f"{len(r['unsupported_citations']) or 'none'} | {hedged} | "
+            f"${r['review']['cost_usd']:.4f} | ${r['chat']['cost_usd']:.4f} |"
+        )
+    lines += [
+        "",
+        f"**Total cost this run:** ${total_cost:.4f}  |  "
+        f"**Boards with hallucinated citations:** {payload['summary']['boards_with_hallucinated_citations']}/{len(results)}",
+        "",
+        "## Per-board detail",
+    ]
+    for r in results:
+        lines += [
+            "",
+            f"### {r['label']}",
+            "",
+            f"Deterministic: score {r['deterministic']['score']}, {r['deterministic']['issue_count']} issues "
+            f"({', '.join(r['deterministic']['issue_ids']) or 'none'}).",
+            "",
+            "**AI review:**",
+            "",
+            r["review"]["text"],
+            "",
+            f"**Chat -- {r['chat']['question']}**",
+            "",
+            r["chat"]["answer"],
+        ]
+    (REPORTS_DIR / "ai_validation.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"\nWrote {REPORTS_DIR / 'ai_validation.md'}")
+    print(f"Wrote {REPORTS_DIR / 'ai_validation.json'}")
 
 
 def main() -> int:
@@ -155,13 +291,18 @@ def main() -> int:
         check_board("weird net names + unicode", weird_names_board()),
     ]
 
+    write_reports(results)
+
     print("\n" + "#" * 78)
     print("SUMMARY")
     ok = True
     for r in results:
-        clean = not r["unsupported"]
+        clean = not r["unsupported_citations"]
         ok = ok and clean
-        print(f"  {r['label']:32} issues={r['issues']:<3} hallucinated={'NONE' if clean else r['unsupported']}  {'OK' if clean else 'REVIEW'}")
+        print(
+            f"  {r['label']:32} issues={r['deterministic']['issue_count']:<3} "
+            f"hallucinated={'NONE' if clean else r['unsupported_citations']}  {'OK' if clean else 'REVIEW'}"
+        )
     return 0 if ok else 1
 
 

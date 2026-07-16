@@ -54,7 +54,12 @@ CHAT_SYSTEM_PROMPT = (
 )
 
 
-def generate_review(digest: dict, client: anthropic.Anthropic | None = None, model: str = DEFAULT_MODEL) -> str:
+def generate_review(
+    digest: dict,
+    client: anthropic.Anthropic | None = None,
+    model: str = DEFAULT_MODEL,
+    return_usage: bool = False,
+) -> str | tuple[str, dict]:
     client = client or _default_client()
     response = client.messages.create(
         model=model,
@@ -64,7 +69,7 @@ def generate_review(digest: dict, client: anthropic.Anthropic | None = None, mod
     )
     text = _extract_text(response)
     _warn_on_unsupported_citations(text, digest)
-    return text
+    return (text, _extract_usage(response)) if return_usage else text
 
 
 def answer_question(
@@ -72,7 +77,8 @@ def answer_question(
     question: str,
     client: anthropic.Anthropic | None = None,
     model: str = DEFAULT_MODEL,
-) -> str:
+    return_usage: bool = False,
+) -> str | tuple[str, dict]:
     client = client or _default_client()
     response = client.messages.create(
         model=model,
@@ -87,7 +93,7 @@ def answer_question(
     )
     text = _extract_text(response)
     _warn_on_unsupported_citations(text, digest)
-    return text
+    return (text, _extract_usage(response)) if return_usage else text
 
 
 def find_unsupported_citations(review_text: str, digest: dict) -> list[str]:
@@ -121,3 +127,8 @@ def _default_client() -> anthropic.Anthropic:
 
 def _extract_text(response) -> str:
     return "".join(block.text for block in response.content if getattr(block, "type", None) == "text")
+
+
+def _extract_usage(response) -> dict:
+    usage = response.usage
+    return {"input_tokens": usage.input_tokens, "output_tokens": usage.output_tokens}
