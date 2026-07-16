@@ -1,0 +1,91 @@
+(kicad_pcb (version 20240108) (generator "pcbnew")
+
+  (general
+    (thickness 1.6)
+  )
+
+  (paper "A4")
+
+  (layers
+    (0 "F.Cu" signal)
+    (31 "B.Cu" signal)
+    (32 "B.Adhes" user)
+    (33 "F.Adhes" user)
+    (36 "B.SilkS" user)
+    (37 "F.SilkS" user)
+    (38 "B.Mask" user)
+    (39 "F.Mask" user)
+    (44 "Edge.Cuts" user)
+    (48 "B.Fab" user)
+    (49 "F.Fab" user)
+  )
+
+  (setup
+    (pad_to_mask_clearance 0)
+  )
+
+  (net 0 "")
+  (net 1 "GND")
+  (net 2 "+3V3")
+  (net 3 "XTAL_CLK")
+  (net 4 "DATA_P")
+  (net 5 "DATA_N")
+
+  (gr_rect (start 0 0) (end 50 40) (layer "Edge.Cuts") (width 0.1))
+
+  (footprint "Package_QFP:LQFP-48_7x7mm_P0.5mm" (layer "F.Cu")
+    (at 10 15 0)
+    (fp_text reference "U1" (at 10 11) (layer "F.SilkS") (effects (font (size 1 1) (thickness 0.15))))
+    (fp_text value "STM32F103C8T6" (at 10 19) (layer "F.Fab") (effects (font (size 1 1) (thickness 0.15))))
+    (pad "8" smd rect (at 9 14) (size 0.3 1.2) (layers "F.Cu" "F.Paste" "F.Mask") (net 2 "+3V3"))
+    (pad "23" smd rect (at 11 16) (size 0.3 1.2) (layers "F.Cu" "F.Paste" "F.Mask") (net 1 "GND"))
+    (pad "5" smd rect (at 9 13) (size 0.3 1.2) (layers "F.Cu" "F.Paste" "F.Mask") (net 3 "XTAL_CLK"))
+    (pad "44" smd rect (at 11 13) (size 0.3 1.2) (layers "F.Cu" "F.Paste" "F.Mask") (net 4 "DATA_P"))
+    (pad "43" smd rect (at 11 14) (size 0.3 1.2) (layers "F.Cu" "F.Paste" "F.Mask") (net 5 "DATA_N"))
+  )
+
+  (footprint "Capacitor_SMD:C_0402_1005Metric" (layer "F.Cu")
+    (at 11 16 0)
+    (fp_text reference "C1" (at 11 15) (layer "F.SilkS") (effects (font (size 0.8 0.8) (thickness 0.12))))
+    (fp_text value "100nF" (at 11 17) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))
+    (pad "1" smd rect (at 10.5 16) (size 0.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (net 2 "+3V3"))
+    (pad "2" smd rect (at 11.5 16) (size 0.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (net 1 "GND"))
+  )
+
+  (footprint "Connector_USB:USB_C_Receptacle" (layer "F.Cu")
+    (at 45 30 0)
+    (fp_text reference "J1" (at 45 27) (layer "F.SilkS") (effects (font (size 1 1) (thickness 0.15))))
+    (fp_text value "USB_C" (at 45 33) (layer "F.Fab") (effects (font (size 1 1) (thickness 0.15))))
+    (pad "GND" smd rect (at 44 29) (size 0.6 1.5) (layers "F.Cu" "F.Paste" "F.Mask") (net 1 "GND"))
+    (pad "DP" smd rect (at 46 29) (size 0.4 1.2) (layers "F.Cu" "F.Paste" "F.Mask") (net 4 "DATA_P"))
+    (pad "DM" smd rect (at 46 31) (size 0.4 1.2) (layers "F.Cu" "F.Paste" "F.Mask") (net 5 "DATA_N"))
+  )
+
+  (segment (start 10 15) (end 25 15) (width 0.2) (layer "F.Cu") (net 3))
+  (segment (start 25 15) (end 45 15) (width 0.2) (layer "F.Cu") (net 3))
+  (segment (start 25 15) (end 25 38) (width 0.2) (layer "F.Cu") (net 3))
+
+  (via (at 35 15) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net 3))
+  (via (at 25 25) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net 3))
+  (via (at 25 38) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net 3))
+
+  (segment (start 10 15) (end 45 30) (width 0.2) (layer "F.Cu") (net 4))
+
+  (segment (start 10 15) (end 15 15) (width 0.2) (layer "F.Cu") (net 5))
+  (segment (start 15 15) (end 15 25) (width 0.2) (layer "F.Cu") (net 5))
+  (segment (start 15 25) (end 35 25) (width 0.2) (layer "F.Cu") (net 5))
+  (segment (start 35 25) (end 45 30) (width 0.2) (layer "F.Cu") (net 5))
+
+  (via (at 15 20) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net 5))
+
+  (zone (net 1) (net_name "GND") (layer "B.Cu") (hatch edge 0.5)
+    (polygon
+      (pts
+        (xy 2 2)
+        (xy 48 2)
+        (xy 48 38)
+        (xy 2 38)
+      )
+    )
+  )
+)

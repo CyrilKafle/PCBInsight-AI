@@ -1,0 +1,77 @@
+(kicad_pcb (version 20240108) (generator "pcbnew")
+
+  (general
+    (thickness 1.6)
+  )
+
+  (paper "A4")
+
+  (layers
+    (0 "F.Cu" signal)
+    (31 "B.Cu" signal)
+    (32 "B.Adhes" user)
+    (33 "F.Adhes" user)
+    (36 "B.SilkS" user)
+    (37 "F.SilkS" user)
+    (38 "B.Mask" user)
+    (39 "F.Mask" user)
+    (44 "Edge.Cuts" user)
+    (48 "B.Fab" user)
+    (49 "F.Fab" user)
+  )
+
+  (setup
+    (pad_to_mask_clearance 0)
+  )
+
+  (net 0 "")
+  (net 1 "GND")
+  (net 2 "+5V")
+  (net 3 "+3V3")
+
+  (gr_rect (start 0 0) (end 50 40) (layer "Edge.Cuts") (width 0.1))
+
+  (footprint "Connector_USB:USB_C_Receptacle" (layer "F.Cu")
+    (at 3 5 0)
+    (fp_text reference "J1" (at 3 2) (layer "F.SilkS") (effects (font (size 1 1) (thickness 0.15))))
+    (fp_text value "USB_C" (at 3 8) (layer "F.Fab") (effects (font (size 1 1) (thickness 0.15))))
+    (pad "VBUS" smd rect (at 2 4) (size 0.6 1.5) (layers "F.Cu" "F.Paste" "F.Mask") (net 2 "+5V"))
+    (pad "GND" smd rect (at 4 4) (size 0.6 1.5) (layers "F.Cu" "F.Paste" "F.Mask") (net 1 "GND"))
+  )
+
+  (footprint "Package_TO_SOT_SMD:SOT-223-3_TabPin2" (layer "F.Cu")
+    (at 25 20 0)
+    (fp_text reference "U1" (at 25 17) (layer "F.SilkS") (effects (font (size 1 1) (thickness 0.15))))
+    (fp_text value "LM1117-3.3" (at 25 23) (layer "F.Fab") (effects (font (size 1 1) (thickness 0.15))))
+    (pad "1" smd rect (at 24 20) (size 1 1.5) (layers "F.Cu" "F.Paste" "F.Mask") (net 1 "GND"))
+    (pad "2" smd rect (at 26 20) (size 1 1.5) (layers "F.Cu" "F.Paste" "F.Mask") (net 3 "+3V3"))
+    (pad "3" smd rect (at 25 19) (size 1 1.5) (layers "F.Cu" "F.Paste" "F.Mask") (net 2 "+5V"))
+  )
+
+  (footprint "Capacitor_SMD:C_0402_1005Metric" (layer "F.Cu")
+    (at 35 20 0)
+    (fp_text reference "C2" (at 35 19) (layer "F.SilkS") (effects (font (size 0.8 0.8) (thickness 0.12))))
+    (fp_text value "10uF" (at 35 21) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))
+    (pad "1" smd rect (at 34.5 20) (size 0.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (net 3 "+3V3"))
+    (pad "2" smd rect (at 35.5 20) (size 0.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (net 1 "GND"))
+  )
+
+  (footprint "Package_QFP:LQFP-48_7x7mm_P0.5mm" (layer "F.Cu")
+    (at 42 10 0)
+    (fp_text reference "U2" (at 42 6) (layer "F.SilkS") (effects (font (size 1 1) (thickness 0.15))))
+    (fp_text value "STM32F103C8T6" (at 42 14) (layer "F.Fab") (effects (font (size 1 1) (thickness 0.15))))
+    (pad "8" smd rect (at 41 9) (size 0.3 1.2) (layers "F.Cu" "F.Paste" "F.Mask") (net 3 "+3V3"))
+    (pad "23" smd rect (at 43 11) (size 0.3 1.2) (layers "F.Cu" "F.Paste" "F.Mask") (net 1 "GND"))
+  )
+
+  (footprint "Capacitor_SMD:C_0402_1005Metric" (layer "F.Cu")
+    (at 44 10 0)
+    (fp_text reference "C1" (at 44 9) (layer "F.SilkS") (effects (font (size 0.8 0.8) (thickness 0.12))))
+    (fp_text value "100nF" (at 44 11) (layer "F.Fab") (effects (font (size 0.8 0.8) (thickness 0.12))))
+    (pad "1" smd rect (at 43.5 10) (size 0.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (net 3 "+3V3"))
+    (pad "2" smd rect (at 44.5 10) (size 0.5 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (net 1 "GND"))
+  )
+
+  (segment (start 3 5) (end 25 20) (width 0.2) (layer "F.Cu") (net 2))
+  (segment (start 25 20) (end 42 10) (width 0.35) (layer "F.Cu") (net 3))
+)

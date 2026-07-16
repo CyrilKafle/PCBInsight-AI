@@ -6,10 +6,13 @@ from pathlib import Path
 
 import pytest
 
+from app.analysis import run_all_checks
+from app.analysis.scoring import score as compute_score
 from app.parser.kicad_project import classify_component, find_project_files, parse_board
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[2] / "examples"
 SIMPLE_BOARD_DIR = EXAMPLES_DIR / "simple_board"
+CORPUS_BOARD_DIRS = sorted(d for d in EXAMPLES_DIR.iterdir() if d.is_dir())
 
 
 @pytest.fixture(scope="module")
@@ -27,6 +30,18 @@ def test_find_project_files_locates_pcb_and_project():
 def test_find_project_files_raises_without_pcb(tmp_path):
     with pytest.raises(FileNotFoundError):
         find_project_files(tmp_path)
+
+
+@pytest.mark.parametrize("board_dir", CORPUS_BOARD_DIRS, ids=lambda d: d.name)
+def test_corpus_board_parses_and_scores_without_error(board_dir):
+    """Regression guard for the Engineering Validation Corpus: every board under
+    examples/ must parse cleanly and run through the full deterministic engine
+    without raising, regardless of how deliberately flawed its design is."""
+    files = find_project_files(board_dir)
+    board = parse_board(files["pcb"])
+    issues = run_all_checks(board)
+    result = compute_score(issues)
+    assert 0 <= result.overall <= 100
 
 
 def test_board_name_and_dimensions(simple_board):

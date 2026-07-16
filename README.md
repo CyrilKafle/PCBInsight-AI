@@ -10,7 +10,7 @@
 
 An AI-augmented engineering design review tool for KiCad PCB projects — a lightweight, local analog of the automated design-review tooling used inside hardware companies (NVIDIA, AMD, Apple, Intel). It does not replace KiCad's Design Rule Check (DRC); it sits a level above DRC, producing the kind of higher-level engineering judgment an experienced PCB reviewer would give in a design review: *why* something could be a problem, *what engineering principle* is involved, a *suggested fix*, a *severity*, and a *confidence level*.
 
-Full design rationale, phased plan, and engineering-check catalogue: [`DESIGN.md`](DESIGN.md).
+Full design rationale, phased plan, and engineering-check catalogue: [`DESIGN.md`](DESIGN.md). How the deterministic engine and the AI layer are each validated: [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
 ## Status: Phase 4 complete — full local dashboard (FastAPI + React) with board visualization, AI chat, and PDF export
 
@@ -31,7 +31,7 @@ This is a from-scratch rebuild of what was previously a separate FPGA/PCB roboti
 ```
 backend/    FastAPI service + CLI: parser, analysis engine, AI integration, HTML/PDF report generation
 frontend/   React + TypeScript + Tailwind dashboard: upload, board visualization, issue browser, AI chat panel
-examples/   Sample KiCad projects used for development and regression-testing the analysis engine
+examples/   Engineering Validation Corpus -- ten purpose-built KiCad boards, see examples/README.md
 docs/       Architecture notes, screenshots, example reports
 ```
 
