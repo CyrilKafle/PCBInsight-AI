@@ -4,7 +4,15 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **Live AI validation harness** (`backend/scripts/validate_ai.py`) — runs the real review/chat prompts against the live Anthropic API, tracks token usage and cost per call, and writes `reports/ai_validation.md`/`.json` as committed evidence (git commit/tag, per-board cost, hallucination check) that the AI layer was validated against a real model, not just the fake test client.
+- `return_usage` flag on `generate_review()`/`answer_question()` (`backend/app/ai/review.py`) — opt-in token-usage capture with zero change to existing call sites.
+- **Engineering Validation Corpus**: seven new purpose-built KiCad boards under `examples/` — `high_quality_reference` (clean board, 100/100, zero findings), `rf_clock_board` (signal-integrity + differential-pair focus), `power_supply_board` (power/decoupling focus), `thermal_reference` (thermal focus), `manufacturing_reference` (DFM focus), `parser_edge_cases` (unicode/escaped-quote/hostile-character parser stress test), and `mixed_realistic_board` (a believable "mostly good, a few real mistakes" board) — plus `flawed_reference` (committed for the first time). Ten boards total, each demonstrating exactly one thing; see `examples/README.md`.
+- `docs/VALIDATION.md` — how the deterministic engine and the AI layer are each validated, and how to interpret a failure in either.
+- `test_corpus_board_parses_and_scores_without_error` — regression guard parametrized over every board in the corpus.
+
+### Changed
+- `examples/README.md` reframed as the "Engineering Validation Corpus" with a per-board purpose table.
 
 ## [v0.5.0] — 2026-07-14 — Phase 4 dashboard: board visualization, AI chat, PDF export
 

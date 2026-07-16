@@ -1,0 +1,65 @@
+(kicad_pcb (version 20240108) (generator "pcbnew")
+
+  (general
+    (thickness 1.6)
+  )
+
+  (paper "A4")
+
+  (layers
+    (0 "F.Cu" signal)
+    (31 "B.Cu" signal)
+    (32 "B.Adhes" user)
+    (33 "F.Adhes" user)
+    (36 "B.SilkS" user)
+    (37 "F.SilkS" user)
+    (38 "B.Mask" user)
+    (39 "F.Mask" user)
+    (44 "Edge.Cuts" user)
+    (48 "B.Fab" user)
+    (49 "F.Fab" user)
+  )
+
+  (setup
+    (pad_to_mask_clearance 0)
+  )
+
+  (net 0 "")
+  (net 1 "SIG1")
+  (net 2 "STITCH")
+
+  (gr_rect (start 0 0) (end 12 12) (layer "Edge.Cuts") (width 0.1))
+
+  (footprint "Package_SO:SOIC-14_3.9x8.7mm_P1.27mm" (layer "F.Cu")
+    (at 3 3 0)
+    (fp_text reference "U1" (at 3 1.5) (layer "F.SilkS") (effects (font (size 0.6 0.6) (thickness 0.1))))
+    (fp_text value "74HC04" (at 3 4.5) (layer "F.Fab") (effects (font (size 0.6 0.6) (thickness 0.1))))
+    (pad "1" smd rect (at 2.7 3) (size 0.3 0.6) (layers "F.Cu" "F.Paste" "F.Mask") (net 1 "SIG1"))
+  )
+
+  (footprint "Resistor_SMD:R_0402_1005Metric" (layer "F.Cu")
+    (at 6 3 0)
+    (fp_text reference "R1" (at 6 1.5) (layer "F.SilkS") (effects (font (size 0.6 0.6) (thickness 0.1))))
+    (fp_text value "1k" (at 6 4.5) (layer "F.Fab") (effects (font (size 0.6 0.6) (thickness 0.1))))
+    (pad "1" smd rect (at 5.7 3) (size 0.3 0.4) (layers "F.Cu" "F.Paste" "F.Mask") (net 1 "SIG1"))
+    (pad "2" smd rect (at 6.3 3) (size 0.3 0.4) (layers "F.Cu" "F.Paste" "F.Mask") (net 2 "STITCH"))
+  )
+
+  (footprint "Capacitor_SMD:C_0402_1005Metric" (layer "F.Cu")
+    (at 9 3 0)
+    (fp_text reference "C1" (at 9 1.5) (layer "F.SilkS") (effects (font (size 0.6 0.6) (thickness 0.1))))
+    (fp_text value "100nF" (at 9 4.5) (layer "F.Fab") (effects (font (size 0.6 0.6) (thickness 0.1))))
+    (pad "1" smd rect (at 8.7 3) (size 0.3 0.4) (layers "F.Cu" "F.Paste" "F.Mask") (net 2 "STITCH"))
+  )
+
+  (segment (start 3 3) (end 6 3) (width 0.10) (layer "F.Cu") (net 1))
+
+  (via (at 2 9) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net 2))
+  (via (at 4 9) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net 2))
+  (via (at 6 9) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net 2))
+  (via (at 8 9) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net 2))
+  (via (at 10 9) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net 2))
+  (via (at 2 11) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net 2))
+  (via (at 6 11) (size 0.3) (drill 0.25) (layers "F.Cu" "B.Cu") (net 2))
+  (via (at 10 11) (size 0.3) (drill 0.25) (layers "F.Cu" "B.Cu") (net 2))
+)
