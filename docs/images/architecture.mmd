@@ -1,0 +1,40 @@
+graph TD
+    KiCad["KiCad Project<br/>.kicad_pcb"]
+    CLI["CLI<br/>pcbinsight review"]
+    API["FastAPI Backend<br/>/api/review /api/chat /api/report/pdf"]
+
+    KiCad --> CLI
+    KiCad --> API
+
+    subgraph DetEngine["Deterministic Engine"]
+        Parser["S-Expression Parser<br/>zero pcbnew deps"] --> Board["Board Model"] --> Engine["Analysis Engine<br/>9 categories / 28 checks"] --> Scoring["Transparent Scoring<br/>0-100 + subscores"]
+    end
+
+    CLI --> Parser
+    API --> Parser
+
+    subgraph AILayer["AI Layer (narrates only)"]
+        Digest["Structured Digest<br/>no raw geometry"] --> Claude["Claude Sonnet 5<br/>review + grounded chat"]
+    end
+
+    Scoring --> Digest
+
+    subgraph Reports["Reports"]
+        HTML["HTML Report"]
+        PDF["PDF Report"]
+    end
+
+    Scoring --> HTML
+    Scoring --> PDF
+
+    CLIOut["Local report file"]
+    HTML --> CLIOut
+    HTML --> API
+    PDF --> API
+    Claude --> API
+
+    Dash["React Dashboard<br/>board view, charts, AI chat, PDF"]
+    API --> Dash
+
+    classDef ai fill:#EDE7F9,stroke:#6f42c1,color:#3c1f6b;
+    class Digest,Claude ai;
