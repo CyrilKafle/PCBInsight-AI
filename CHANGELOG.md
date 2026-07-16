@@ -2,7 +2,9 @@
 
 All notable changes to this project are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [v1.0.0] — 2026-07-16 — Engineering complete + public landing page
+
+v1.0.0: the deterministic engine, AI review layer, validation corpus, live AI validation, and public-facing landing page are all complete. This is the first tagged release with a public site.
 
 ### Added
 - `docs/ENGINEERING_DECISIONS.md` — the "why" behind the major architectural calls (deterministic-first, the AI can't-invent-findings boundary, code-enforced citations, the custom parser, the validation corpus, AI validation staying out of CI, transparent scoring over benchmark scores).
