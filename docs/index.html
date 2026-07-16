@@ -234,6 +234,7 @@
     background: var(--surface);
   }
   .showcase-img img { width: 100%; height: auto; }
+  .demo-gif { max-width: 760px; margin: 0 auto 3.5rem; }
   @media (max-width: 760px) {
     .showcase-item, .showcase-item.reverse { grid-template-columns: 1fr; }
     .showcase-item.reverse .showcase-copy,
@@ -451,7 +452,10 @@
   <div class="wrap">
     <p class="eyebrow">The dashboard</p>
     <h2 class="section-title">What it actually looks like</h2>
-    <p class="section-dek">Every screenshot below is genuine output from a real run against <code class="mono">examples/stm32_usb_dev</code> — an AI-generated 4-layer STM32 USB dev board in the validation corpus. Nothing here is a mockup.</p>
+    <p class="section-dek">Every screenshot below — and the demo below that — is genuine output from a real run against <code class="mono">examples/stm32_usb_dev</code>, an AI-generated 4-layer STM32 USB dev board in the validation corpus. Nothing here is a mockup.</p>
+    <div class="showcase-img demo-gif">
+      <img src="images/demo/demo.gif" alt="Animated demo: uploading a KiCad board, the deterministic score and AI review, board visualization, an expanded issue, a real AI chat answer, and PDF export">
+    </div>
     <div class="showcase">
       <div class="showcase-item">
         <div class="showcase-copy">
