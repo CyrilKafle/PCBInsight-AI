@@ -1,6 +1,6 @@
 # PCBInsight AI — Project Knowledge File
 
-Purpose of this file: a complete, current snapshot of the project so a fresh work session can pick up with zero re-discovery. Everything below is factual and verified as of 2026-07-16.
+Purpose of this file: a complete, current snapshot of the project so a fresh work session can pick up with zero re-discovery. Everything below is factual and verified as of 2026-07-16 (end of session, post v1.0.0 release).
 
 > **Session continuity note:** `CLAUDE.md` at the repo root auto-loads every Claude Code session and points here. Keep this file current at the end of each session so a fresh session inherits state with zero re-discovery.
 
@@ -11,7 +11,9 @@ Purpose of this file: a complete, current snapshot of the project so a fresh wor
 **PCBInsight AI** — an automated PCB design review platform for KiCad projects. It parses `.kicad_pcb` files with a custom parser, runs 28 deterministic engineering checks across 9 categories, computes a transparent 0–100 engineering score, and generates professional HTML/PDF reports. Claude AI sits on top as a strictly-bounded "technical writer" layer that narrates the deterministic findings — it never analyzes the board itself and never sees raw geometry.
 
 - **Repo (public):** https://github.com/CyrilKafle/PCBInsight-AI (renamed from the pre-pivot `SiliconArm`)
-- **Landing page (live):** https://cyrilkafle.github.io/PCBInsight-AI/ — GitHub Pages, served from `/docs` on `master`, enabled 2026-07-16.
+- **Landing page (live):** https://cyrilkafle.github.io/PCBInsight-AI/ — GitHub Pages, served from `/docs` on `master`, enabled 2026-07-16. Includes a free "Try it" demo (`try-it-demo.html`, a real pre-generated report, zero live API cost) and a real 6-frame demo GIF (`images/demo/demo.gif`) captured from an actual live run.
+- **v1.0.0 tagged and released:** https://github.com/CyrilKafle/PCBInsight-AI/releases/tag/v1.0.0 (2026-07-16). Verified via a fresh clone of the tag: backend 147/147 tests pass, frontend builds clean, zero fixes needed.
+- **Personal portfolio site (separate repo):** https://cyrilkafle.github.io/ (`github.com/CyrilKafle/CyrilKafle.github.io`) features PCBInsight AI as the flagship project (real screenshot/demo GIF, live links) alongside Polaris (a team project, scoped to Cyril's actual contributions). Built the same session, reuses this project's exact design system (IBM Plex Sans + JetBrains Mono, same dark palette) for visual consistency. Not part of this repo; mentioned here only for cross-continuity.
 - **Owner:** Cyril Kafle, undergraduate; a portfolio project in the EE/PCB/EDA/embedded space.
 - **Positioning (decided, in DESIGN.md):** personal/local tool, *not* a public multi-tenant service. No public upload endpoint (Claude API cost + an unhardened parser = two real reasons). The static landing page + GitHub repo are the public artifacts; the functional dashboard stays local-only. The honest and sufficient story is the tool itself.
 
@@ -52,6 +54,10 @@ Shared report styling lives in `backend/app/reports/theme.py` (`SEVERITY_COLORS`
 | AI validation harness | DONE | `backend/scripts/validate_ai.py` — usage/cost tracking, writes committed evidence to `reports/ai_validation.{md,json}` (git commit/tag, per-board cost). Manual/live only, deliberately not in CI (see §6). |
 | Engineering Validation Corpus | DONE | 10 purpose-built KiCad boards in `examples/`, each demonstrating exactly one thing. See `docs/VALIDATION.md` and `examples/README.md`. |
 | Landing page | **DONE, live** | `docs/index.html`, dark-mode-first design system (`docs/design-system.md`: IBM Plex Sans + JetBrains Mono, teal `#2FD9C4` accent kept distinct from the AI-purple `#8A63D2`). Every screenshot is genuine (live dashboard run against `examples/stm32_usb_dev`, real Claude review + real chat answer). Served via GitHub Pages from `/docs`. README updated to link it + embed real screenshots. |
+| "Try it" demo | **DONE, live** | `docs/try-it-demo.html`, linked as the primary hero CTA + nav link. A real, unedited report; `backend/scripts/generate_try_it_demo.py` reuses the AI review text already captured in `reports/ai_validation.json` instead of calling the API again — regenerating it costs $0. |
+| Demo GIF | **DONE, live** | `docs/images/demo/demo.gif`, embedded at the top of the showcase section. 6 real screen-captured frames (upload → score+AI review → board view → issue detail → real AI chat answer → PDF export) from one live session against `examples/stm32_usb_dev`. No synthetic/AI-generated visuals. |
+| Security audit | **DONE** | `npm audit` and `pip-audit` (isolated venv scoped to `backend/requirements.txt`, not the noisy global Python) both clean. No committed secrets, no `eval`/`exec`/`pickle`/`shell=True` anywhere. CI hardened with explicit `permissions: contents: read`. Full findings in the 2026-07-16 session; nothing outstanding. |
+| v1.0.0 release | **DONE** | Tagged, pushed, GitHub Release published with real release notes. Verified via a genuinely fresh clone (not just the working tree) — backend and frontend both build clean. |
 
 ## 4. Verified state (as of 2026-07-16)
 
@@ -81,14 +87,16 @@ Full writeup with code citations: `docs/ENGINEERING_DECISIONS.md`. Summary:
 7. **Transparent scoring over benchmark scores** — severity × confidence deduction, named constants, no black box. Same instinct behind skipping the coverage badge and the "time saved" metric — no fabricated numbers, ever.
 8. **Local-only backend posture** — CORS scoped, path-traversal guarded, explicitly not hardened for public internet (deliberate; the landing page is static specifically to avoid needing to harden the real backend for public traffic).
 
-## 7. Current milestone status — engineering AND productization both complete
+## 7. Current milestone status — engineering, productization, AND v1.0.0 all complete
 
-**v1.0-ready.** Both the engineering milestone (deterministic engine, AI layer, validation corpus, live AI validation, repo audit) and the productization milestone (design system, landing page, real screenshots, GitHub Pages) are done. Per the user's explicit call: **stop adding engineering functionality.** What remains is entirely outside the codebase:
+**Shipped.** Engineering (deterministic engine, AI layer, validation corpus, live AI validation, repo audit), productization (design system, landing page, real screenshots, GitHub Pages, free "Try it" demo, real demo GIF), and a verified security audit are all done. v1.0.0 is tagged, released, and clean-clone-verified. Per the user's explicit call: **stop adding engineering functionality unless a real bug turns up.**
 
-1. **Resume/portfolio integration** — PCBInsight as the flagship project.
-2. **LinkedIn/write-up** — the engineering-decisions narrative is already written (`docs/ENGINEERING_DECISIONS.md`) and ready to adapt.
-3. **Interview prep** — be ready to demo live; the "why not just let the LLM review it" answer is already documented.
-4. **v1.0.0 tag** — not yet cut as of this writing; consider tagging once the user confirms the landing page is final.
+What remains is entirely outside this codebase (tracked in the global memory system, not here):
+
+1. **Resume** — PCBInsight AI added as the flagship/most-recent project entry on `InternPilot/resume/Cyril_Kafle_Resume.pdf`. Not yet fully finalized — the user wants to add a Polaris demo recording first (Polaris has an unrelated bug it's currently blocked on; see the `project-polaris-supabase-down` memory).
+2. **Personal portfolio site** — done, live at https://cyrilkafle.github.io/ (separate repo, see §1). Will get a Polaris demo section once that project's bug is fixed.
+3. **LinkedIn/write-up** — drafted (not published); the user questioned whether it's even needed and it was left as fully optional.
+4. **Interview prep** — not started.
 
 Stretch backlog (documented in DESIGN.md, explicitly NOT next): review-session workflow, plugin SDK, threshold/measured-value structured fields, design-history comparison, multi-board compare, Altium/EasyEDA import. Do not start these unprompted — the user was explicit that presentation, not more features, is the highest-return work from here.
 
