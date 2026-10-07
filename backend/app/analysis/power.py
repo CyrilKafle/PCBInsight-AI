@@ -64,7 +64,7 @@ def _check_missing_plane(net: Net, board: Board) -> list[Issue]:
             summary=f"Power net {net.name} has no dedicated copper pour",
             explanation=(
                 f"This net is routed as {len(net.traces)} discrete trace segments with no "
-                "supporting plane, which looks like a daisy-chained distribution — each "
+                "supporting plane, which looks like a daisy-chained distribution. Each "
                 "downstream component sees a longer, noisier supply path than the last."
             ),
             principle="Prefer a power plane/pour or star distribution over daisy-chaining.",

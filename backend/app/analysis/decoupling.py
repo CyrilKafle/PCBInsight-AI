@@ -49,7 +49,7 @@ def _check_power_net(ic: Component, power_net: str, capacitors: list[Component])
                 summary=f"No decoupling capacitor found on {ic.footprint.reference}'s {power_net} net",
                 explanation=(
                     f"{ic.footprint.reference} draws power from {power_net} but no capacitor "
-                    "bridges that net to ground — switching current transients will have to be "
+                    "bridges that net to ground, so switching current transients will have to be "
                     "supplied from further away, increasing supply noise at the IC."
                 ),
                 principle="Every IC power pin needs a local decoupling capacitor bridging to ground.",

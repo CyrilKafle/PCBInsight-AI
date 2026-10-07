@@ -50,6 +50,21 @@ _SUBSCORE_NAMES = [
 ]
 
 
+def subscore_for(category: str) -> str | None:
+    """Name of the subscore an issue category rolls into, or None."""
+    return _CATEGORY_TO_SUBSCORE.get(category)
+
+
+def severity_points(severity: Severity) -> float:
+    """Base points a finding of this severity takes off its subscore."""
+    return _SEVERITY_DEDUCTION[severity]
+
+
+def deduction(issue: Issue) -> float:
+    """Points this issue takes off its subscore: severity points x confidence."""
+    return severity_points(issue.severity) * issue.confidence
+
+
 def score(issues: list[Issue]) -> EngineeringScore:
     totals = {name: 100.0 for name in _SUBSCORE_NAMES}
 
@@ -57,8 +72,7 @@ def score(issues: list[Issue]) -> EngineeringScore:
         subscore_name = _CATEGORY_TO_SUBSCORE.get(issue.category)
         if subscore_name is None:
             continue
-        deduction = _SEVERITY_DEDUCTION[issue.severity] * issue.confidence
-        totals[subscore_name] = max(0.0, totals[subscore_name] - deduction)
+        totals[subscore_name] = max(0.0, totals[subscore_name] - deduction(issue))
 
     subscores = [SubScore(category=name, score=round(totals[name])) for name in _SUBSCORE_NAMES]
     overall = round(sum(s.score for s in subscores) / len(subscores))

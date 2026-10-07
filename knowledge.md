@@ -1,6 +1,6 @@
 # PCBInsight AI — Project Knowledge File
 
-Purpose of this file: a complete, current snapshot of the project so a fresh work session can pick up with zero re-discovery. Everything below is factual and verified as of 2026-07-16 (end of session, post v1.0.0 release).
+Purpose of this file: a complete, current snapshot of the project so a fresh work session can pick up with zero re-discovery. Everything below is factual and verified as of 2026-07-16 (end of session, post v1.0.0 release). Update 2026-10-07: HTML report and `docs/try-it-demo.html` redesigned (see CHANGELOG Unreleased/Changed); backend tests now 150 passing.
 
 > **Session continuity note:** `CLAUDE.md` at the repo root auto-loads every Claude Code session and points here. Keep this file current at the end of each session so a fresh session inherits state with zero re-discovery.
 

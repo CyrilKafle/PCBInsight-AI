@@ -153,7 +153,7 @@ def _check_dangling_stubs(net: Net, board: Board) -> list[Issue]:
                     summary=f"Possible dangling trace end on net {net.name}",
                     explanation=(
                         "This trace end doesn't connect to another trace, a via, or a component "
-                        "pad on the same net within a small tolerance — it may be an unterminated stub."
+                        "pad on the same net within a small tolerance, so it may be an unterminated stub."
                     ),
                     principle="Every trace should terminate at a pad, via, or another trace on its net.",
                     suggested_fix="Verify this endpoint actually lands on a pad; extend or remove the stub.",

@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+### Changed
+- **Report redesign** (`backend/app/reports/html_report.py`): the HTML report now uses the landing page's dark design system (IBM Plex Sans / JetBrains Mono, teal accent, purple reserved for AI content). Charts are native HTML bars instead of matplotlib PNGs (the PDF export still uses the matplotlib renderers). Findings with identical explanation and fix are grouped into one card. The AI review's markdown is rendered, and a cut-off trailing sentence is omitted with a note.
+- **Score derivation shown in the report**: a "How the score is computed" block lists each deduction (severity points x confidence), reconciles every subscore and the overall mean, and defines what confidence is and is not. `scoring.py` now exposes `deduction`, `severity_points` and `subscore_for` for this; scoring behaviour is unchanged.
+- Removed em dashes from three check explanations (decoupling, power, routing) and rewrote the demo banner to state that `stm32_usb_dev` is synthetic test data.
+- Independent review loop: six rounds of external grading (74, 82, 84, 85, 87, 90) drove these changes.
+
 ### Added
 - **"Try it" demo** (`docs/try-it-demo.html`), linked from the landing page nav and as the primary hero CTA — a real, unedited report for `examples/stm32_usb_dev`. `backend/scripts/generate_try_it_demo.py` re-runs the deterministic pipeline locally and reuses the AI review text already captured in `reports/ai_validation.json`, so regenerating it makes zero new Anthropic API calls. Carries a disclosure banner explaining what it is and linking back to the landing page and repo.
 - **Demo GIF** (`docs/images/demo/demo.gif`), embedded at the top of the landing page's dashboard showcase — six real, screen-captured frames from a live run against `examples/stm32_usb_dev` (upload, deterministic score + AI review, board visualization, an expanded issue, a real AI chat answer, and PDF export). No synthetic or AI-generated visuals.

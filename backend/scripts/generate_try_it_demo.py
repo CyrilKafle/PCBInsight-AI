@@ -26,18 +26,23 @@ VALIDATION_JSON = REPO_ROOT / "reports" / "ai_validation.json"
 OUTPUT_PATH = REPO_ROOT / "docs" / "try-it-demo.html"
 
 _BANNER = """
-<div style="max-width:960px;margin:0 auto 1.5rem;padding:0.9rem 1.25rem;
-     background:#EDE7F9;border:1px solid #c9b8ef;border-radius:8px;
-     font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-     font-size:0.9rem;line-height:1.5;color:#3c1f6b;">
-  This is a real report PCBInsight generated for
-  <code style="background:rgba(0,0,0,0.06);padding:0.1rem 0.35rem;border-radius:3px;">examples/stm32_usb_dev</code>,
-  a board in the <a href="https://github.com/CyrilKafle/PCBInsight-AI/tree/master/examples"
-  style="color:#3c1f6b;">Engineering Validation Corpus</a> &mdash; deterministic findings and the AI
-  review below are both unedited output, not a mockup. The upload dashboard runs locally; see the
-  <a href="https://github.com/CyrilKafle/PCBInsight-AI" style="color:#3c1f6b;">GitHub repo</a> to run it
-  on your own boards. &larr; <a href="index.html" style="color:#3c1f6b;">Back to the landing page</a>
-</div>
+<style>
+  .demo-banner { max-width: 1040px; margin: 0 auto; padding: 14px 24px 0; box-sizing: border-box; }
+  .demo-banner-inner { padding: 12px 16px; background: #10151C; border: 1px solid #232B36;
+    border-left: 3px solid #2FD9C4; border-radius: 4px; font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', sans-serif;
+    font-size: 0.875rem; line-height: 1.55; color: #8B96A5; }
+  .demo-banner a { color: #2FD9C4; }
+  .demo-banner code { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #E6EDF3; }
+  .demo-banner .back { display: inline-block; padding: 10px 0; margin-top: 4px; white-space: nowrap; }
+</style>
+<div class="demo-banner"><div class="demo-banner-inner">
+  <strong style="color:#E6EDF3;font-weight:600;">Real output, not a mockup.</strong>
+  This is the report PCBInsight generated for <code>examples/stm32_usb_dev</code>, a synthetic board in the
+  ten-board <a href="https://github.com/CyrilKafle/PCBInsight-AI/tree/master/examples">validation corpus</a>;
+  its low-confidence stub warnings were not checked against a real design.
+  Run it on your own boards from the <a href="https://github.com/CyrilKafle/PCBInsight-AI">GitHub repository</a>.<br>
+  <a class="back" href="index.html">&larr; Back to the landing page</a>
+</div></div>
 """
 
 
