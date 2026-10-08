@@ -439,13 +439,13 @@
       <div class="topbar-inner">
         <div class="topbar-row">
           <a class="brand" href="#overview" data-go="overview">PCBInsight<span class="brand-slash"> / </span>demo</a>
-          <span class="topbar-meta">stm32_usb_dev &middot; generated 2026-10-08 18:02 UTC</span>
+          <span class="topbar-meta">stm32_usb_dev &middot; generated 2026-10-08 18:49 UTC</span>
           <a class="landing-link" href="index.html">&larr; Landing page</a>
         </div>
         <nav class="tabs" role="tablist" aria-label="Report sections"><a role="tab" class="tab" href="#overview" data-go="overview" id="tab-overview" aria-controls="view-overview">Overview</a><a role="tab" class="tab" href="#scores" data-go="scores" id="tab-scores" aria-controls="view-scores">Scores</a><a role="tab" class="tab" href="#findings" data-go="findings" id="tab-findings" aria-controls="view-findings">Findings</a><a role="tab" class="tab" href="#ai-review" data-go="ai-review" id="tab-ai-review" aria-controls="view-ai-review">AI review</a><a role="tab" class="tab" href="#board" data-go="board" id="tab-board" aria-controls="view-board">Board</a><a role="tab" class="tab" href="#try-it" data-go="try-it" id="tab-try-it" aria-controls="view-try-it">Try it</a></nav>
       </div>
     </header>
-    <main class="page"><section id="view-overview" class="view" data-view="overview" tabindex="-1" aria-labelledby="h-overview" hidden>
+    <main class="page"><section id="view-overview" class="view" data-view="overview" role="tabpanel" tabindex="-1" aria-labelledby="tab-overview" hidden>
     <div class="hero">
       <div class="hero-main">
         <p class="eyebrow">Design review</p>
@@ -506,7 +506,7 @@
       </ul>
     </details>
     <div class="view-pager"><button type="button" class="pager pager-home" data-go="overview">All sections</button><button type="button" class="pager pager-next" data-go="scores">Next: Scores <span aria-hidden="true">&rarr;</span></button></div></section>
-<section id="view-scores" class="view" data-view="scores" tabindex="-1" aria-labelledby="h-scores" hidden>
+<section id="view-scores" class="view" data-view="scores" role="tabpanel" tabindex="-1" aria-labelledby="tab-scores" hidden>
     <div class="view-nav">
       <button type="button" class="back-btn" data-go="overview"><span aria-hidden="true">&larr;</span> Back to overview</button>
       <span class="crumbs"><a href="#overview" data-go="overview">Overview</a> / Scores</span>
@@ -617,7 +617,7 @@
     </details>
     
     <div class="view-pager"><button type="button" class="pager" data-go="overview"><span aria-hidden="true">&larr;</span> Overview</button><button type="button" class="pager pager-home" data-go="overview">All sections</button><button type="button" class="pager pager-next" data-go="findings">Next: Findings <span aria-hidden="true">&rarr;</span></button></div></section>
-<section id="view-findings" class="view" data-view="findings" tabindex="-1" aria-labelledby="h-findings" hidden>
+<section id="view-findings" class="view" data-view="findings" role="tabpanel" tabindex="-1" aria-labelledby="tab-findings" hidden>
     <div class="view-nav">
       <button type="button" class="back-btn" data-go="overview"><span aria-hidden="true">&larr;</span> Back to overview</button>
       <span class="crumbs"><a href="#overview" data-go="overview">Overview</a> / Findings</span>
@@ -717,7 +717,7 @@
     <p class="muted empty" id="findings-empty" hidden>No findings match these filters. <button type="button" class="link-btn" id="filters-clear">Clear filters</button></p>
     <details class="panel glossary"><summary><h3>Glossary</h3></summary><dl><dt>Net</dt><dd>A set of pads that must be electrically connected, such as every pin that touches the 3.3 V supply.</dd><dt>Trace</dt><dd>A strip of copper that carries a signal or power between pads.</dd><dt>Via</dt><dd>A plated hole that moves a trace from one board layer to another.</dd><dt>Annular ring</dt><dd>The ring of copper left around a drilled hole. Too thin and a slightly off-centre drill breaks the connection.</dd><dt>Decoupling capacitor</dt><dd>A small capacitor placed right next to a chip&#x27;s power pin to supply fast bursts of current.</dd><dt>Copper pour</dt><dd>A large filled area of copper, usually ground, that gives current an easy return path and helps spread heat.</dd><dt>Differential pair</dt><dd>Two traces that carry one signal as a voltage difference, like USB D+ and D-. They should match in length and shape.</dd><dt>Confidence</dt><dd>A fixed per-rule estimate from 0 to 1 of how likely a finding is real. It is not a statistical probability.</dd></dl></details>
     <div class="view-pager"><button type="button" class="pager" data-go="scores"><span aria-hidden="true">&larr;</span> Scores</button><button type="button" class="pager pager-home" data-go="overview">All sections</button><button type="button" class="pager pager-next" data-go="ai-review">Next: AI review <span aria-hidden="true">&rarr;</span></button></div></section>
-<section id="view-ai-review" class="view" data-view="ai-review" tabindex="-1" aria-labelledby="h-ai-review" hidden>
+<section id="view-ai-review" class="view" data-view="ai-review" role="tabpanel" tabindex="-1" aria-labelledby="tab-ai-review" hidden>
     <div class="view-nav">
       <button type="button" class="back-btn" data-go="overview"><span aria-hidden="true">&larr;</span> Back to overview</button>
       <span class="crumbs"><a href="#overview" data-go="overview">Overview</a> / AI review</span>
@@ -749,7 +749,7 @@
 <li><strong>PWR-001</strong> (confidence 0.65): the +3V3 rail includes a 0.25mm-wide trace segment, flagged as thin relative to current-carrying needs. This is the higher-confidence item in the batch and warrants attention — widening to at least 0.30mm is the supplied recommendation.</li>
 <li><strong>DECAP-001</strong> (confidence 0.5): decoupling capacitor C1 sits 3.2mm from U1 on +3V3, slightly beyond the recommended proximity for effective high-frequency decoupling at the MCU pin. At exactly the 0.5 confidence boundary, this is plausible but should still be confirmed against the actual layout before committing to a fix.</li>
 </ul><p class="truncation-note">The model reached its output limit, so one trailing incomplete sentence is omitted. Everything above is verbatim.</p></article><div class="view-pager"><button type="button" class="pager" data-go="findings"><span aria-hidden="true">&larr;</span> Findings</button><button type="button" class="pager pager-home" data-go="overview">All sections</button><button type="button" class="pager pager-next" data-go="board">Next: Board <span aria-hidden="true">&rarr;</span></button></div></section>
-<section id="view-board" class="view" data-view="board" tabindex="-1" aria-labelledby="h-board" hidden>
+<section id="view-board" class="view" data-view="board" role="tabpanel" tabindex="-1" aria-labelledby="tab-board" hidden>
     <div class="view-nav">
       <button type="button" class="back-btn" data-go="overview"><span aria-hidden="true">&larr;</span> Back to overview</button>
       <span class="crumbs"><a href="#overview" data-go="overview">Overview</a> / Board</span>
@@ -793,7 +793,7 @@
     
     <dl class="stats"><div class="stat"><dt>Dimensions</dt><dd>40.0 &times; 30.0 mm</dd><p>Outline of the board in millimetres.</p></div><div class="stat"><dt>Layers</dt><dd>4</dd><p>Copper layers. More layers allow denser routing and dedicated power and ground planes.</p></div><div class="stat"><dt>Components</dt><dd>18</dd><p>Parts placed on the board: chips, passives, connectors.</p></div><div class="stat"><dt>Nets</dt><dd>12</dd><p>Groups of pads that must be electrically connected.</p></div><div class="stat"><dt>Trace segments</dt><dd>14</dd><p>Straight pieces of copper that make up the routing.</p></div><div class="stat"><dt>Vias</dt><dd>6</dd><p>Plated holes that move a trace between layers.</p></div><div class="stat"><dt>Copper pours</dt><dd>3</dd><p>Large filled copper areas, usually ground.</p></div><div class="stat"><dt>Findings</dt><dd>8</dd><p>Problems the rule engine flagged. Each one with a known position is pinned on the map above.</p></div></dl>
     <div class="view-pager"><button type="button" class="pager" data-go="ai-review"><span aria-hidden="true">&larr;</span> AI review</button><button type="button" class="pager pager-home" data-go="overview">All sections</button><button type="button" class="pager pager-next" data-go="try-it">Next: Try it <span aria-hidden="true">&rarr;</span></button></div></section>
-<section id="view-try-it" class="view" data-view="try-it" tabindex="-1" aria-labelledby="h-try-it" hidden>
+<section id="view-try-it" class="view" data-view="try-it" role="tabpanel" tabindex="-1" aria-labelledby="tab-try-it" hidden>
     <div class="view-nav">
       <button type="button" class="back-btn" data-go="overview"><span aria-hidden="true">&larr;</span> Back to overview</button>
       <span class="crumbs"><a href="#overview" data-go="overview">Overview</a> / Try it</span>

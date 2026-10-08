@@ -98,7 +98,7 @@ def render(
         prev_key = VIEWS[index - 1] if index > 0 else None
         next_key = VIEWS[index + 1] if index < len(VIEWS) - 1 else None
         sections.append(
-            f'<section id="view-{key}" class="view" data-view="{key}" tabindex="-1" aria-labelledby="h-{key}" hidden>'
+            f'<section id="view-{key}" class="view" data-view="{key}" role="tabpanel" tabindex="-1" aria-labelledby="tab-{key}" hidden>'
             f"{_view_nav_top(key, label)}{views[key]}{_view_nav_bottom(prev_key, next_key)}</section>"
         )
     body = _topbar(board, generated_at, landing_href) + '<main class="page">' + "\n".join(sections) + "</main>" + _footer_bar()
