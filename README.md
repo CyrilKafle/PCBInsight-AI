@@ -65,7 +65,7 @@ Real numbers, computed from the codebase as of this commit — not estimates:
 |---|---|
 | Analysis categories | 9 |
 | Deterministic checks | 28 |
-| Unit tests (all passing, backend) | 147 |
+| Unit tests (all passing, backend) | 159 |
 | Lines of Python — `backend/app/` | 2,957 |
 | Lines of Python — `backend/tests/` | 1,386 |
 | Engineering Validation Corpus | 10 purpose-built boards, see `examples/README.md` |

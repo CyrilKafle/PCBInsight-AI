@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>stm32_usb_dev &middot; PCB Design Review Report</title>
+<title>stm32_usb_dev &middot; PCBInsight demo</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 fill=%27%230A0E14%27/%3E%3Cpath d=%27M2 8h4l2-4 2 8 2-4h2%27 stroke=%27%232FD9C4%27 fill=%27none%27 stroke-width=%271.5%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,258 +205,536 @@
     .finding-head, .sev-name, .chip, .stat dt { font-size: 0.875rem; }
     .topbar-meta { order: 4; width: 100%; margin-left: 0; }
   }
+
+  html { scroll-behavior: auto; }
+  body { padding-bottom: 0; }
+  .page { padding-top: 8px; min-height: 70vh; }
+  .view[hidden] { display: none; }
+  .view:focus { outline: none; }
+  .topbar-wrap { position: sticky; top: 0; z-index: 20; background: rgba(10,14,20,0.94);
+    backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); }
+  .topbar-inner { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+  .topbar-row { display: flex; align-items: center; gap: 16px; padding: 12px 0 4px;
+    font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); }
+  .brand { color: var(--text); font-weight: 600; letter-spacing: 0.02em; }
+  .brand:hover { text-decoration: none; }
+  .topbar-meta { margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .landing-link { white-space: nowrap; }
+  .tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin: 0 -8px; padding: 0 8px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: 0 0 auto; padding: 10px 14px; font-family: var(--mono); font-size: 0.875rem; color: var(--text-muted);
+    border-bottom: 2px solid transparent; }
+  .tab:hover { color: var(--text); text-decoration: none; }
+  .tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:focus-visible, .card:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible,
+  summary:focus-visible, .marker:focus-visible, abbr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .view-nav { display: flex; align-items: center; gap: 16px; padding: 20px 0 4px; }
+  .crumbs { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); }
+  .back-btn, .pager, .btn-ghost, .btn-primary, .chip-btn, .link-btn {
+    font-family: var(--mono); cursor: pointer; border-radius: 4px; }
+  .back-btn { background: var(--surface); color: var(--text); border: 1px solid var(--border);
+    padding: 9px 14px; font-size: 0.875rem; min-height: 40px; }
+  .back-btn:hover, .pager:hover, .btn-ghost:hover, .chip-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .view-pager { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .pager { background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 11px 16px; font-size: 0.875rem; min-height: 44px; }
+  .pager-next { margin-left: auto; border-color: var(--accent-dim); color: var(--accent); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 7px 12px; font-size: 0.8125rem; min-height: 36px; }
+  .btn-primary { background: var(--accent); color: #04110f; border: 1px solid var(--accent); padding: 11px 18px; font-size: 0.875rem; font-weight: 600; min-height: 44px; }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .link-btn { background: none; border: 0; color: var(--accent); padding: 4px 6px; font-size: 0.8125rem; text-decoration: underline; min-height: 32px; }
+
+  .view > h2 { margin-top: 20px; }
+  .section-title { margin: 40px 0 16px; font-size: 1.25rem; }
+  .what { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent-dim);
+    border-radius: 4px; padding: 14px 20px; margin: 0 0 24px; max-width: 80ch; }
+  .what p { margin: 0; font-size: 0.9375rem; color: var(--text-muted); }
+  .what p strong { color: var(--text); font-weight: 500; }
+  .what-title { font-family: var(--mono); font-size: 0.8125rem !important; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--accent) !important; margin-bottom: 6px !important; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 20px 24px; margin-top: 24px; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .panel h3 { margin: 0; font-size: 1.0625rem; }
+  .panel-note { margin: 0 0 14px; font-size: 0.875rem; color: var(--text-muted); max-width: 76ch; }
+  details.panel > summary { cursor: pointer; list-style: none; }
+  details.panel > summary::-webkit-details-marker { display: none; }
+  details.panel > summary h3::before { content: "+"; display: inline-block; width: 1.2em; color: var(--accent); font-family: var(--mono); }
+  details.panel[open] > summary h3::before { content: "\2212"; }
+  details.panel[open] > summary { margin-bottom: 14px; }
+
+  .hero { padding-top: 36px; }
+  .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; margin: 20px 0 0; }
+  .demo-note { margin: 8px 0 0; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); border-radius: 4px; font-size: 0.875rem; color: var(--text-muted); }
+  .demo-note strong { color: var(--text); }
+  .demo-note a { color: var(--accent); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
+  .card { display: flex; flex-direction: column; gap: 6px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 4px; padding: 18px 20px; color: var(--text); transition: border-color .12s, transform .12s; }
+  .card:hover { border-color: var(--accent); text-decoration: none; transform: translateY(-1px); }
+  .card-top { display: flex; justify-content: space-between; align-items: baseline; }
+  .card-title { font-size: 1.125rem; font-weight: 600; }
+  .card-arrow { color: var(--accent); font-family: var(--mono); }
+  .card-stat { font-family: var(--mono); font-size: 0.8125rem; color: var(--accent); }
+  .card-desc { font-size: 0.875rem; color: var(--text-muted); }
+  @media (min-width: 980px) { .cards .card:last-child:nth-child(3n+2) { grid-column: span 2; } }
+  .how { margin-top: 40px; }
+  .how h3 { margin: 0 0 8px; font-size: 1.0625rem; }
+  .how ol { margin: 0; padding-left: 20px; color: var(--text-muted); max-width: 80ch; }
+  .how li { margin-bottom: 6px; }
+  .how strong { color: var(--text); font-weight: 500; }
+  .limits { margin-top: 32px; color: var(--text-muted); font-size: 0.9375rem; max-width: 80ch; }
+  .limits summary { cursor: pointer; font-family: var(--mono); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.1em; padding: 6px 0; }
+  .limits ul { padding-left: 18px; }
+  .limits li { margin-bottom: 6px; }
+
+  .subscore { grid-template-columns: 170px 1fr 100px 44px 56px; }
+  .subscore-loss { white-space: nowrap; }
+  .subscore-delta { font-family: var(--mono); font-size: 0.8125rem; text-align: right; min-height: 1em; }
+  .delta-up { color: #3fb98a; } .delta-down { color: #ff7b72; }
+  .subscore-total { background: var(--surface-alt); font-weight: 600; }
+  .meter-fill { transition: width .25s ease, background .25s; }
+  .sim-list { display: grid; gap: 8px; }
+  .sim-row { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 10px 14px;
+    background: var(--surface-alt); border: 1px solid var(--border); border-left: 3px solid var(--sev); border-radius: 3px; cursor: pointer; }
+  .sim-row:hover { border-color: var(--accent); }
+  .sim-row input { width: 18px; height: 18px; accent-color: #2FD9C4; }
+  .sim-row:has(input:checked) { opacity: .6; }
+  .sim-row:has(input:checked) .sim-title { text-decoration: line-through; }
+  .sim-title { display: block; font-size: 0.9375rem; }
+  .sim-meta { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); }
+  .sim-pts { font-family: var(--mono); font-size: 0.875rem; color: var(--text-muted); }
+  .sim-extra { margin-top: 12px; }
+  .derivation summary h3 { display: inline; }
+  .derivation { padding: 18px 24px; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .chip-row, .toolbar-right { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chip-btn { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); padding: 7px 12px; font-size: 0.8125rem; min-height: 36px; }
+  .chip-btn[aria-pressed="true"] { color: var(--text); border-color: var(--sev, var(--accent)); box-shadow: inset 0 -2px 0 var(--sev, var(--accent)); }
+  .chip-count { color: var(--text-muted); margin-left: 4px; }
+  .select-wrap, .check-wrap { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+  select, input[type=number] { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); border-radius: 4px;
+    padding: 9px 10px; font-family: var(--mono); font-size: 0.875rem; min-height: 40px; max-width: 100%; }
+  .check-wrap input { width: 16px; height: 16px; accent-color: #2FD9C4; }
+  .result-count { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); margin: 4px 0 12px; }
+  .finding { padding: 0; }
+  .finding > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 74px 1fr auto; gap: 14px; align-items: center; padding: 14px 20px; }
+  .finding > summary::-webkit-details-marker { display: none; }
+  .finding > summary:hover { background: var(--surface-alt); }
+  .finding-sev { font-family: var(--mono); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; color: var(--sev); }
+  .finding-title { font-size: 1rem; font-weight: 500; }
+  .finding-side { display: flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); flex-wrap: wrap; justify-content: flex-end; }
+  .finding-chev::before { content: "+"; color: var(--accent); font-size: 1.1rem; }
+  .finding[open] .finding-chev::before { content: "\2212"; }
+  .finding-detail { padding: 4px 24px 20px; border-top: 1px solid var(--border); }
+  .finding-ids { padding-top: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .finding-detail .members { margin-top: 12px; }
+  .members .locate { margin-left: auto; }
+  .empty { padding: 24px; text-align: center; }
+  .glossary dl { margin: 0; display: grid; grid-template-columns: 180px 1fr; gap: 8px 20px; }
+  .glossary dt { font-family: var(--mono); font-size: 0.875rem; color: var(--accent); }
+  .glossary dd { margin: 0; font-size: 0.9375rem; color: var(--text-muted); }
+
+  .flow { list-style: none; margin: 0 0 20px; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .flow li { background: var(--surface); border: 1px solid var(--border); border-top: 2px solid var(--ai); border-radius: 4px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .flow strong { font-family: var(--mono); font-size: 0.875rem; color: var(--ai-soft); font-weight: 500; }
+  .flow span { font-size: 0.8125rem; color: var(--text-muted); }
+  .ai-body { max-width: 80ch; }
+
+  .stats { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-top: 24px; }
+  .stat p { margin: 6px 0 0; font-size: 0.8125rem; color: var(--text-muted); }
+  .boardmap svg { display: block; width: 100%; height: auto; max-height: 560px; background: #0c1119; border: 1px solid var(--border); border-radius: 4px; }
+  .layer-toggles { display: flex; flex-wrap: wrap; gap: 6px 16px; font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); }
+  .layer-toggles label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  .layer-toggles input { accent-color: #2FD9C4; width: 16px; height: 16px; }
+  .outline { fill: #0f1620; stroke: #3a4656; stroke-width: 0.35; }
+  .pour { fill: rgba(47,217,196,0.07); stroke: rgba(47,217,196,0.35); stroke-width: 0.2; }
+  .trace { stroke-linecap: round; opacity: .9; }
+  .layer-0 { stroke: #e06c75; } .layer-1 { stroke: #61afef; } .layer-2 { stroke: #c678dd; } .layer-3 { stroke: #98c379; }
+  .via { fill: #0c1119; stroke: #d6c26a; stroke-width: 0.25; }
+  .comp rect { fill: #1b2431; stroke: #6b7889; stroke-width: 0.2; }
+  .comp.k-ic rect { fill: #243349; stroke: #8fb4e8; }
+  .comp.k-conn rect { fill: #2c2a1c; stroke: #d6c26a; }
+  .comp text { font-family: var(--mono); font-size: 1.25px; fill: #9fb0c4; }
+  .marker { fill: var(--sev); fill-opacity: .55; stroke: var(--sev); stroke-width: 0.35; cursor: pointer; }
+  .marker:hover, .marker.is-active { fill-opacity: 1; stroke: #fff; }
+  .marker.is-active { stroke-width: 0.6; }
+  .hide-pours .g-pours, .hide-traces .g-traces, .hide-vias .g-vias, .hide-comps .g-comps, .hide-markers .g-markers { display: none; }
+  .map-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); }
+  .lg { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { display: inline-block; width: 18px; height: 0; border-top: 3px solid; }
+  .sw.layer-0 { border-color: #e06c75; } .sw.layer-1 { border-color: #61afef; } .sw.layer-2 { border-color: #c678dd; } .sw.layer-3 { border-color: #98c379; }
+  .sw-via { width: 10px; height: 10px; border: 2px solid #d6c26a; border-radius: 50%; }
+  .sw-marker { width: 10px; height: 10px; border-radius: 50%; background: #f0883e; border: 0; }
+  .map-detail { margin-top: 14px; padding: 12px 16px; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 4px; font-size: 0.9375rem; min-height: 48px; }
+  .map-detail code { margin-right: 8px; }
+
+  .try { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  .try .panel { margin-top: 0; }
+  .field { display: grid; gap: 6px; margin-bottom: 8px; }
+  .field-label { font-family: var(--mono); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+  .field select { width: 100%; }
+  .fields { display: grid; gap: 12px; margin-bottom: 14px; }
+  .input-row { display: flex; align-items: center; gap: 10px; }
+  .input-row input[type=number] { flex: 1; min-width: 0; }
+  .input-row select { flex: 1; }
+  .input-row .unit { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); min-width: 52px; }
+  .input-row input[type=checkbox] { width: 20px; height: 20px; accent-color: #2FD9C4; }
+  .check-field { display: flex; align-items: center; gap: 12px; font-size: 0.9375rem; cursor: pointer; min-height: 40px; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .presets .lbl { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); }
+  .rule-line { margin: 0; padding-top: 12px; border-top: 1px solid var(--border); font-size: 0.8125rem; color: var(--text-muted); font-family: var(--mono); }
+  .verdict { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 4px; font-weight: 600; margin-bottom: 14px; border: 1px solid; }
+  .verdict .dot { width: 12px; height: 12px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+  .verdict.pass { color: #3fb98a; background: rgba(63,185,138,0.08); border-color: rgba(63,185,138,0.4); }
+  .verdict.fail { color: #f0883e; background: rgba(240,136,62,0.08); border-color: rgba(240,136,62,0.4); }
+  .verdict small { display: block; font-weight: 400; color: var(--text-muted); font-size: 0.8125rem; }
+  .res-finding { border: 1px solid var(--border); border-left: 3px solid var(--sev); border-radius: 3px; padding: 12px 14px; margin-bottom: 10px; background: var(--surface-alt); }
+  .res-finding h4 { margin: 0 0 6px; font-size: 0.9375rem; }
+  .res-meta { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); display: flex; gap: 6px 14px; flex-wrap: wrap; margin-bottom: 6px; }
+  .res-meta .sevw { color: var(--sev); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+  .res-finding p { margin: 0 0 4px; font-size: 0.875rem; color: var(--text-muted); }
+  .res-finding p strong { color: var(--text); font-weight: 500; }
+  .try-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  .rules-table table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .rules-table th { text-align: left; font-family: var(--mono); font-size: 0.8125rem; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-muted); padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  .rules-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--text-muted); }
+  .rules-table td:first-child { color: var(--text); }
+  .test-list ul { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 8px; }
+  .test-list li { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 8px 12px; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 3px; font-size: 0.875rem; }
+  abbr.term { text-decoration: underline dotted; cursor: help; }
+  .site-footer { max-width: 1040px; margin: 48px auto 0; padding: 20px 24px 40px; border-top: 1px solid var(--border); font-size: 0.8125rem; color: var(--text-muted); }
+
+  @media (max-width: 760px) {
+    .topbar-inner { padding: 0 16px; }
+    .page { padding: 0 16px 48px; }
+    .topbar-meta { display: none; }
+    .landing-link { margin-left: auto; }
+    .try { grid-template-columns: 1fr; }
+    .flow { grid-template-columns: 1fr 1fr; }
+    .glossary dl { grid-template-columns: 1fr; gap: 2px; }
+    .glossary dd { margin-bottom: 10px; }
+    .finding > summary { grid-template-columns: 1fr; gap: 6px; }
+    .finding-side { justify-content: flex-start; }
+    .subscore { grid-template-columns: 1fr 64px 40px; }
+    .subscore-delta { grid-column: 1 / -1; text-align: left; }
+    .subscore-delta:empty { display: none; }
+    .subscore-head { display: none; }
+    .subscore .meter { grid-column: 1 / -1; grid-row: 2; }
+    .toolbar-right { width: 100%; }
+    .pager-next { margin-left: 0; }
+    .view-pager .pager { flex: 1 1 100%; }
+    .panel { padding: 16px; }
+    .finding-detail { padding: 4px 16px 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .meter-fill, .card { transition: none; } }
 </style>
+<noscript><style>.view[hidden] { display: block; } .view-nav, .view-pager { display: none; }</style></noscript>
 </head>
 <body>
 
-<style>
-  .demo-banner { max-width: 1040px; margin: 0 auto; padding: 14px 24px 0; box-sizing: border-box; }
-  .demo-banner-inner { padding: 12px 16px; background: #10151C; border: 1px solid #232B36;
-    border-left: 3px solid #2FD9C4; border-radius: 4px; font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', sans-serif;
-    font-size: 0.875rem; line-height: 1.55; color: #8B96A5; }
-  .demo-banner a { color: #2FD9C4; }
-  .demo-banner code { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #E6EDF3; }
-  .demo-banner .back { display: inline-block; padding: 10px 0; margin-top: 4px; white-space: nowrap; }
-</style>
-<div class="demo-banner"><div class="demo-banner-inner">
-  <strong style="color:#E6EDF3;font-weight:600;">Real output, not a mockup.</strong>
-  This is the report PCBInsight generated for <code>examples/stm32_usb_dev</code>, a synthetic board in the
-  ten-board <a href="https://github.com/CyrilKafle/PCBInsight-AI/tree/master/examples">validation corpus</a>;
-  its low-confidence stub warnings were not checked against a real design.
-  Run it on your own boards from the <a href="https://github.com/CyrilKafle/PCBInsight-AI">GitHub repository</a>.<br>
-  <a class="back" href="index.html">&larr; Back to the landing page</a>
-</div></div>
-
-  <div class="page">
-    
-    <nav class="topbar">
-      <span class="brand">PCBInsight<span class="brand-slash"> / </span>report</span>
-      <span class="topbar-links">
-        <a href="#scores">Scores</a>
-        <a href="#findings">Findings</a>
-        <a href="#ai-review">AI review</a>
-        <a href="#board">Board</a>
-      </span>
-      <span class="topbar-meta">Generated 2026-10-07 21:40 UTC</span>
-    </nav>
-    
-
-    <header class="hero">
+    <header class="topbar-wrap">
+      <div class="topbar-inner">
+        <div class="topbar-row">
+          <a class="brand" href="#overview" data-go="overview">PCBInsight<span class="brand-slash"> / </span>demo</a>
+          <span class="topbar-meta">stm32_usb_dev &middot; generated 2026-10-08 18:02 UTC</span>
+          <a class="landing-link" href="index.html">&larr; Landing page</a>
+        </div>
+        <nav class="tabs" role="tablist" aria-label="Report sections"><a role="tab" class="tab" href="#overview" data-go="overview" id="tab-overview" aria-controls="view-overview">Overview</a><a role="tab" class="tab" href="#scores" data-go="scores" id="tab-scores" aria-controls="view-scores">Scores</a><a role="tab" class="tab" href="#findings" data-go="findings" id="tab-findings" aria-controls="view-findings">Findings</a><a role="tab" class="tab" href="#ai-review" data-go="ai-review" id="tab-ai-review" aria-controls="view-ai-review">AI review</a><a role="tab" class="tab" href="#board" data-go="board" id="tab-board" aria-controls="view-board">Board</a><a role="tab" class="tab" href="#try-it" data-go="try-it" id="tab-try-it" aria-controls="view-try-it">Try it</a></nav>
+      </div>
+    </header>
+    <main class="page"><section id="view-overview" class="view" data-view="overview" tabindex="-1" aria-labelledby="h-overview" hidden>
+    <div class="hero">
       <div class="hero-main">
         <p class="eyebrow">Design review</p>
-        <h1>stm32_usb_dev</h1>
+        <h1 id="h-overview">stm32_usb_dev</h1>
         <p class="facts"><span>4 layers</span><span>40 &times; 30 mm</span><span>18 components</span><span>12 nets</span></p>
-        <p class="lead">
-          8 findings from the deterministic check engine
-          (2 medium, 6 low). 6 of 8 fall below the 0.5 confidence line (all routing) and need manual verification.
-          Section 01 itemizes each deduction.
-        </p>
+        <p class="lead">PCBInsight reads a KiCad board, runs 28 engineering checks across 9
+        categories against it, scores the result, and has an AI explain the findings. This page is that report for a real
+        example board. Pick a section below to explore it.</p>
+        <p class="hero-cta"><button type="button" class="btn-primary" data-go="scores">Start with the scores <span aria-hidden="true">&rarr;</span></button>
+        <button type="button" class="btn-ghost" data-go="try-it">Jump to Try it</button></p>
       </div>
       <div class="hero-score" style="--score-color:#3fb98a">
         <div class="hero-score-value"><span>98</span><small>/100</small></div>
-        <div class="meter" role="meter" aria-labelledby="overall-label" aria-valuetext="98 of 100" aria-valuenow="98" aria-valuemin="0" aria-valuemax="100"><div class="meter-fill" style="width:98%"></div></div>
-        <p class="hero-score-label" id="overall-label">Overall score</p>
-        <p class="hero-score-note">Mean of seven subscores. Unverified findings are discounted by confidence, not excluded. Excluding Documentation, which has no checks yet: 97.</p>
-      </div>
-    </header>
-    <div class="severity-strip">
-      <div class="sev-tile is-zero" style="--sev:#ff5d5d">
-        <span class="sev-count">0</span>
-        <span class="sev-name">critical</span>
-      </div>
-    
-      <div class="sev-tile is-zero" style="--sev:#ff7b72">
-        <span class="sev-count">0</span>
-        <span class="sev-name">high</span>
-      </div>
-    
-      <div class="sev-tile" style="--sev:#f0883e">
-        <span class="sev-count">2</span>
-        <span class="sev-name">medium</span>
-      </div>
-    
-      <div class="sev-tile" style="--sev:#e3b341">
-        <span class="sev-count">6</span>
-        <span class="sev-name">low</span>
+        <div class="meter"><span class="meter-fill" style="width:98%"></span></div>
+        <p class="hero-score-label">Overall score</p>
+        <p class="hero-score-note">The plain average of seven subscores. 6 of 8 findings are low confidence and need a manual look.</p>
       </div>
     </div>
+    <div class="demo-note"><strong>Real output, not a mockup.</strong> This is the report PCBInsight generated for <code>examples/stm32_usb_dev</code>, a synthetic board in the ten-board <a href="https://github.com/CyrilKafle/PCBInsight-AI/tree/master/examples">validation corpus</a>; its low-confidence stub warnings were not checked against a real design. Run it on your own boards from the <a href="https://github.com/CyrilKafle/PCBInsight-AI">GitHub repository</a>.</div>
+    <h2 class="section-title">Explore the report</h2>
+    <div class="cards"><a class="card" href="#scores" data-go="scores">
+          <span class="card-top"><span class="card-title">Scores</span><span class="card-arrow" aria-hidden="true">&rarr;</span></span>
+          <span class="card-stat">98/100 overall</span>
+          <span class="card-desc">Seven subscores and the exact arithmetic behind them. Mark findings as fixed to see the score move.</span>
+        </a><a class="card" href="#findings" data-go="findings">
+          <span class="card-top"><span class="card-title">Findings</span><span class="card-arrow" aria-hidden="true">&rarr;</span></span>
+          <span class="card-stat">8 found &middot; 3 groups</span>
+          <span class="card-desc">Every problem the engine found (2 medium, 6 low), with why it matters and how to fix it. Filter by severity or area.</span>
+        </a><a class="card" href="#ai-review" data-go="ai-review">
+          <span class="card-top"><span class="card-title">AI review</span><span class="card-arrow" aria-hidden="true">&rarr;</span></span>
+          <span class="card-stat">Written by Claude</span>
+          <span class="card-desc">A plain-English summary of the findings. It can only talk about what the engine already found.</span>
+        </a><a class="card" href="#board" data-go="board">
+          <span class="card-top"><span class="card-title">Board</span><span class="card-arrow" aria-hidden="true">&rarr;</span></span>
+          <span class="card-stat">18 parts &middot; 6 vias</span>
+          <span class="card-desc">A map of the board with every finding pinned to where it was detected, plus the raw statistics.</span>
+        </a><a class="card" href="#try-it" data-go="try-it">
+          <span class="card-top"><span class="card-title">Try it</span><span class="card-arrow" aria-hidden="true">&rarr;</span></span>
+          <span class="card-stat">Type in your own numbers</span>
+          <span class="card-desc">Enter a trace width, via size, or capacitor distance and see what the real rule engine says.</span>
+        </a></div>
+    <div class="how">
+      <h3>How to read this</h3>
+      <ol>
+        <li><strong>The engine decides.</strong> Deterministic rules with named thresholds find every problem. No machine learning is involved in the score.</li>
+        <li><strong>The score is arithmetic.</strong> Each finding removes points based on its severity and how confident the rule is.</li>
+        <li><strong>The AI only explains.</strong> Claude receives a digest of the findings, never the raw board, and its citations are checked in code.</li>
+      </ol>
+    </div>
+    <details class="limits">
+      <summary>Known limits of this demo</summary>
+      <ul>
+        <li>The 0 to 100 score has no pass threshold. It summarizes deductions and is not a certification.</li>
+        <li>Documentation has no checks yet, so it reads 100 by default. A subscore of 100 means no deductions were found, not that the area was validated.</li>
+        <li>Dangling-end detection compares endpoints to pads, vias and traces within a position tolerance, so it can flag ends that are actually connected. That is why those findings carry low confidence.</li>
+        <li>Manufacturability checks currently cover trace width, annular ring, and via density.</li>
+        <li>Confidence values are set by hand per rule, not calibrated against labelled boards.</li>
+      </ul>
+    </details>
+    <div class="view-pager"><button type="button" class="pager pager-home" data-go="overview">All sections</button><button type="button" class="pager pager-next" data-go="scores">Next: Scores <span aria-hidden="true">&rarr;</span></button></div></section>
+<section id="view-scores" class="view" data-view="scores" tabindex="-1" aria-labelledby="h-scores" hidden>
+    <div class="view-nav">
+      <button type="button" class="back-btn" data-go="overview"><span aria-hidden="true">&larr;</span> Back to overview</button>
+      <span class="crumbs"><a href="#overview" data-go="overview">Overview</a> / Scores</span>
+    </div>
     
-
-    <section id="scores" class="block">
-      <h2><span class="h-label">01</span> Engineering scores</h2>
-      <div class="subscores">
-        <div class="subscore subscore-head" aria-hidden="true">
-          <span>Subscore</span><span></span><span class="subscore-loss">Points lost</span><span class="subscore-value">Score</span>
-        </div>
-        
-        <div class="subscore" style="--score-color:#3fb98a">
-          <span class="subscore-name">Routing</span>
-          <span class="meter" role="meter" aria-label="Routing" aria-valuetext="93 of 100" aria-valuenow="93" aria-valuemin="0" aria-valuemax="100"><span class="meter-fill" style="width:93%"></span></span>
-          <span class="subscore-loss">&minus;7.2</span>
-          <span class="subscore-value">93</span>
-        </div>
+    <h2 id="h-scores"><span class="h-label">01</span> Engineering scores</h2>
     
-
-        <div class="subscore" style="--score-color:#3fb98a">
-          <span class="subscore-name">Power</span>
-          <span class="meter" role="meter" aria-label="Power" aria-valuetext="91 of 100" aria-valuenow="91" aria-valuemin="0" aria-valuemax="100"><span class="meter-fill" style="width:91%"></span></span>
-          <span class="subscore-loss">&minus;9.2</span>
-          <span class="subscore-value">91</span>
-        </div>
+    <div class="what">
+      <p class="what-title">What is this?</p>
+      <p>Every finding removes points from the area it belongs to. The size of the penalty depends on how <strong>severe</strong> the problem is and how <strong>confident</strong> the rule is that it is real. Each area starts at 100, and the overall score is the average of all seven areas.</p>
+    </div>
     
-
-        <div class="subscore" style="--score-color:#3fb98a">
-          <span class="subscore-name">Signal Integrity</span>
-          <span class="meter" role="meter" aria-label="Signal Integrity" aria-valuetext="100 of 100" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"><span class="meter-fill" style="width:100%"></span></span>
-          <span class="subscore-loss">0.0</span>
-          <span class="subscore-value">100</span>
-        </div>
-    
-
-        <div class="subscore" style="--score-color:#3fb98a">
-          <span class="subscore-name">Manufacturability</span>
-          <span class="meter" role="meter" aria-label="Manufacturability" aria-valuetext="100 of 100" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"><span class="meter-fill" style="width:100%"></span></span>
-          <span class="subscore-loss">0.0</span>
-          <span class="subscore-value">100</span>
-        </div>
-    
-
-        <div class="subscore" style="--score-color:#3fb98a">
-          <span class="subscore-name">Placement</span>
-          <span class="meter" role="meter" aria-label="Placement" aria-valuetext="100 of 100" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"><span class="meter-fill" style="width:100%"></span></span>
-          <span class="subscore-loss">0.0</span>
-          <span class="subscore-value">100</span>
-        </div>
-    
-
-        <div class="subscore" style="--score-color:#3fb98a">
-          <span class="subscore-name">Thermals</span>
-          <span class="meter" role="meter" aria-label="Thermals" aria-valuetext="100 of 100" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"><span class="meter-fill" style="width:100%"></span></span>
-          <span class="subscore-loss">0.0</span>
-          <span class="subscore-value">100</span>
-        </div>
-    
-
-        <div class="subscore" style="--score-color:#8B96A5" title="Not assessed: no checks feed this subscore yet">
-          <span class="subscore-name">Documentation<small class="subscore-sub">no checks yet</small></span>
-          <span class="meter" role="meter" aria-label="Documentation" aria-valuetext="100 of 100" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"><span class="meter-fill" style="width:100%"></span></span>
-          <span class="subscore-loss">0.0</span>
-          <span class="subscore-value">100</span>
-        </div>
-    
+    <div class="subscores">
+      <div class="subscore subscore-head" aria-hidden="true"><span>Area</span><span></span><span class="subscore-loss">Points lost</span><span class="subscore-value">Score</span><span></span></div>
+      <div class="subscore" data-sub="Routing" style="--score-color:#3fb98a">
+              <span class="subscore-name">Routing</span>
+              <span class="meter"><span class="meter-fill" style="width:93%"></span></span>
+              <span class="subscore-loss">&minus;7.2</span>
+              <span class="subscore-value">93</span>
+              <span class="subscore-delta" aria-live="polite"></span>
+            </div><div class="subscore" data-sub="Power" style="--score-color:#3fb98a">
+              <span class="subscore-name">Power</span>
+              <span class="meter"><span class="meter-fill" style="width:91%"></span></span>
+              <span class="subscore-loss">&minus;9.2</span>
+              <span class="subscore-value">91</span>
+              <span class="subscore-delta" aria-live="polite"></span>
+            </div><div class="subscore" data-sub="Signal Integrity" style="--score-color:#3fb98a">
+              <span class="subscore-name">Signal Integrity</span>
+              <span class="meter"><span class="meter-fill" style="width:100%"></span></span>
+              <span class="subscore-loss">0.0</span>
+              <span class="subscore-value">100</span>
+              <span class="subscore-delta" aria-live="polite"></span>
+            </div><div class="subscore" data-sub="Manufacturability" style="--score-color:#3fb98a">
+              <span class="subscore-name">Manufacturability</span>
+              <span class="meter"><span class="meter-fill" style="width:100%"></span></span>
+              <span class="subscore-loss">0.0</span>
+              <span class="subscore-value">100</span>
+              <span class="subscore-delta" aria-live="polite"></span>
+            </div><div class="subscore" data-sub="Placement" style="--score-color:#3fb98a">
+              <span class="subscore-name">Placement</span>
+              <span class="meter"><span class="meter-fill" style="width:100%"></span></span>
+              <span class="subscore-loss">0.0</span>
+              <span class="subscore-value">100</span>
+              <span class="subscore-delta" aria-live="polite"></span>
+            </div><div class="subscore" data-sub="Thermals" style="--score-color:#3fb98a">
+              <span class="subscore-name">Thermals</span>
+              <span class="meter"><span class="meter-fill" style="width:100%"></span></span>
+              <span class="subscore-loss">0.0</span>
+              <span class="subscore-value">100</span>
+              <span class="subscore-delta" aria-live="polite"></span>
+            </div><div class="subscore" data-sub="Documentation" style="--score-color:#8B96A5">
+              <span class="subscore-name">Documentation<small class="subscore-sub">no checks yet</small></span>
+              <span class="meter"><span class="meter-fill" style="width:100%"></span></span>
+              <span class="subscore-loss">0.0</span>
+              <span class="subscore-value">100</span>
+              <span class="subscore-delta" aria-live="polite"></span>
+            </div>
+      <div class="subscore subscore-total" id="overall-row" style="--score-color:#3fb98a">
+        <span class="subscore-name">Overall</span>
+        <span class="meter"><span class="meter-fill" style="width:98%"></span></span>
+        <span class="subscore-loss">average</span>
+        <span class="subscore-value">98</span>
+        <span class="subscore-delta" aria-live="polite"></span>
       </div>
-      
-      <div class="derivation">
-        <h3>How the score is computed</h3>
-        <p class="formula"><code>subscore = 100 &minus; &Sigma; (severity points &times; confidence)</code></p>
-        <p class="derivation-note">Severity points: critical 25, high 15, medium 8, low 3, info 1. Overall is the plain mean of the seven rounded subscores.
-        Decoupling and ground findings roll into Power. Weighting by confidence, rather than a hard cutoff, keeps
-        uncertain findings from being either ignored or counted in full. The confidence values are set by hand
-        per rule by the rule's author, not calibrated against labelled boards.</p>
-        <div class="table-scroll" tabindex="0" role="region" aria-label="Score deductions table">
+    </div>
+
+    <div class="panel sim" id="what-if">
+      <div class="panel-head">
+        <h3>What if you fixed these?</h3>
+        <button type="button" class="btn-ghost" id="sim-reset">Reset</button>
+      </div>
+      <p class="panel-note">Tick a finding to pretend you fixed it. The bars above update using the same formula as the engine.
+      <span id="sim-test-note"></span></p>
+      <div class="sim-list"><label class="sim-row" style="--sev:#f0883e">
+              <input type="checkbox" class="sim-check" data-group="0">
+              <span class="sim-main"><span class="sim-title">Thin power trace on net +3V3 (0.25mm)</span>
+              <span class="sim-meta"><code>PWR-001</code> &middot; medium &middot; Power</span></span>
+              <span class="sim-pts">&minus;5.2</span>
+            </label><label class="sim-row" style="--sev:#f0883e">
+              <input type="checkbox" class="sim-check" data-group="1">
+              <span class="sim-main"><span class="sim-title">Decoupling capacitor C1 is 3.2mm from U1</span>
+              <span class="sim-meta"><code>DECAP-001</code> &middot; medium &middot; Power</span></span>
+              <span class="sim-pts">&minus;4.0</span>
+            </label><label class="sim-row" style="--sev:#e3b341">
+              <input type="checkbox" class="sim-check" data-group="2">
+              <span class="sim-main"><span class="sim-title">6 &times; Possible dangling trace end</span>
+              <span class="sim-meta"><code>RTE-001 to RTE-006</code> &middot; low &middot; Routing</span></span>
+              <span class="sim-pts">&minus;7.2</span>
+            </label></div>
+      <div id="sim-extra" class="sim-extra" hidden></div>
+    </div>
+
+    
+    <details class="panel derivation">
+      <summary><h3>Show the exact arithmetic</h3></summary>
+      <p class="formula"><code>area score = 100 &minus; &Sigma; (severity points &times; confidence)</code></p>
+      <p class="panel-note">Severity points: critical 25, high 15, medium 8, low 3, info 1. Decoupling and ground findings roll into Power. Confidence is a hand-set
+      per-rule estimate, not a statistical probability.</p>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Score deductions table">
         <table>
-          <thead><tr><th>Finding</th><th>Subscore</th><th class="num">Deducted</th><th class="num">Severity &times; confidence</th></tr></thead>
-          <tbody>
-            <tr><td class="nowrap"><code>PWR-001</code></td><td>Power</td><td class="num">&minus;5.2</td><td class="num">8 &times; 0.65</td></tr>
+          <thead><tr><th>Finding</th><th>Area</th><th class="num">Deducted</th><th class="num">Severity &times; confidence</th></tr></thead>
+          <tbody><tr><td class="nowrap"><code>PWR-001</code></td><td>Power</td><td class="num">&minus;5.2</td><td class="num">8 &times; 0.65</td></tr>
 <tr><td class="nowrap"><code>DECAP-001</code></td><td>Power</td><td class="num">&minus;4.0</td><td class="num">8 &times; 0.50</td></tr>
-<tr><td class="nowrap"><code>RTE-001 to RTE-006</code></td><td>Routing</td><td class="num">&minus;7.2</td><td class="num">6 &times; 3 &times; 0.40</td></tr>
-          </tbody>
+<tr><td class="nowrap"><code>RTE-001 to RTE-006</code></td><td>Routing</td><td class="num">&minus;7.2</td><td class="num">6 &times; 3 &times; 0.40</td></tr></tbody>
         </table>
-        </div>
-        <p class="derivation-note">Each row multiplies severity points by confidence, by the number of findings in the group. Overall = (93 + 91 + 100 + 100 + 100 + 100 + 100) / 7 = 97.7, shown as 98.</p>
       </div>
+      <p class="panel-note">Overall = (93 + 91 + 100 + 100 + 100 + 100 + 100) / 7 = 97.7, shown as 98.</p>
+    </details>
     
-    </section>
+    <div class="view-pager"><button type="button" class="pager" data-go="overview"><span aria-hidden="true">&larr;</span> Overview</button><button type="button" class="pager pager-home" data-go="overview">All sections</button><button type="button" class="pager pager-next" data-go="findings">Next: Findings <span aria-hidden="true">&rarr;</span></button></div></section>
+<section id="view-findings" class="view" data-view="findings" tabindex="-1" aria-labelledby="h-findings" hidden>
+    <div class="view-nav">
+      <button type="button" class="back-btn" data-go="overview"><span aria-hidden="true">&larr;</span> Back to overview</button>
+      <span class="crumbs"><a href="#overview" data-go="overview">Overview</a> / Findings</span>
+    </div>
     
-
-    <section id="findings" class="block">
-      <h2><span class="h-label">02</span> Findings</h2>
-      <p class="legend"><strong>Confidence</strong> is a fixed per-rule heuristic from 0 to 1 that estimates how likely a
-      finding is to be real. It is not a statistical probability. Below 0.5, a finding is treated as
-      unverified and should be checked by hand in the CAD tool; 0.5 or above is not tagged.</p>
-      <div class="findings">
+    <h2 id="h-findings"><span class="h-label">02</span> Findings</h2>
+    
+    <div class="what">
+      <p class="what-title">What is this?</p>
+      <p>Each card is one problem the rule engine found. Cards that share the same explanation are grouped, so six copies of the same warning read as one card listing six nets. Open a card to see <strong>why it matters</strong> and <strong>how to fix it</strong>. Findings below <strong>0.5</strong> confidence are marked <span class="unverified">unverified</span>: check them by hand in your CAD tool.</p>
+    </div>
+    
+    <div class="toolbar" role="group" aria-label="Filter findings">
+      <div class="chip-row">
+        <button type="button" class="chip-btn is-on" data-filter-sev="all" aria-pressed="true">All <span class="chip-count">8</span></button>
+        <button type="button" class="chip-btn" data-filter-sev="medium" style="--sev:#f0883e" aria-pressed="false">Medium <span class="chip-count">2</span></button><button type="button" class="chip-btn" data-filter-sev="low" style="--sev:#e3b341" aria-pressed="false">Low <span class="chip-count">6</span></button>
+      </div>
+      <div class="toolbar-right">
+        <label class="select-wrap">Area
+          <select id="filter-cat"><option value="all">All areas</option><option value="decoupling">Decoupling</option><option value="power">Power</option><option value="routing">Routing</option></select>
+        </label>
+        <label class="check-wrap"><input type="checkbox" id="filter-unverified"> Only unverified</label>
+        <button type="button" class="btn-ghost" id="expand-all">Expand all</button>
+        <button type="button" class="btn-ghost" id="collapse-all">Collapse all</button>
+      </div>
+    </div>
+    <p class="result-count" id="result-count" aria-live="polite">Showing 3 of 3 groups</p>
+    <div class="findings" id="findings-list">
+    <details class="finding" data-group="0" data-sev="medium" data-cat="power" data-unverified="0" style="--sev:#f0883e">
+      <summary>
+        <span class="finding-sev">medium</span>
+        <span class="finding-title">Thin power trace on net +3V3 (0.25mm)</span>
+        <span class="finding-side">
+          <span class="finding-cat">Power</span>
+          <span class="finding-conf" title="Confidence: how likely this finding is real (0 to 1)">conf 0.65</span>
+          
+          <span class="finding-chev" aria-hidden="true"></span>
+        </span>
+      </summary>
+      <div class="finding-detail">
+        <div class="finding-ids"><code class="issue-id">PWR-001</code><button type="button" class="link-btn" data-locate="PWR-001">Show on board</button></div>
+        <p class="chips"><span class="chip">+3V3</span></p>
         
-        <article class="finding" style="--sev:#f0883e">
-          <div class="finding-head">
-            <code class="issue-id">PWR-001</code>
-            <span class="sev-tag">medium</span>
-            <span class="finding-cat">power</span>
-            <span class="finding-conf">confidence 0.65</span>
-            
-          </div>
-          <h3>Thin power trace on net +3V3 (0.25mm)</h3>
-          <p class="chips"><span class="chip">+3V3</span></p>
-          
-          <div class="finding-body">
-            <div>
-              <h4>Why it matters</h4>
-              <p>A trace this narrow limits current-carrying capacity and increases IR drop along the supply path, which can starve downstream components under load.</p>
-              <p class="principle">Size power trace width to the expected current, not the minimum fab rule.</p>
-            </div>
-            <div>
-              <h4>Suggested fix</h4>
-              <p>Widen this trace to at least 0.30mm, more for high-current rails.</p>
-            </div>
-          </div>
-        </article>
-    
-
-        <article class="finding" style="--sev:#f0883e">
-          <div class="finding-head">
-            <code class="issue-id">DECAP-001</code>
-            <span class="sev-tag">medium</span>
-            <span class="finding-cat">decoupling</span>
-            <span class="finding-conf">confidence 0.50</span>
-            
-          </div>
-          <h3>Decoupling capacitor C1 is 3.2mm from U1</h3>
-          <p class="chips"><span class="chip">U1</span><span class="chip">C1</span><span class="chip">+3V3</span></p>
-          
-          <div class="finding-body">
-            <div>
-              <h4>Why it matters</h4>
-              <p>The nearest capacitor bridging +3V3 to ground is farther than recommended for a MCU, lengthening the loop the transient current has to travel and reducing the capacitor&#x27;s effectiveness at high frequency.</p>
-              <p class="principle">Decoupling capacitors should sit as close as possible to the pin they protect.</p>
-            </div>
-            <div>
-              <h4>Suggested fix</h4>
-              <p>Move C1 within 3.0mm of U1, or add a closer one.</p>
-            </div>
-          </div>
-        </article>
-    
-
-        <article class="finding" style="--sev:#e3b341">
-          <div class="finding-head">
-            <code class="issue-id">RTE-001 to RTE-006</code>
-            <span class="sev-tag">low</span>
-            <span class="finding-cat">routing</span>
-            <span class="finding-conf">confidence 0.40</span>
-            <span class="unverified">unverified: check by hand</span>
-          </div>
-          <h3>6 &times; Possible dangling trace end</h3>
-          
-          <ul class="members"><li><code class="issue-id">RTE-001</code><span>Possible dangling trace end on net /USB_DP</span></li><li><code class="issue-id">RTE-002</code><span>Possible dangling trace end on net /USB_DM</span></li><li><code class="issue-id">RTE-003</code><span>Possible dangling trace end on net /XTAL_IN</span></li><li><code class="issue-id">RTE-004</code><span>Possible dangling trace end on net /XTAL_OUT</span></li><li><code class="issue-id">RTE-005</code><span>Possible dangling trace end on net /SWDIO</span></li><li><code class="issue-id">RTE-006</code><span>Possible dangling trace end on net /SWCLK</span></li></ul>
-          <div class="finding-body">
-            <div>
-              <h4>Why it matters</h4>
-              <p>This trace end doesn&#x27;t connect to another trace, a via, or a component pad on the same net within a small tolerance, so it may be an unterminated stub.</p>
-              <p class="principle">Every trace should terminate at a pad, via, or another trace on its net.</p>
-            </div>
-            <div>
-              <h4>Suggested fix</h4>
-              <p>Verify this endpoint actually lands on a pad; extend or remove the stub.</p>
-            </div>
-          </div>
-        </article>
-    
+        <div class="finding-body">
+          <div><h4>Why it matters</h4><p>A trace this narrow limits current-carrying capacity and increases IR drop along the supply path, which can starve downstream components under load.</p><p class="principle">Size power trace width to the expected current, not the minimum fab rule.</p></div>
+          <div><h4>Suggested fix</h4><p>Widen this trace to at least 0.30mm, more for high-current rails.</p></div>
+        </div>
       </div>
-    </section>
+    </details>
     
 
-    <section id="ai-review" class="block ai-block">
-      <h2><span class="h-label ai-label">03</span> AI review</h2>
-      <p class="ai-note">Written by Claude <em>over</em> the findings above and shown verbatim. It never sees raw board geometry and cannot add findings of its own. It repeats the engine's score and confidence values and adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p><div class="ai-body"><h3>PCB Review Summary — stm32_usb_dev</h3>
+    <details class="finding" data-group="1" data-sev="medium" data-cat="decoupling" data-unverified="0" style="--sev:#f0883e">
+      <summary>
+        <span class="finding-sev">medium</span>
+        <span class="finding-title">Decoupling capacitor C1 is 3.2mm from U1</span>
+        <span class="finding-side">
+          <span class="finding-cat">Decoupling</span>
+          <span class="finding-conf" title="Confidence: how likely this finding is real (0 to 1)">conf 0.50</span>
+          
+          <span class="finding-chev" aria-hidden="true"></span>
+        </span>
+      </summary>
+      <div class="finding-detail">
+        <div class="finding-ids"><code class="issue-id">DECAP-001</code><button type="button" class="link-btn" data-locate="DECAP-001">Show on board</button></div>
+        <p class="chips"><span class="chip">U1</span><span class="chip">C1</span><span class="chip">+3V3</span></p>
+        
+        <div class="finding-body">
+          <div><h4>Why it matters</h4><p>The nearest capacitor bridging +3V3 to ground is farther than recommended for a MCU, lengthening the loop the transient current has to travel and reducing the capacitor&#x27;s effectiveness at high frequency.</p><p class="principle">Decoupling capacitors should sit as close as possible to the pin they protect.</p></div>
+          <div><h4>Suggested fix</h4><p>Move C1 within 3.0mm of U1, or add a closer one.</p></div>
+        </div>
+      </div>
+    </details>
+    
+
+    <details class="finding" data-group="2" data-sev="low" data-cat="routing" data-unverified="1" style="--sev:#e3b341">
+      <summary>
+        <span class="finding-sev">low</span>
+        <span class="finding-title">6 &times; Possible dangling trace end</span>
+        <span class="finding-side">
+          <span class="finding-cat">Routing</span>
+          <span class="finding-conf" title="Confidence: how likely this finding is real (0 to 1)">conf 0.40</span>
+          <span class="unverified">unverified: check by hand</span>
+          <span class="finding-chev" aria-hidden="true"></span>
+        </span>
+      </summary>
+      <div class="finding-detail">
+        <div class="finding-ids"><code class="issue-id">RTE-001 to RTE-006</code></div>
+        
+        <ul class="members"><li><code class="issue-id">RTE-001</code><span>Possible dangling trace end on net /USB_DP</span><button type="button" class="link-btn locate" data-locate="RTE-001">Show on board</button></li><li><code class="issue-id">RTE-002</code><span>Possible dangling trace end on net /USB_DM</span><button type="button" class="link-btn locate" data-locate="RTE-002">Show on board</button></li><li><code class="issue-id">RTE-003</code><span>Possible dangling trace end on net /XTAL_IN</span><button type="button" class="link-btn locate" data-locate="RTE-003">Show on board</button></li><li><code class="issue-id">RTE-004</code><span>Possible dangling trace end on net /XTAL_OUT</span><button type="button" class="link-btn locate" data-locate="RTE-004">Show on board</button></li><li><code class="issue-id">RTE-005</code><span>Possible dangling trace end on net /SWDIO</span><button type="button" class="link-btn locate" data-locate="RTE-005">Show on board</button></li><li><code class="issue-id">RTE-006</code><span>Possible dangling trace end on net /SWCLK</span><button type="button" class="link-btn locate" data-locate="RTE-006">Show on board</button></li></ul>
+        <div class="finding-body">
+          <div><h4>Why it matters</h4><p>This trace end doesn&#x27;t connect to another trace, a via, or a component pad on the same net within a small tolerance, so it may be an unterminated stub.</p><p class="principle">Every trace should terminate at a pad, via, or another trace on its net.</p></div>
+          <div><h4>Suggested fix</h4><p>Verify this endpoint actually lands on a pad; extend or remove the stub.</p></div>
+        </div>
+      </div>
+    </details>
+    </div>
+    <p class="muted empty" id="findings-empty" hidden>No findings match these filters. <button type="button" class="link-btn" id="filters-clear">Clear filters</button></p>
+    <details class="panel glossary"><summary><h3>Glossary</h3></summary><dl><dt>Net</dt><dd>A set of pads that must be electrically connected, such as every pin that touches the 3.3 V supply.</dd><dt>Trace</dt><dd>A strip of copper that carries a signal or power between pads.</dd><dt>Via</dt><dd>A plated hole that moves a trace from one board layer to another.</dd><dt>Annular ring</dt><dd>The ring of copper left around a drilled hole. Too thin and a slightly off-centre drill breaks the connection.</dd><dt>Decoupling capacitor</dt><dd>A small capacitor placed right next to a chip&#x27;s power pin to supply fast bursts of current.</dd><dt>Copper pour</dt><dd>A large filled area of copper, usually ground, that gives current an easy return path and helps spread heat.</dd><dt>Differential pair</dt><dd>Two traces that carry one signal as a voltage difference, like USB D+ and D-. They should match in length and shape.</dd><dt>Confidence</dt><dd>A fixed per-rule estimate from 0 to 1 of how likely a finding is real. It is not a statistical probability.</dd></dl></details>
+    <div class="view-pager"><button type="button" class="pager" data-go="scores"><span aria-hidden="true">&larr;</span> Scores</button><button type="button" class="pager pager-home" data-go="overview">All sections</button><button type="button" class="pager pager-next" data-go="ai-review">Next: AI review <span aria-hidden="true">&rarr;</span></button></div></section>
+<section id="view-ai-review" class="view" data-view="ai-review" tabindex="-1" aria-labelledby="h-ai-review" hidden>
+    <div class="view-nav">
+      <button type="button" class="back-btn" data-go="overview"><span aria-hidden="true">&larr;</span> Back to overview</button>
+      <span class="crumbs"><a href="#overview" data-go="overview">Overview</a> / AI review</span>
+    </div>
+    <h2 id="h-ai-review"><span class="h-label ai-label">03</span> AI review</h2>
+    <div class="what">
+      <p class="what-title">What is this?</p>
+      <p>After the engine finishes, Claude writes a short engineering review of the findings, the way a senior engineer would in a code review. It is a <strong>narrator, not an analyst</strong>: it receives a structured digest of what the engine already found and nothing else.</p>
+    </div>
+    
+    <ol class="flow" aria-label="How the AI review is produced">
+      <li><strong>1 &middot; Engine</strong><span>28 deterministic checks produce findings</span></li>
+      <li><strong>2 &middot; Digest</strong><span>Findings are summarized. No raw board geometry.</span></li>
+      <li><strong>3 &middot; Claude</strong><span>Writes the narrative from the digest only</span></li>
+      <li><strong>4 &middot; Check</strong><span>Every citation is verified in code</span></li>
+    </ol>
+    <p class="panel-note">Shown verbatim from a real Claude run. It repeats the engine's score and confidence values and adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p><article class="ai-body"><h3>PCB Review Summary — stm32_usb_dev</h3>
 <p><strong>Overall score: 98/100</strong> — a strong result. No critical or high-severity issues were found; the deterministic analysis surfaced only 2 medium and 6 low-severity items across a 4-layer, 18-component board.</p>
 <h4>Recurring Theme: Possible Dangling Trace Stubs</h4>
 <p>Six of the eight findings (RTE-001 through RTE-006) share the identical pattern — a trace endpoint that doesn&#x27;t clearly terminate at a pad, via, or same-net trace within tolerance. These span several functionally distinct nets: USB differential pair (/USB_DP, /USB_DM), crystal lines (/XTAL_IN, /XTAL_OUT), and SWD programming/debug lines (/SWDIO, /SWCLK).</p>
@@ -470,38 +748,443 @@
 <ul>
 <li><strong>PWR-001</strong> (confidence 0.65): the +3V3 rail includes a 0.25mm-wide trace segment, flagged as thin relative to current-carrying needs. This is the higher-confidence item in the batch and warrants attention — widening to at least 0.30mm is the supplied recommendation.</li>
 <li><strong>DECAP-001</strong> (confidence 0.5): decoupling capacitor C1 sits 3.2mm from U1 on +3V3, slightly beyond the recommended proximity for effective high-frequency decoupling at the MCU pin. At exactly the 0.5 confidence boundary, this is plausible but should still be confirmed against the actual layout before committing to a fix.</li>
-</ul><p class="truncation-note">The model reached its output limit, so one trailing incomplete sentence is omitted. Everything above is verbatim.</p></div>
-    </section>
+</ul><p class="truncation-note">The model reached its output limit, so one trailing incomplete sentence is omitted. Everything above is verbatim.</p></article><div class="view-pager"><button type="button" class="pager" data-go="findings"><span aria-hidden="true">&larr;</span> Findings</button><button type="button" class="pager pager-home" data-go="overview">All sections</button><button type="button" class="pager pager-next" data-go="board">Next: Board <span aria-hidden="true">&rarr;</span></button></div></section>
+<section id="view-board" class="view" data-view="board" tabindex="-1" aria-labelledby="h-board" hidden>
+    <div class="view-nav">
+      <button type="button" class="back-btn" data-go="overview"><span aria-hidden="true">&larr;</span> Back to overview</button>
+      <span class="crumbs"><a href="#overview" data-go="overview">Overview</a> / Board</span>
+    </div>
     
-
-    <section id="board" class="block">
-      <h2><span class="h-label">04</span> Board</h2>
-      <dl class="stats">
-        <div class="stat"><dt>Board</dt><dd>stm32_usb_dev</dd></div>
-<div class="stat"><dt>Dimensions</dt><dd>40.0 &times; 30.0 mm</dd></div>
-<div class="stat"><dt>Layers</dt><dd>4</dd></div>
-<div class="stat"><dt>Components</dt><dd>18</dd></div>
-<div class="stat"><dt>Nets</dt><dd>12</dd></div>
-<div class="stat"><dt>Trace segments</dt><dd>14</dd></div>
-<div class="stat"><dt>Vias</dt><dd>6</dd></div>
-<div class="stat"><dt>Copper pours</dt><dd>3</dd></div>
-      </dl>
-    </section>
+    <h2 id="h-board"><span class="h-label">04</span> Board</h2>
     
-
-    <footer class="footer">
-      <p class="eyebrow">Known limits</p>
-      <ul>
-        <li>The 0 to 100 score has no pass threshold; it summarizes deductions and is not a certification.</li>
-        <li>Documentation has no checks yet, so it reads 100 by default. More generally, a subscore at 100 means no deductions were found, not that the area was validated.</li>
-        <li>Dangling-end detection compares endpoints to pads, vias and traces within a position tolerance, so it can
-        flag ends that are actually connected. This is why those findings carry low confidence.</li>
-        <li>Manufacturability checks currently cover trace width, annular ring, and via density.
-        Silkscreen-over-pad and copper-sliver detection are planned once the parser captures silkscreen text
-        geometry and full pour polygon shape.</li>
-      </ul>
+    <div class="what">
+      <p class="what-title">What is this?</p>
+      <p>A top-down map of the board as the parser read it. Dots mark where each finding was detected. Hover or tap a dot to read it, or use <strong>Show on board</strong> in the Findings tab to jump straight to one.</p>
+    </div>
+    
+    
+    <div class="panel boardmap">
+      <div class="panel-head">
+        <h3>Board map</h3>
+        <div class="layer-toggles" role="group" aria-label="Map layers">
+          <label><input type="checkbox" data-layer="pours" checked> Pours</label>
+          <label><input type="checkbox" data-layer="traces" checked> Traces</label>
+          <label><input type="checkbox" data-layer="vias" checked> Vias</label>
+          <label><input type="checkbox" data-layer="comps" checked> Parts</label>
+          <label><input type="checkbox" data-layer="markers" checked> Findings (8)</label>
+        </div>
+      </div>
+      <svg id="board-svg" viewBox="-2.60 -2.60 45.20 35.20" role="img"
+           aria-label="Top-down map of the board with 8 findings pinned">
+        <rect class="outline" x="0" y="0" width="40.00" height="30.00" rx="0.8"/>
+        <g class="g-pours"><polygon class="pour" points="1.00,1.00 39.00,1.00 39.00,29.00 1.00,29.00"/><polygon class="pour" points="1.00,1.00 39.00,1.00 39.00,29.00 1.00,29.00"/><polygon class="pour" points="1.00,1.00 39.00,1.00 39.00,29.00 1.00,29.00"/></g>
+        <g class="g-traces"><line class="trace layer-0" x1="2.00" y1="13.00" x2="5.00" y2="8.00" stroke-width="0.40"/><line class="trace layer-0" x1="5.00" y1="8.00" x2="6.50" y2="6.00" stroke-width="0.40"/><line class="trace layer-0" x1="9.50" y1="6.00" x2="11.00" y2="8.00" stroke-width="0.40"/><line class="trace layer-0" x1="11.00" y1="8.00" x2="16.50" y2="13.50" stroke-width="0.40"/><line class="trace layer-0" x1="16.50" y1="13.50" x2="17.50" y2="12.50" stroke-width="0.25"/><line class="trace layer-0" x1="3.00" y1="14.00" x2="6.50" y2="14.00" stroke-width="0.25"/><line class="trace layer-0" x1="7.50" y1="14.00" x2="23.50" y2="13.50" stroke-width="0.25"/><line class="trace layer-0" x1="3.00" y1="16.00" x2="6.50" y2="16.00" stroke-width="0.25"/><line class="trace layer-0" x1="7.50" y1="16.00" x2="23.50" y2="14.00" stroke-width="0.25"/><line class="trace layer-0" x1="16.50" y1="12.50" x2="25.50" y2="22.50" stroke-width="0.20"/><line class="trace layer-0" x1="16.50" y1="13.00" x2="29.50" y2="22.50" stroke-width="0.20"/><line class="trace layer-0" x1="23.50" y1="16.50" x2="37.00" y2="6.00" stroke-width="0.20"/><line class="trace layer-0" x1="23.50" y1="17.00" x2="37.00" y2="7.50" stroke-width="0.20"/><line class="trace layer-0" x1="20.00" y1="18.00" x2="31.50" y2="25.00" stroke-width="0.20"/></g>
+        <g class="g-vias"><circle class="via" cx="16.50" cy="16.50" r="0.30"/><circle class="via" cx="2.00" cy="17.00" r="0.30"/><circle class="via" cx="6.50" cy="6.00" r="0.30"/><circle class="via" cx="29.50" cy="21.50" r="0.30"/><circle class="via" cx="11.00" cy="8.00" r="0.30"/><circle class="via" cx="20.00" cy="15.00" r="0.30"/></g>
+        <g class="g-comps"><g class="comp k-ic" transform="translate(20.00,15.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">U1</text></g><g class="comp k-ic" transform="translate(8.00,6.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">U2</text></g><g class="comp k-pass" transform="translate(28.00,20.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">Y1</text></g><g class="comp k-conn" transform="translate(2.00,15.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">J1</text></g><g class="comp k-conn" transform="translate(37.00,6.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">J2</text></g><g class="comp k-pass" transform="translate(18.00,12.50)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">C1</text></g><g class="comp k-pass" transform="translate(22.00,12.50)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">C2</text></g><g class="comp k-pass" transform="translate(18.00,17.50)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">C3</text></g><g class="comp k-pass" transform="translate(5.00,8.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">C5</text></g><g class="comp k-pass" transform="translate(11.00,8.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">C6</text></g><g class="comp k-pass" transform="translate(26.00,22.50)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">C7</text></g><g class="comp k-pass" transform="translate(30.00,22.50)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">C8</text></g><g class="comp k-pass" transform="translate(7.00,14.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">R1</text></g><g class="comp k-pass" transform="translate(7.00,16.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">R2</text></g><g class="comp k-pass" transform="translate(14.00,22.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">R3</text></g><g class="comp k-pass" transform="translate(14.00,8.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">R4</text></g><g class="comp k-pass" transform="translate(32.00,25.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">R5</text></g><g class="comp k-pass" transform="translate(36.00,25.00)"><rect x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.2"/><text y="-1.1" text-anchor="middle">D1</text></g></g>
+        <g class="g-markers"><circle class="marker" tabindex="0" role="button" data-id="RTE-001" data-sev="low" cx="23.50" cy="13.50" r="0.56" style="--sev:#e3b341"><title>RTE-001: Possible dangling trace end on net /USB_DP</title></circle><circle class="marker" tabindex="0" role="button" data-id="RTE-002" data-sev="low" cx="23.50" cy="14.00" r="0.56" style="--sev:#e3b341"><title>RTE-002: Possible dangling trace end on net /USB_DM</title></circle><circle class="marker" tabindex="0" role="button" data-id="RTE-003" data-sev="low" cx="16.50" cy="12.50" r="0.56" style="--sev:#e3b341"><title>RTE-003: Possible dangling trace end on net /XTAL_IN</title></circle><circle class="marker" tabindex="0" role="button" data-id="RTE-004" data-sev="low" cx="16.50" cy="13.00" r="0.56" style="--sev:#e3b341"><title>RTE-004: Possible dangling trace end on net /XTAL_OUT</title></circle><circle class="marker" tabindex="0" role="button" data-id="RTE-005" data-sev="low" cx="23.50" cy="16.50" r="0.56" style="--sev:#e3b341"><title>RTE-005: Possible dangling trace end on net /SWDIO</title></circle><circle class="marker" tabindex="0" role="button" data-id="RTE-006" data-sev="low" cx="23.50" cy="17.00" r="0.56" style="--sev:#e3b341"><title>RTE-006: Possible dangling trace end on net /SWCLK</title></circle><circle class="marker" tabindex="0" role="button" data-id="PWR-001" data-sev="medium" cx="16.50" cy="13.50" r="0.56" style="--sev:#f0883e"><title>PWR-001: Thin power trace on net +3V3 (0.25mm)</title></circle><circle class="marker" tabindex="0" role="button" data-id="DECAP-001" data-sev="medium" cx="20.00" cy="15.00" r="0.56" style="--sev:#f0883e"><title>DECAP-001: Decoupling capacitor C1 is 3.2mm from U1</title></circle></g>
+      </svg>
+      <div class="map-legend">
+        <span class="lg"><i class="sw layer-0"></i>F.Cu</span>
+        <span class="lg"><i class="sw sw-via"></i>Via</span>
+        <span class="lg"><i class="sw sw-marker"></i>Finding (colour = severity)</span>
+      </div>
+      <div class="map-detail" id="map-detail" aria-live="polite"><span class="muted">Select a dot on the map to read the finding.</span></div>
+    </div>
+    
+    <dl class="stats"><div class="stat"><dt>Dimensions</dt><dd>40.0 &times; 30.0 mm</dd><p>Outline of the board in millimetres.</p></div><div class="stat"><dt>Layers</dt><dd>4</dd><p>Copper layers. More layers allow denser routing and dedicated power and ground planes.</p></div><div class="stat"><dt>Components</dt><dd>18</dd><p>Parts placed on the board: chips, passives, connectors.</p></div><div class="stat"><dt>Nets</dt><dd>12</dd><p>Groups of pads that must be electrically connected.</p></div><div class="stat"><dt>Trace segments</dt><dd>14</dd><p>Straight pieces of copper that make up the routing.</p></div><div class="stat"><dt>Vias</dt><dd>6</dd><p>Plated holes that move a trace between layers.</p></div><div class="stat"><dt>Copper pours</dt><dd>3</dd><p>Large filled copper areas, usually ground.</p></div><div class="stat"><dt>Findings</dt><dd>8</dd><p>Problems the rule engine flagged. Each one with a known position is pinned on the map above.</p></div></dl>
+    <div class="view-pager"><button type="button" class="pager" data-go="ai-review"><span aria-hidden="true">&larr;</span> AI review</button><button type="button" class="pager pager-home" data-go="overview">All sections</button><button type="button" class="pager pager-next" data-go="try-it">Next: Try it <span aria-hidden="true">&rarr;</span></button></div></section>
+<section id="view-try-it" class="view" data-view="try-it" tabindex="-1" aria-labelledby="h-try-it" hidden>
+    <div class="view-nav">
+      <button type="button" class="back-btn" data-go="overview"><span aria-hidden="true">&larr;</span> Back to overview</button>
+      <span class="crumbs"><a href="#overview" data-go="overview">Overview</a> / Try it</span>
+    </div>
+    
+    <h2 id="h-try-it"><span class="h-label">05</span> Try it yourself</h2>
+    
+    <div class="what">
+      <p class="what-title">What is this?</p>
+      <p>This is the real rule engine's logic with the numbers left blank. Pick a check, type in a value from your own board, and it tells you instantly whether the engine would flag it, how severe it would be, and how many points it would cost. The thresholds shown come straight from the engine's source code.</p>
+    </div>
+    
+    <div class="try">
+      <div class="panel try-form">
+        <div class="panel-head"><h3>1. Choose a check</h3></div>
+        <label class="field"><span class="field-label">Check</span>
+          <select id="rule-select" aria-describedby="rule-what"></select>
+        </label>
+        <p class="panel-note" id="rule-what"></p>
+        <div class="panel-head"><h3>2. Enter your numbers</h3></div>
+        <div id="rule-fields" class="fields"></div>
+        <div class="presets" id="rule-presets" aria-label="Example values"></div>
+        <p class="rule-line" id="rule-line"></p>
+      </div>
+      <div class="panel try-result" aria-live="polite">
+        <div class="panel-head"><h3>3. What the engine says</h3></div>
+        <div id="rule-result"></div>
+        <div class="try-actions">
+          <button type="button" class="btn-primary" id="rule-add" hidden>Add to the what-if score</button>
+          <span class="muted" id="rule-add-note"></span>
+        </div>
+      </div>
+    </div>
+    <details class="panel rules-table">
+      <summary><h3>All checks you can try, and when each one flags</h3></summary>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Rule thresholds">
+        <table>
+          <thead><tr><th>Check</th><th>Area</th><th>Flagged when</th></tr></thead>
+          <tbody><tr><td class="nowrap">Trace width</td><td>Power</td><td>Power and ground traces under 0.3 mm are flagged (under 0.15 mm is high severity). Any trace under 0.15 mm is flagged as hard to manufacture.</td></tr><tr><td class="nowrap">Via annular ring</td><td>Manufacturability</td><td>Ring = (pad - drill) / 2. Flagged when the ring is under 0.075 mm.</td></tr><tr><td class="nowrap">Long trace segment</td><td>Routing</td><td>Flagged at 60.0 mm or more (medium) and 120.0 mm or more (high).</td></tr><tr><td class="nowrap">Vias on one net</td><td>Routing</td><td>Flagged above 4 vias. Clock nets are stricter: flagged above 2 vias.</td></tr><tr><td class="nowrap">Segments on one net</td><td>Routing</td><td>Flagged above 8 segments.</td></tr><tr><td class="nowrap">Trace bend angle</td><td>Routing</td><td>Flagged when the angle is under 90.0 degrees.</td></tr><tr><td class="nowrap">Decoupling capacitor distance</td><td>Power</td><td>Allowed distance by chip type (mm): MCU 3.0, FPGA 2.5, regulator 5.0, other IC 4.0. A missing capacitor is a separate, higher severity finding.</td></tr><tr><td class="nowrap">Supply path length</td><td>Power</td><td>Flagged at 80.0 mm or more of total trace on one supply net.</td></tr><tr><td class="nowrap">Differential pair matching</td><td>Signal Integrity</td><td>Length mismatch above 0.2 mm is flagged. Different via counts are flagged. Segment counts differing by more than 2 are flagged.</td></tr><tr><td class="nowrap">Clock net length</td><td>Signal Integrity</td><td>Flagged at 40.0 mm or more.</td></tr><tr><td class="nowrap">Via density</td><td>Manufacturability</td><td>Density = vias / board area in cm2. Flagged at 5.0 per cm2 or more.</td></tr><tr><td class="nowrap">Connector distance from board edge</td><td>Placement</td><td>Flagged when a connector is more than 10.0 mm from the edge.</td></tr><tr><td class="nowrap">Component crowding</td><td>Placement</td><td>Flagged when two components are closer than 1.0 mm.</td></tr><tr><td class="nowrap">Heat source spacing</td><td>Thermals</td><td>Flagged when two heat sources are closer than 8.0 mm.</td></tr></tbody>
+        </table>
+      </div>
+    </details>
+    <div class="panel test-list" id="test-list" hidden>
+      <div class="panel-head"><h3>Findings you added</h3><button type="button" class="btn-ghost" id="test-clear">Clear</button></div>
+      <p class="panel-note">These count against the board's scores in the <a href="#scores" data-go="scores">what-if panel</a>.</p>
+      <ul id="test-items"></ul>
+      <button type="button" class="btn-primary" data-go="scores">See the effect on the scores</button>
+    </div>
+    <div class="view-pager"><button type="button" class="pager" data-go="board"><span aria-hidden="true">&larr;</span> Board</button><button type="button" class="pager pager-home" data-go="overview">All sections</button></div></section></main>
+    <footer class="site-footer">
+      <p>PCBInsight AI &middot; deterministic PCB design review with an evidence-constrained AI narrator.
+      <a href="https://github.com/CyrilKafle/PCBInsight-AI">Source on GitHub</a></p>
     </footer>
     
-  </div>
+<script id="pcbi-data" type="application/json">{"subscores": [{"name": "Routing", "score": 93}, {"name": "Power", "score": 91}, {"name": "Signal Integrity", "score": 100}, {"name": "Manufacturability", "score": 100}, {"name": "Placement", "score": 100}, {"name": "Thermals", "score": 100}, {"name": "Documentation", "score": 100}], "order": ["Routing", "Power", "Signal Integrity", "Manufacturability", "Placement", "Thermals", "Documentation"], "severityPoints": {"critical": 25.0, "high": 15.0, "medium": 8.0, "low": 3.0, "info": 1.0}, "severityColors": {"critical": "#ff5d5d", "high": "#ff7b72", "medium": "#f0883e", "low": "#e3b341", "info": "#8b96a5"}, "issues": [{"id": "PWR-001", "sub": "Power", "sev": "medium", "conf": 0.65, "group": 0}, {"id": "DECAP-001", "sub": "Power", "sev": "medium", "conf": 0.5, "group": 1}, {"id": "RTE-001", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-002", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-003", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-004", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-005", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-006", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}], "rules": [{"id": "trace_width", "sub": "Power", "label": "Trace width", "what": "How wide a copper trace is, in millimetres. Wider traces carry more current with less heating and are easier to manufacture.", "fields": [{"key": "width", "label": "Trace width", "unit": "mm", "value": 0.25, "step": 0.01, "min": 0.01}, {"key": "net", "label": "What does it carry?", "type": "select", "options": [["signal", "A signal"], ["power", "Power (VCC, 3V3, ...)"], ["ground", "Ground"]], "value": "power"}], "limits": {"power_min": 0.3, "power_crit": 0.15, "ground_min": 0.3, "fab_min": 0.15}, "rule": "Power and ground traces under {power_min} mm are flagged (under {power_crit} mm is high severity). Any trace under {fab_min} mm is flagged as hard to manufacture.", "presets": [["Passes", {"width": 0.5, "net": "power"}], ["Fails", {"width": 0.12, "net": "power"}]]}, {"id": "annular_ring", "sub": "Manufacturability", "label": "Via annular ring", "what": "The ring of copper left around a via's drill hole. Drill wander can break a ring that is too thin and cut the connection.", "fields": [{"key": "pad", "label": "Via pad diameter", "unit": "mm", "value": 0.6, "step": 0.01, "min": 0.1}, {"key": "drill", "label": "Drill diameter", "unit": "mm", "value": 0.3, "step": 0.01, "min": 0.05}], "limits": {"min": 0.075}, "rule": "Ring = (pad - drill) / 2. Flagged when the ring is under {min} mm.", "presets": [["Passes", {"pad": 0.6, "drill": 0.3}], ["Fails", {"pad": 0.4, "drill": 0.3}]]}, {"id": "long_trace", "sub": "Routing", "label": "Long trace segment", "what": "The length of one straight trace segment. Long runs add resistance, pick up noise and are more likely to need rerouting.", "fields": [{"key": "length", "label": "Segment length", "unit": "mm", "value": 45, "step": 1, "min": 0}], "limits": {"warn": 60.0, "crit": 120.0}, "rule": "Flagged at {warn} mm or more (medium) and {crit} mm or more (high).", "presets": [["Passes", {"length": 25}], ["Fails", {"length": 130}]]}, {"id": "via_count", "sub": "Routing", "label": "Vias on one net", "what": "How many layer changes (vias) one net makes. Each via adds inductance and a place for a fabrication defect.", "fields": [{"key": "vias", "label": "Number of vias", "unit": "", "value": 3, "step": 1, "min": 0}, {"key": "clock", "label": "This is a clock net", "type": "checkbox", "value": false}], "limits": {"max": 4, "clock_max": 2}, "rule": "Flagged above {max} vias. Clock nets are stricter: flagged above {clock_max} vias.", "presets": [["Passes", {"vias": 2, "clock": false}], ["Fails", {"vias": 7, "clock": true}]]}, {"id": "segments", "sub": "Routing", "label": "Segments on one net", "what": "How many separate straight pieces a net is routed with. Many tiny segments usually mean a messy, hard-to-maintain route.", "fields": [{"key": "segments", "label": "Number of segments", "unit": "", "value": 6, "step": 1, "min": 1}], "limits": {"max": 8}, "rule": "Flagged above {max} segments.", "presets": [["Passes", {"segments": 4}], ["Fails", {"segments": 14}]]}, {"id": "acute_angle", "sub": "Routing", "label": "Trace bend angle", "what": "The angle where two trace segments meet. Sharp bends can trap etchant during fabrication and disturb fast signals.", "fields": [{"key": "angle", "label": "Angle between segments", "unit": "degrees", "value": 90, "step": 1, "min": 1, "max": 180}], "limits": {"max": 90.0}, "rule": "Flagged when the angle is under {max} degrees.", "presets": [["Passes", {"angle": 135}], ["Fails", {"angle": 45}]]}, {"id": "decoupling", "sub": "Power", "label": "Decoupling capacitor distance", "what": "How far the nearest bypass capacitor sits from the chip it protects. Close capacitors supply fast current spikes; distant ones cannot.", "fields": [{"key": "kind", "label": "Chip type", "type": "select", "options": [["MCU", "Microcontroller"], ["FPGA", "FPGA"], ["regulator", "Voltage regulator"], ["IC", "Other IC"]], "value": "MCU"}, {"key": "gap", "label": "Distance to nearest capacitor", "unit": "mm", "value": 2.0, "step": 0.1, "min": 0}, {"key": "none", "label": "No capacitor on this power net at all", "type": "checkbox", "value": false}], "limits": {"MCU": 3.0, "FPGA": 2.5, "regulator": 5.0, "IC": 4.0}, "rule": "Allowed distance by chip type (mm): MCU {MCU}, FPGA {FPGA}, regulator {regulator}, other IC {IC}. A missing capacitor is a separate, higher severity finding.", "presets": [["Passes", {"kind": "MCU", "gap": 1.5, "none": false}], ["Fails", {"kind": "FPGA", "gap": 6, "none": false}]]}, {"id": "supply_path", "sub": "Power", "label": "Supply path length", "what": "Total copper length of one power net. Long supply paths drop voltage and add noise.", "fields": [{"key": "length", "label": "Total length of the net", "unit": "mm", "value": 50, "step": 1, "min": 0}], "limits": {"max": 80.0}, "rule": "Flagged at {max} mm or more of total trace on one supply net.", "presets": [["Passes", {"length": 40}], ["Fails", {"length": 110}]]}, {"id": "diff_pair", "sub": "Signal Integrity", "label": "Differential pair matching", "what": "A differential pair (like USB D+ and D-) works best when both wires are the same length and shape, so the signal arrives together.", "fields": [{"key": "lenP", "label": "Length of positive wire", "unit": "mm", "value": 42.0, "step": 0.1, "min": 0}, {"key": "lenN", "label": "Length of negative wire", "unit": "mm", "value": 42.1, "step": 0.1, "min": 0}, {"key": "viaP", "label": "Vias on positive wire", "unit": "", "value": 1, "step": 1, "min": 0}, {"key": "viaN", "label": "Vias on negative wire", "unit": "", "value": 1, "step": 1, "min": 0}, {"key": "segP", "label": "Segments on positive wire", "unit": "", "value": 4, "step": 1, "min": 1}, {"key": "segN", "label": "Segments on negative wire", "unit": "", "value": 4, "step": 1, "min": 1}], "limits": {"len": 0.2, "seg": 2}, "rule": "Length mismatch above {len} mm is flagged. Different via counts are flagged. Segment counts differing by more than {seg} are flagged.", "presets": [["Passes", {"lenP": 42, "lenN": 42.1, "viaP": 1, "viaN": 1, "segP": 4, "segN": 4}], ["Fails", {"lenP": 42, "lenN": 44.5, "viaP": 2, "viaN": 0, "segP": 3, "segN": 8}]]}, {"id": "clock_length", "sub": "Signal Integrity", "label": "Clock net length", "what": "Total length of a clock net. Long clock routes radiate noise and degrade edges.", "fields": [{"key": "length", "label": "Clock net length", "unit": "mm", "value": 25, "step": 1, "min": 0}], "limits": {"max": 40.0}, "rule": "Flagged at {max} mm or more.", "presets": [["Passes", {"length": 20}], ["Fails", {"length": 65}]]}, {"id": "via_density", "sub": "Manufacturability", "label": "Via density", "what": "Vias per square centimetre of board. Very dense via fields raise fabrication cost and reduce yield.", "fields": [{"key": "vias", "label": "Total vias on board", "unit": "", "value": 40, "step": 1, "min": 0}, {"key": "w", "label": "Board width", "unit": "mm", "value": 60, "step": 1, "min": 1}, {"key": "h", "label": "Board height", "unit": "mm", "value": 40, "step": 1, "min": 1}], "limits": {"max": 5.0}, "rule": "Density = vias / board area in cm2. Flagged at {max} per cm2 or more.", "presets": [["Passes", {"vias": 40, "w": 60, "h": 40}], ["Fails", {"vias": 160, "w": 40, "h": 30}]]}, {"id": "connector_edge", "sub": "Placement", "label": "Connector distance from board edge", "what": "How far a connector sits from the nearest board edge. Connectors away from the edge are awkward to plug into and to fit in an enclosure.", "fields": [{"key": "dist", "label": "Distance to nearest edge", "unit": "mm", "value": 4, "step": 0.5, "min": 0}], "limits": {"max": 10.0}, "rule": "Flagged when a connector is more than {max} mm from the edge.", "presets": [["Passes", {"dist": 3}], ["Fails", {"dist": 18}]]}, {"id": "crowding", "sub": "Placement", "label": "Component crowding", "what": "Centre-to-centre spacing between two parts. Parts packed too tightly are hard to assemble, probe and rework.", "fields": [{"key": "gap", "label": "Centre-to-centre spacing", "unit": "mm", "value": 3, "step": 0.1, "min": 0}], "limits": {"min": 1.0}, "rule": "Flagged when two components are closer than {min} mm.", "presets": [["Passes", {"gap": 3}], ["Fails", {"gap": 0.6}]]}, {"id": "heat_spacing", "sub": "Thermals", "label": "Heat source spacing", "what": "Spacing between two parts that run hot (regulators, power transistors). Hot parts side by side heat each other up.", "fields": [{"key": "gap", "label": "Distance between the two hot parts", "unit": "mm", "value": 12, "step": 0.5, "min": 0}], "limits": {"min": 8.0}, "rule": "Flagged when two heat sources are closer than {min} mm.", "presets": [["Passes", {"gap": 15}], ["Fails", {"gap": 4}]]}], "confidenceFloor": 0.5}</script>
+<script>(function () { 'use strict'; 
+  function fnd(sub, sev, conf, title, why, fix) { return { sub: sub, sev: sev, conf: conf, title: title, why: why, fix: fix }; }
+  var f2 = function (x) { return (Math.round(x * 100) / 100).toString(); };
+  var EVAL = {
+    trace_width: function (v, L) {
+      var out = [], w = v.width;
+      if (v.net === 'power' && w < L.power_min) out.push(fnd('Power', w < L.power_crit ? 'high' : 'medium', 0.65,
+        'Thin power trace (' + f2(w) + ' mm)', 'A narrow power trace has higher resistance, drops voltage and heats up under load.', 'Widen the trace to at least ' + L.power_min + ' mm or use a copper pour.'));
+      if (v.net === 'ground' && w < L.ground_min) out.push(fnd('Power', 'medium', 0.55,
+        'Thin ground trace (' + f2(w) + ' mm)', 'A narrow ground return path adds resistance and noise to everything that shares it.', 'Widen the ground trace to at least ' + L.ground_min + ' mm or use a pour.'));
+      if (w < L.fab_min) out.push(fnd('Manufacturability', 'high', 0.7,
+        'Trace is ' + f2(w) + ' mm wide', 'Traces this narrow are at or beyond what many fabricators can reliably etch.', 'Widen the trace to at least ' + L.fab_min + ' mm.'));
+      return out;
+    },
+    annular_ring: function (v, L) {
+      var ring = (v.pad - v.drill) / 2;
+      return ring >= L.min ? [] : [fnd('Manufacturability', 'high', 0.7, 'Via has a ' + (Math.round(ring * 1000) / 1000) + ' mm annular ring',
+        'A thin annular ring can break when the drill is slightly off-centre, cutting the connection.', 'Increase the via pad diameter or reduce the drill so the ring is at least ' + L.min + ' mm.')];
+    },
+    long_trace: function (v, L) {
+      if (v.length >= L.crit) return [fnd('Routing', 'high', 0.75, 'Long trace segment (' + f2(v.length) + ' mm)', 'Long unbroken runs add resistance and pick up more noise.', 'Reroute the net with a shorter path.')];
+      if (v.length >= L.warn) return [fnd('Routing', 'medium', 0.65, 'Long trace segment (' + f2(v.length) + ' mm)', 'Long unbroken runs add resistance and pick up more noise.', 'Consider a shorter path.')];
+      return [];
+    },
+    via_count: function (v, L) {
+      var out = [];
+      if (v.vias > L.max) out.push(fnd('Routing', 'medium', 0.6, 'Net uses ' + v.vias + ' vias', 'Every via adds inductance and a place for a fabrication defect.', 'Reduce layer changes on this net.'));
+      if (v.clock && v.vias > L.clock_max) out.push(fnd('Signal Integrity', 'low', 0.45, 'Clock net uses ' + v.vias + ' vias', 'Vias on a clock disturb its edges and add impedance discontinuities.', 'Keep the clock on one layer where possible.'));
+      return out;
+    },
+    segments: function (v, L) {
+      return v.segments > L.max ? [fnd('Routing', 'low', 0.5, 'Net routed with ' + v.segments + ' segments', 'A net built from many small pieces is usually a messy route and harder to maintain.', 'Re-route the net with fewer, longer segments.')] : [];
+    },
+    acute_angle: function (v, L) {
+      return v.angle < L.max ? [fnd('Routing', 'medium', 0.6, 'Acute-angle bend (' + f2(v.angle) + ' degrees)', 'Sharp bends can trap etchant during fabrication and disturb high-speed signals.', 'Use 45-degree or rounded bends.')] : [];
+    },
+    decoupling: function (v, L) {
+      var thr = L[v.kind], out = [];
+      if (v.none) out.push(fnd('Power', 'high', 0.55, 'No decoupling capacitor on this power net', 'Without a local capacitor, switching current must come from further away, raising supply noise at the chip.', 'Add a 100 nF capacitor between the supply pin and ground, close to the chip.'));
+      else if (v.gap > thr) out.push(fnd('Power', 'medium', 0.5, 'Decoupling capacitor is ' + f2(v.gap) + ' mm away (limit ' + thr + ' mm)', 'A distant capacitor lengthens the current loop and loses effectiveness at high frequency.', 'Move the capacitor within ' + thr + ' mm of the chip, or add a closer one.'));
+      return out;
+    },
+    supply_path: function (v, L) {
+      return v.length >= L.max ? [fnd('Power', 'low', 0.5, 'Supply net totals ' + f2(v.length) + ' mm of trace', 'Long supply paths drop voltage and pick up noise.', 'Shorten the route or distribute power with a plane.')] : [];
+    },
+    diff_pair: function (v, L) {
+      var out = [], diff = Math.abs(v.lenP - v.lenN);
+      if (diff > L.len) out.push(fnd('Signal Integrity', 'medium', 0.6, 'Length mismatch of ' + f2(diff) + ' mm', 'Unequal lengths make the two halves of the signal arrive at different times and degrade it.', 'Add serpentine length to the shorter wire.'));
+      if (v.viaP !== v.viaN) out.push(fnd('Signal Integrity', 'low', 0.4, 'Asymmetric via count (' + v.viaP + ' vs ' + v.viaN + ')', 'Different via counts make the two wires see different impedance.', 'Use the same number of vias on both wires.'));
+      if (Math.abs(v.segP - v.segN) > L.seg) out.push(fnd('Signal Integrity', 'low', 0.35, 'Different segment counts (' + v.segP + ' vs ' + v.segN + ')', 'Differently shaped routes usually mean the pair is not routed together.', 'Route the pair together with matching geometry.'));
+      return out;
+    },
+    clock_length: function (v, L) {
+      return v.length >= L.max ? [fnd('Signal Integrity', 'low', 0.4, 'Clock net totals ' + f2(v.length) + ' mm', 'Long clock routes radiate noise and degrade edges.', 'Move the clock source closer to its load.')] : [];
+    },
+    via_density: function (v, L) {
+      var area = v.w * v.h / 100, d = area > 0 ? v.vias / area : 0;
+      return (v.vias > 0 && area > 0 && d >= L.max) ? [fnd('Manufacturability', 'low', 0.4, 'Via density is ' + d.toFixed(1) + ' vias/cm²', 'High via density can raise fabrication cost and reduce yield.', 'Review whether every via is needed.')] : [];
+    },
+    connector_edge: function (v, L) {
+      return v.dist > L.max ? [fnd('Placement', 'low', 0.5, 'Connector is ' + f2(v.dist) + ' mm from the nearest board edge', 'Connectors away from the edge complicate enclosure design and cable access.', 'Move the connector to the board edge.')] : [];
+    },
+    crowding: function (v, L) {
+      return v.gap < L.min ? [fnd('Placement', 'medium', 0.5, 'Parts are only ' + f2(v.gap) + ' mm apart', 'Parts packed this tightly are hard to assemble, probe and rework.', 'Increase the spacing.')] : [];
+    },
+    heat_spacing: function (v, L) {
+      return v.gap < L.min ? [fnd('Thermals', 'medium', 0.4, 'Heat sources are ' + f2(v.gap) + ' mm apart', 'Hot parts close together heat each other and raise local temperature.', 'Spread the heat sources out or add copper for heat spreading.')] : [];
+    }
+  };
+
+
+  var DATA = JSON.parse(document.getElementById('pcbi-data').textContent);
+  var BASE_TITLE = document.title;
+  var VIEWS = ['overview', 'scores', 'findings', 'ai-review', 'board', 'try-it'];
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------- tabs / navigation ---------- */
+  function currentFromHash() {
+    var h = (location.hash || '').replace('#', '');
+    return VIEWS.indexOf(h) >= 0 ? h : 'overview';
+  }
+  function show(view, opts) {
+    opts = opts || {};
+    $$('.view').forEach(function (v) { v.hidden = v.getAttribute('data-view') !== view; });
+    $$('.tab').forEach(function (t) {
+      var on = t.getAttribute('data-go') === view;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on) { t.setAttribute('aria-current', 'page'); t.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+      else t.removeAttribute('aria-current');
+    });
+    var el = $('#view-' + view);
+    if (!opts.keepScroll) window.scrollTo(0, 0);
+    if (el && !opts.noFocus) el.focus({ preventScroll: true });
+    document.title = (view === 'overview' ? '' : $('.tab[data-go="' + view + '"]').textContent + ' · ') + BASE_TITLE;
+  }
+  function go(view) {
+    if (location.hash === '#' + view) show(view); else location.hash = '#' + view;
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-go]');
+    if (!t) return;
+    e.preventDefault();
+    go(t.getAttribute('data-go'));
+  });
+  window.addEventListener('hashchange', function () { show(currentFromHash()); });
+  $('.tabs').addEventListener('keydown', function (e) {
+    var i = VIEWS.indexOf(currentFromHash()), n = null;
+    if (e.key === 'ArrowRight') n = VIEWS[(i + 1) % VIEWS.length];
+    else if (e.key === 'ArrowLeft') n = VIEWS[(i + VIEWS.length - 1) % VIEWS.length];
+    else if (e.key === 'Home') n = VIEWS[0];
+    else if (e.key === 'End') n = VIEWS[VIEWS.length - 1];
+    if (n) { e.preventDefault(); go(n); $('.tab[data-go="' + n + '"]').focus(); }
+  });
+  show(currentFromHash(), { noFocus: true });
+
+  /* ---------- scoring (mirrors backend/app/analysis/scoring.py) ---------- */
+  function roundHalfEven(x) {
+    var f = Math.floor(x), d = x - f;
+    if (Math.abs(d - 0.5) < 1e-9) return f % 2 === 0 ? f : f + 1;
+    return Math.round(x);
+  }
+  var fixed = {};          // group index -> true
+  var extra = [];          // findings added from the checker
+  function compute() {
+    var totals = {};
+    DATA.order.forEach(function (n) { totals[n] = 100; });
+    DATA.issues.forEach(function (i) {
+      if (!i.sub || fixed[i.group]) return;
+      totals[i.sub] = Math.max(0, totals[i.sub] - DATA.severityPoints[i.sev] * i.conf);
+    });
+    extra.forEach(function (f) {
+      totals[f.sub] = Math.max(0, totals[f.sub] - DATA.severityPoints[f.sev] * f.conf);
+    });
+    var res = {}, sum = 0;
+    DATA.order.forEach(function (n) { res[n] = roundHalfEven(totals[n]); sum += res[n]; });
+    return { subs: res, overall: roundHalfEven(sum / DATA.order.length) };
+  }
+  function colorFor(v) { return v >= 90 ? '#3fb98a' : v >= 75 ? '#e3b341' : v >= 50 ? '#f0883e' : '#ff7b72'; }
+  var baseline = {};
+  DATA.subscores.forEach(function (s) { baseline[s.name] = s.score; });
+  var baseOverall = roundHalfEven(DATA.subscores.reduce(function (a, s) { return a + s.score; }, 0) / DATA.subscores.length);
+
+  function paintRow(row, value, base) {
+    if (!row) return;
+    var unchecked = row.getAttribute('data-sub') === 'Documentation';
+    row.style.setProperty('--score-color', unchecked ? '#8B96A5' : colorFor(value));
+    $('.meter-fill', row).style.width = value + '%';
+    $('.subscore-value', row).textContent = value;
+    var d = $('.subscore-delta', row), diff = value - base;
+    d.textContent = diff === 0 ? '' : (diff > 0 ? '+' : '−') + Math.abs(diff);
+    d.className = 'subscore-delta' + (diff > 0 ? ' delta-up' : diff < 0 ? ' delta-down' : '');
+  }
+  function paintScores() {
+    var r = compute();
+    DATA.order.forEach(function (n) { paintRow($('.subscore[data-sub="' + n + '"]'), r.subs[n], baseline[n]); });
+    paintRow($('#overall-row'), r.overall, baseOverall);
+    var note = $('#sim-test-note');
+    if (note) note.textContent = extra.length ? ' Includes ' + extra.length + ' finding' + (extra.length > 1 ? 's' : '') + ' you added in Try it.' : '';
+    var box = $('#sim-extra');
+    if (box) {
+      box.hidden = !extra.length;
+      box.innerHTML = extra.length ? '<p class="panel-note">Added in Try it: ' + extra.map(function (f) { return escapeHtml(f.label); }).join('; ') + '</p>' : '';
+    }
+  }
+  $$('.sim-check').forEach(function (c) {
+    c.addEventListener('change', function () { fixed[c.getAttribute('data-group')] = c.checked; paintScores(); });
+  });
+  $('#sim-reset').addEventListener('click', function () {
+    fixed = {}; extra = []; $$('.sim-check').forEach(function (c) { c.checked = false; });
+    paintScores(); renderTestList();
+  });
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+  }
+
+  /* ---------- findings filters ---------- */
+  var sevFilter = 'all';
+  function applyFilters() {
+    var cat = $('#filter-cat').value, onlyUnv = $('#filter-unverified').checked, shown = 0, total = 0;
+    $$('#findings-list .finding').forEach(function (f) {
+      total++;
+      var ok = (sevFilter === 'all' || f.getAttribute('data-sev') === sevFilter) &&
+               (cat === 'all' || f.getAttribute('data-cat') === cat) &&
+               (!onlyUnv || f.getAttribute('data-unverified') === '1');
+      f.hidden = !ok; if (ok) shown++;
+    });
+    $('#result-count').textContent = 'Showing ' + shown + ' of ' + total + ' groups';
+    $('#findings-empty').hidden = shown !== 0;
+  }
+  if ($('#filter-cat')) {
+    $$('[data-filter-sev]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        sevFilter = b.getAttribute('data-filter-sev');
+        $$('[data-filter-sev]').forEach(function (x) {
+          var on = x === b; x.setAttribute('aria-pressed', on ? 'true' : 'false'); x.classList.toggle('is-on', on);
+        });
+        applyFilters();
+      });
+    });
+    $('#filter-cat').addEventListener('change', applyFilters);
+    $('#filter-unverified').addEventListener('change', applyFilters);
+    $('#expand-all').addEventListener('click', function () { $$('#findings-list .finding').forEach(function (f) { if (!f.hidden) f.open = true; }); });
+    $('#collapse-all').addEventListener('click', function () { $$('#findings-list .finding').forEach(function (f) { f.open = false; }); });
+    $('#filters-clear').addEventListener('click', function () {
+      sevFilter = 'all'; $('#filter-cat').value = 'all'; $('#filter-unverified').checked = false;
+      $$('[data-filter-sev]').forEach(function (x) { var on = x.getAttribute('data-filter-sev') === 'all'; x.setAttribute('aria-pressed', on); x.classList.toggle('is-on', on); });
+      applyFilters();
+    });
+  }
+  // clicking a subscore row jumps to findings in that area
+  var catForSub = { 'Routing': ['routing'], 'Power': ['power', 'ground', 'decoupling'], 'Signal Integrity': ['signal_integrity', 'differential_pairs'], 'Manufacturability': ['manufacturability'], 'Placement': ['placement'], 'Thermals': ['thermal'] };
+
+  /* ---------- board map ---------- */
+  $$('.layer-toggles input').forEach(function (c) {
+    c.addEventListener('change', function () { $('#board-svg').classList.toggle('hide-' + c.getAttribute('data-layer'), !c.checked); });
+  });
+  var issueIndex = {};
+  $$('.finding').forEach(function (card) {
+    $$('.members li', card).forEach(function (li) {
+      var code = $('code', li), btn = $('[data-locate]', li), span = $('span', li);
+      var id = btn && btn.getAttribute('data-locate');
+      if (id) issueIndex[id] = { sev: card.getAttribute('data-sev'), text: span ? span.textContent : $('.finding-title', card).textContent, card: card };
+    });
+    var single = $('.finding-ids [data-locate]', card);
+    if (single) { var sid = single.getAttribute('data-locate'); issueIndex[sid] = { sev: card.getAttribute('data-sev'), text: $('.finding-title', card).textContent, card: card }; }
+  });
+  function selectMarker(id, scroll) {
+    $$('.marker').forEach(function (m) { m.classList.toggle('is-active', m.getAttribute('data-id') === id); });
+    var info = issueIndex[id];
+    var d = $('#map-detail');
+    d.innerHTML = '<code class="issue-id">' + escapeHtml(id) + '</code> ' + (info ? escapeHtml(info.text) : '') +
+      (info ? ' <button type="button" class="link-btn" data-open-finding="' + escapeHtml(id) + '">Open finding</button>' : '');
+    if (scroll) { var m = $('.marker[data-id="' + id + '"]'); if (m) $('#board-svg').scrollIntoView({ block: 'center' }); }
+  }
+  $$('.marker').forEach(function (m) {
+    m.addEventListener('click', function () { selectMarker(m.getAttribute('data-id')); });
+    m.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectMarker(m.getAttribute('data-id')); } });
+  });
+  document.addEventListener('click', function (e) {
+    var loc = e.target.closest('[data-locate]');
+    if (loc) { go('board'); setTimeout(function () { selectMarker(loc.getAttribute('data-locate')); }, 30); return; }
+    var op = e.target.closest('[data-open-finding]');
+    if (op) {
+      var info = issueIndex[op.getAttribute('data-open-finding')];
+      go('findings');
+      if (info) setTimeout(function () { info.card.hidden = false; info.card.open = true; info.card.scrollIntoView({ block: 'center' }); }, 30);
+    }
+  });
+
+  /* ---------- rule checker ---------- */
+  var P = DATA.severityPoints;
+  /* rule evaluators live in _RULES_JS (see top of script) */
+  var ruleSel = $('#rule-select'), current = null, values = {};
+  DATA.rules.forEach(function (r) {
+    var og = $$('optgroup', ruleSel).filter(function (g) { return g.label === r.sub; })[0];
+    if (!og) { og = document.createElement('optgroup'); og.label = r.sub; ruleSel.appendChild(og); }
+    var o = document.createElement('option'); o.value = r.id; o.textContent = r.label; og.appendChild(o);
+  });
+  function fillRule(rule, preset) {
+    current = rule; values = {};
+    $('#rule-what').textContent = rule.what;
+    var box = $('#rule-fields'); box.innerHTML = '';
+    rule.fields.forEach(function (f) {
+      var v = preset && preset[f.key] !== undefined ? preset[f.key] : f.value;
+      values[f.key] = v;
+      var wrap = document.createElement('div'), id = 'f-' + f.key;
+      if (f.type === 'checkbox') {
+        wrap.innerHTML = '<label class="check-field"><input type="checkbox" id="' + id + '"' + (v ? ' checked' : '') + '> <span>' + escapeHtml(f.label) + '</span></label>';
+        wrap.querySelector('input').addEventListener('change', function (e) { values[f.key] = e.target.checked; run(); });
+      } else if (f.type === 'select') {
+        wrap.innerHTML = '<label class="field"><span class="field-label">' + escapeHtml(f.label) + '</span><select id="' + id + '">' +
+          f.options.map(function (o) { return '<option value="' + escapeHtml(o[0]) + '"' + (o[0] === v ? ' selected' : '') + '>' + escapeHtml(o[1]) + '</option>'; }).join('') + '</select></label>';
+        wrap.querySelector('select').addEventListener('change', function (e) { values[f.key] = e.target.value; run(); });
+      } else {
+        wrap.innerHTML = '<label class="field"><span class="field-label">' + escapeHtml(f.label) + '</span><span class="input-row"><input type="number" inputmode="decimal" id="' + id +
+          '" value="' + v + '" step="' + f.step + '"' + (f.min !== undefined ? ' min="' + f.min + '"' : '') + (f.max !== undefined ? ' max="' + f.max + '"' : '') +
+          '><span class="unit">' + escapeHtml(f.unit) + '</span></span></label>';
+        wrap.querySelector('input').addEventListener('input', function (e) { var n = parseFloat(e.target.value); values[f.key] = isNaN(n) ? null : n; run(); });
+      }
+      box.appendChild(wrap);
+    });
+    var pr = $('#rule-presets'); pr.innerHTML = '<span class="lbl">Try an example:</span>';
+    rule.presets.forEach(function (p) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'btn-ghost'; b.textContent = p[0];
+      b.addEventListener('click', function () { fillRule(rule, p[1]); });
+      pr.appendChild(b);
+    });
+    $('#rule-line').textContent = 'Engine rule: ' + rule.rule.replace(/\{(\w+)\}/g, function (m, k) { return rule.limits[k]; });
+    run();
+  }
+  var lastFindings = [];
+  function run() {
+    var res = $('#rule-result'), add = $('#rule-add');
+    $('#rule-add-note').textContent = '';
+    var missing = current.fields.some(function (f) { return f.type !== 'checkbox' && f.type !== 'select' && (values[f.key] === null || values[f.key] === undefined); });
+    if (missing) { res.innerHTML = '<p class="muted">Enter a number in every field.</p>'; add.hidden = true; lastFindings = []; return; }
+    var found = EVAL[current.id](values, current.limits);
+    lastFindings = found;
+    if (!found.length) {
+      res.innerHTML = '<div class="verdict pass"><span class="dot"></span><span>Passes<small>The engine would not flag this. No points are deducted.</small></span></div>';
+      add.hidden = true; return;
+    }
+    var total = found.reduce(function (a, f) { return a + P[f.sev] * f.conf; }, 0);
+    res.innerHTML = '<div class="verdict fail"><span class="dot"></span><span>' + found.length + ' finding' + (found.length > 1 ? 's' : '') +
+      '<small>Would cost ' + f2(total) + ' points in total</small></span></div>' +
+      found.map(function (f) {
+        return '<div class="res-finding" style="--sev:' + DATA.severityColors[f.sev] + '"><h4>' + escapeHtml(f.title) + '</h4>' +
+          '<div class="res-meta"><span class="sevw">' + f.sev + '</span><span>' + escapeHtml(f.sub) + '</span><span>confidence ' + f.conf.toFixed(2) +
+          '</span><span>&minus;' + f2(P[f.sev] * f.conf) + ' pts (' + P[f.sev] + ' &times; ' + f.conf.toFixed(2) + ')</span></div>' +
+          '<p><strong>Why it matters:</strong> ' + escapeHtml(f.why) + '</p><p><strong>Fix:</strong> ' + escapeHtml(f.fix) + '</p></div>';
+      }).join('');
+    add.hidden = false;
+  }
+  ruleSel.addEventListener('change', function () {
+    var r = DATA.rules.filter(function (x) { return x.id === ruleSel.value; })[0]; fillRule(r);
+  });
+  $('#rule-add').addEventListener('click', function () {
+    lastFindings.forEach(function (f) { extra.push({ sub: f.sub, sev: f.sev, conf: f.conf, label: f.title + ' [' + f.sub + ']' }); });
+    $('#rule-add-note').textContent = 'Added. See it in the Scores tab.';
+    paintScores(); renderTestList();
+  });
+  function renderTestList() {
+    var box = $('#test-list'); box.hidden = !extra.length;
+    $('#test-items').innerHTML = extra.map(function (f, i) {
+      return '<li><span>' + escapeHtml(f.label) + '</span><button type="button" class="link-btn" data-remove="' + i + '">Remove</button></li>';
+    }).join('');
+  }
+  document.addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-remove]');
+    if (rm) { extra.splice(parseInt(rm.getAttribute('data-remove'), 10), 1); paintScores(); renderTestList(); }
+  });
+  $('#test-clear').addEventListener('click', function () { extra = []; paintScores(); renderTestList(); });
+  fillRule(DATA.rules[0]);
+  paintScores();
+ })();</script>
 </body>
 </html>

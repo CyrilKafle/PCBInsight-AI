@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+### Changed (interactive demo)
+- **"Try it" is now a tabbed, interactive app** (`backend/app/reports/interactive_report.py`, rendered into `docs/try-it-demo.html`). Instead of one long page with anchor links, each tab (Overview, Scores, Findings, AI review, Board, Try it) is its own view, with a back button on every view, previous/next buttons, a landing-page link, browser back/forward support (hash routing) and arrow-key tab navigation. Every view opens with a plain-language "What is this?" box; findings can be filtered by severity, area and confidence and expanded or collapsed; a glossary defines the PCB terms.
+- **What-if score simulator**: tick findings as fixed and the subscores recompute live using the exact `scoring.py` formula (half-to-even rounding matches Python).
+- **Rule checker**: enter numbers (trace width, via pad and drill, capacitor distance, differential pair lengths, via density, and more) and see whether the engine would flag them, at what severity and confidence, and how many points it would cost; add the result to the what-if score. Thresholds are imported from the engine modules, not retyped.
+- **Board map**: an SVG of the parsed board (parts, traces, vias, pours) with every finding pinned at its location, layer toggles, and a Show on board link from each finding.
+- `backend/tests/test_interactive_report.py` (9 tests): view structure, escaping, script-tag safety, and a parity test that runs the checker's JavaScript under node against the real Python check functions on 122 cases. Backend tests: 159 passing.
+
 ### Changed
 - **Report redesign** (`backend/app/reports/html_report.py`): the HTML report now uses the landing page's dark design system (IBM Plex Sans / JetBrains Mono, teal accent, purple reserved for AI content). Charts are native HTML bars instead of matplotlib PNGs (the PDF export still uses the matplotlib renderers). Findings with identical explanation and fix are grouped into one card. The AI review's markdown is rendered, and a cut-off trailing sentence is omitted with a note.
 - **Score derivation shown in the report**: a "How the score is computed" block lists each deduction (severity points x confidence), reconciles every subscore and the overall mean, and defines what confidence is and is not. `scoring.py` now exposes `deduction`, `severity_points` and `subscore_for` for this; scoring behaviour is unchanged.

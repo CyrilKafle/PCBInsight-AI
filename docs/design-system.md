@@ -11,7 +11,7 @@ This is the visual system for `docs/index.html` (the public landing page) and th
 | Role | Typeface | Why |
 |---|---|---|
 | Body, UI, headings | **IBM Plex Sans** | Open (OFL), technical/engineering heritage (IBM's own brand face), distinct from Inter/Roboto/system-ui — the fonts every generic AI-product site defaults to. |
-| Stats, code, labels, nav | **JetBrains Mono** | Open (OFL), directly ties to the JetBrains reference point, and gives numbers (28 checks, 147 tests, 10 boards) the "instrument readout" treatment instead of just sitting in prose. |
+| Stats, code, labels, nav | **JetBrains Mono** | Open (OFL), directly ties to the JetBrains reference point, and gives numbers (28 checks, 159 tests, 10 boards) the "instrument readout" treatment instead of just sitting in prose. |
 
 Both load from Google Fonts (`fonts.googleapis.com`) or self-hosted `.woff2` — no paid license, no CDN dependency risk.
 
