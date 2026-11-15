@@ -14,7 +14,7 @@ graph TD
     API --> Parser
 
     subgraph AILayer["AI Layer (narrates only)"]
-        Digest["Structured Digest<br/>no raw geometry"] --> Claude["Claude Sonnet 5<br/>review + grounded chat"]
+        Digest["Structured Digest<br/>no raw geometry"] --> LLM["LLM explanation layer<br/>review + grounded chat"]
     end
 
     Scoring --> Digest
@@ -31,10 +31,10 @@ graph TD
     HTML --> CLIOut
     HTML --> API
     PDF --> API
-    Claude --> API
+    LLM --> API
 
     Dash["React Dashboard<br/>board view, charts, AI chat, PDF"]
     API --> Dash
 
     classDef ai fill:#EDE7F9,stroke:#6f42c1,color:#3c1f6b;
-    class Digest,Claude ai;
+    class Digest,LLM ai;

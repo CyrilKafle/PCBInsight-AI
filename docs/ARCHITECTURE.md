@@ -14,10 +14,10 @@ KiCad project upload
     -> analysis engine (backend/app/analysis)  Board -> list[Issue]
     -> scoring (backend/app/analysis/scoring)  list[Issue] -> EngineeringScore
     -> AI summarizer (backend/app/ai/summarizer)  Board + Issues -> structured digest
-    -> AI review (backend/app/ai/review)   digest -> narrative review (Claude)
+    -> AI review (backend/app/ai/review)   digest -> optional LLM narrative review
     -> report (backend/app/reports)        Board + Issues + Score + review -> HTML/PDF
 ```
 
 ## Key boundary
 
-Claude never receives raw KiCad files or geometry — only the structured digest produced by `app/ai/summarizer.py`. This keeps the AI layer bounded, auditable, and clearly additive rather than load-bearing.
+The LLM never receives raw KiCad files or geometry — only the structured digest produced by `app/ai/summarizer.py`. This keeps the AI layer bounded, auditable, and clearly additive rather than load-bearing.

@@ -369,7 +369,7 @@
   <div class="wrap">
     <p class="eyebrow">PCBInsight AI</p>
     <h1>Deterministic PCB design analysis with evidence-constrained AI explanations.</h1>
-    <p class="dek">28 engineering checks across 9 categories, run against your actual KiCad project. Claude narrates the findings afterward — it never invents them, and every citation is checked in code.</p>
+    <p class="dek">28 engineering checks across 9 categories, run against your actual KiCad project. An optional LLM layer then explains the findings. It only receives the engine's results, and every finding ID it cites is checked against the real list.</p>
     <div class="hero-actions">
       <a class="btn primary" href="try-it-demo.html">Try it: explore a real report</a>
       <a class="btn secondary" href="https://github.com/CyrilKafle/PCBInsight-AI">View on GitHub</a>
@@ -379,7 +379,7 @@
       <div><span class="stat-value">28</span><span class="stat-label">deterministic checks</span></div>
       <div><span class="stat-value">159</span><span class="stat-label">automated tests</span></div>
       <div><span class="stat-value">10</span><span class="stat-label">validation corpus boards</span></div>
-      <div><span class="stat-value">0</span><span class="stat-label">hallucinated citations</span></div>
+      <div><span class="stat-value">0</span><span class="stat-label">pcbnew/CAD dependencies</span></div>
     </div>
   </div>
 </section>
@@ -403,7 +403,7 @@
       <div class="why-card">
         <span class="mono-tag">03 · BOUNDARY</span>
         <h3>AI constrained by evidence</h3>
-        <p>Claude never receives raw board geometry — only a structured digest of findings the engine already produced. It's instructed, and code-checked, never to invent a problem.</p>
+        <p>The LLM never receives raw board geometry, only a structured digest of findings the engine already produced. It is instructed not to add problems, and cited finding IDs are checked in code; mismatches are flagged, not yet blocked.</p>
       </div>
       <div class="why-card">
         <span class="mono-tag">04 · CITATIONS</span>
@@ -418,7 +418,7 @@
   <div class="wrap">
     <p class="eyebrow">How it works</p>
     <h2 class="section-title">Upload to report, end to end</h2>
-    <p class="section-dek">No account, no cloud upload required for the core analysis. The deterministic pipeline runs entirely locally; the AI narration step is the one part that calls out to Claude, and it's optional.</p>
+    <p class="section-dek">No account, no cloud upload required for the core analysis. The deterministic pipeline runs entirely locally; the LLM explanation step is the one part that calls an external API, and it's optional.</p>
     <div class="steps">
       <div class="step">
         <span class="step-num">01</span>
@@ -434,7 +434,7 @@
       </div>
       <div class="step">
         <span class="step-num">04</span>
-        <div><h3>Optional AI explanation</h3><p>Claude narrates and prioritizes the findings, citing issue IDs — grounded entirely in the digest, checked for unsupported citations in code.</p></div>
+        <div><h3>Optional AI explanation</h3><p>An LLM summarizes and prioritizes the findings, citing issue IDs from the digest. Unknown IDs are detected in code and logged.</p></div>
       </div>
       <div class="step">
         <span class="step-num">05</span>
@@ -506,7 +506,7 @@
       <div class="highlight-cell"><span class="stat-value">9</span><span class="stat-label">analysis categories</span></div>
       <div class="highlight-cell"><span class="stat-value">159</span><span class="stat-label">automated tests</span></div>
       <div class="highlight-cell"><span class="stat-value">10</span><span class="stat-label">validation corpus boards</span></div>
-      <div class="highlight-cell"><span class="stat-value">0</span><span class="stat-label">hallucinated citations, live-validated</span></div>
+      <div class="highlight-cell"><span class="stat-value">0</span><span class="stat-label">unknown finding IDs in a 5-board live run (v0.5.0)</span></div>
       <div class="highlight-cell"><span class="stat-value">100%</span><span class="stat-label">CI pass rate on push</span></div>
       <div class="highlight-cell"><span class="stat-value">0</span><span class="stat-label">pcbnew/CAD dependencies</span></div>
       <div class="highlight-cell"><span class="stat-value text">FastAPI + React</span><span class="stat-label">local-only dashboard</span></div>
@@ -524,7 +524,7 @@
       <div class="ai-dot"></div>
       <div>
         <p class="ai-label">AI Engineering Review Layer</p>
-        <p>Claude receives a digest with <code>schema_version</code>, an evidence block, and the issue list — never raw geometry. <code>find_unsupported_citations()</code> checks every citation Claude makes against the digest's real issue IDs, in code, not just in the prompt.</p>
+        <p>The model receives a digest with <code>schema_version</code>, an evidence block, and the issue list, never raw geometry. <code>find_unsupported_citations()</code> compares every cited issue ID with the digest's real IDs in code and logs any mismatch. A known ID does not prove the sentence around it is correct, so the deterministic findings remain the source of truth.</p>
       </div>
     </div>
     <div class="arch-links">

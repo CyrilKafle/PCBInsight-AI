@@ -46,7 +46,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         "--out", type=Path, default=None, help="Output path: an HTML file for a single board, a directory for a batch"
     )
     review.add_argument(
-        "--ai", action="store_true", help="Also generate a Claude narrative review (requires ANTHROPIC_API_KEY)"
+        "--ai", action="store_true", help="Also generate an LLM narrative review (requires ANTHROPIC_API_KEY)"
     )
     review.set_defaults(func=_run_review)
 

@@ -71,7 +71,7 @@ export default function App() {
                 onChange={(event) => setIncludeAiReview(event.target.checked)}
                 className="rounded border-neutral-600 bg-neutral-900"
               />
-              Also generate a Claude narrative review (requires ANTHROPIC_API_KEY, costs an API call)
+              Also generate an LLM narrative review (requires ANTHROPIC_API_KEY, costs an API call)
             </label>
             {status === "loading" && (
               <div className="flex items-center justify-center gap-3 py-8 text-neutral-400">

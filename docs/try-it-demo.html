@@ -439,7 +439,7 @@
       <div class="topbar-inner">
         <div class="topbar-row">
           <a class="brand" href="#overview" data-go="overview">PCBInsight<span class="brand-slash"> / </span>demo</a>
-          <span class="topbar-meta">stm32_usb_dev &middot; generated 2026-10-08 18:49 UTC</span>
+          <span class="topbar-meta">stm32_usb_dev &middot; generated 2026-11-15 19:48 UTC</span>
           <a class="landing-link" href="index.html">&larr; Landing page</a>
         </div>
         <nav class="tabs" role="tablist" aria-label="Report sections"><a role="tab" class="tab" href="#overview" data-go="overview" id="tab-overview" aria-controls="view-overview">Overview</a><a role="tab" class="tab" href="#scores" data-go="scores" id="tab-scores" aria-controls="view-scores">Scores</a><a role="tab" class="tab" href="#findings" data-go="findings" id="tab-findings" aria-controls="view-findings">Findings</a><a role="tab" class="tab" href="#ai-review" data-go="ai-review" id="tab-ai-review" aria-controls="view-ai-review">AI review</a><a role="tab" class="tab" href="#board" data-go="board" id="tab-board" aria-controls="view-board">Board</a><a role="tab" class="tab" href="#try-it" data-go="try-it" id="tab-try-it" aria-controls="view-try-it">Try it</a></nav>
@@ -476,7 +476,7 @@
           <span class="card-desc">Every problem the engine found (2 medium, 6 low), with why it matters and how to fix it. Filter by severity or area.</span>
         </a><a class="card" href="#ai-review" data-go="ai-review">
           <span class="card-top"><span class="card-title">AI review</span><span class="card-arrow" aria-hidden="true">&rarr;</span></span>
-          <span class="card-stat">Written by Claude</span>
+          <span class="card-stat">Written by the LLM layer</span>
           <span class="card-desc">A plain-English summary of the findings. It can only talk about what the engine already found.</span>
         </a><a class="card" href="#board" data-go="board">
           <span class="card-top"><span class="card-title">Board</span><span class="card-arrow" aria-hidden="true">&rarr;</span></span>
@@ -492,7 +492,7 @@
       <ol>
         <li><strong>The engine decides.</strong> Deterministic rules with named thresholds find every problem. No machine learning is involved in the score.</li>
         <li><strong>The score is arithmetic.</strong> Each finding removes points based on its severity and how confident the rule is.</li>
-        <li><strong>The AI only explains.</strong> Claude receives a digest of the findings, never the raw board, and its citations are checked in code.</li>
+        <li><strong>The AI only explains.</strong> The LLM receives a digest of the findings, never the raw board. Cited finding IDs are checked in code and mismatches are flagged.</li>
       </ol>
     </div>
     <details class="limits">
@@ -725,16 +725,16 @@
     <h2 id="h-ai-review"><span class="h-label ai-label">03</span> AI review</h2>
     <div class="what">
       <p class="what-title">What is this?</p>
-      <p>After the engine finishes, Claude writes a short engineering review of the findings, the way a senior engineer would in a code review. It is a <strong>narrator, not an analyst</strong>: it receives a structured digest of what the engine already found and nothing else.</p>
+      <p>After the engine finishes, an LLM writes a short engineering review of the findings, the way a senior engineer would in a code review. It is a <strong>narrator, not an analyst</strong>: it receives a structured digest of what the engine already found and nothing else.</p>
     </div>
     
     <ol class="flow" aria-label="How the AI review is produced">
       <li><strong>1 &middot; Engine</strong><span>28 deterministic checks produce findings</span></li>
       <li><strong>2 &middot; Digest</strong><span>Findings are summarized. No raw board geometry.</span></li>
-      <li><strong>3 &middot; Claude</strong><span>Writes the narrative from the digest only</span></li>
+      <li><strong>3 &middot; LLM</strong><span>Writes the narrative from the digest only</span></li>
       <li><strong>4 &middot; Check</strong><span>Every citation is verified in code</span></li>
     </ol>
-    <p class="panel-note">Shown verbatim from a real Claude run. It repeats the engine's score and confidence values and adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p><article class="ai-body"><h3>PCB Review Summary — stm32_usb_dev</h3>
+    <p class="panel-note">Shown verbatim from a real LLM run. It repeats the engine's score and confidence values and adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p><article class="ai-body"><h3>PCB Review Summary — stm32_usb_dev</h3>
 <p><strong>Overall score: 98/100</strong> — a strong result. No critical or high-severity issues were found; the deterministic analysis surfaced only 2 medium and 6 low-severity items across a 4-layer, 18-component board.</p>
 <h4>Recurring Theme: Possible Dangling Trace Stubs</h4>
 <p>Six of the eight findings (RTE-001 through RTE-006) share the identical pattern — a trace endpoint that doesn&#x27;t clearly terminate at a pad, via, or same-net trace within tolerance. These span several functionally distinct nets: USB differential pair (/USB_DP, /USB_DM), crystal lines (/XTAL_IN, /XTAL_OUT), and SWD programming/debug lines (/SWDIO, /SWCLK).</p>

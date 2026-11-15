@@ -4,6 +4,11 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+### Changed (accuracy of public wording)
+- Public docs, the landing page, the demo and report labels now describe the LLM layer as an optional explanation layer, and the claims match current behavior: unknown cited issue IDs are detected and logged, not blocked, and the live AI run covered 5 inputs at v0.5.0. Removed the vendor badge. Model IDs, package names and the `ANTHROPIC_API_KEY` variable are unchanged.
+- Architecture diagram label updated to match.
+- Session-instruction files (`CLAUDE.md`, `knowledge.md`) are no longer tracked; the engineering content lives in `DESIGN.md` and `docs/`.
+
 ### Changed (interactive demo)
 - **"Try it" is now a tabbed, interactive app** (`backend/app/reports/interactive_report.py`, rendered into `docs/try-it-demo.html`). Instead of one long page with anchor links, each tab (Overview, Scores, Findings, AI review, Board, Try it) is its own view, with a back button on every view, previous/next buttons, a landing-page link, browser back/forward support (hash routing) and arrow-key tab navigation. Every view opens with a plain-language "What is this?" box; findings can be filtered by severity, area and confidence and expanded or collapsed; a glossary defines the PCB terms.
 - **What-if score simulator**: tick findings as fixed and the subscores recompute live using the exact `scoring.py` formula (half-to-even rounding matches Python).

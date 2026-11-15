@@ -374,7 +374,7 @@ def _view_overview(board: Board, issues: list[Issue], score: EngineeringScore, g
     cards = [
         ("scores", "Scores", f"{score.overall}/100 overall", "Seven subscores and the exact arithmetic behind them. Mark findings as fixed to see the score move."),
         ("findings", "Findings", f"{len(issues)} found &middot; {len(groups)} groups", f"Every problem the engine found ({escape(sev_line)}), with why it matters and how to fix it. Filter by severity or area."),
-        ("ai-review", "AI review", "Written by Claude", "A plain-English summary of the findings. It can only talk about what the engine already found."),
+        ("ai-review", "AI review", "Written by the LLM layer", "A plain-English summary of the findings. It can only talk about what the engine already found."),
         ("board", "Board", f"{len(board.components)} parts &middot; {via_count} vias", "A map of the board with every finding pinned to where it was detected, plus the raw statistics."),
         ("try-it", "Try it", "Type in your own numbers", "Enter a trace width, via size, or capacitor distance and see what the real rule engine says."),
     ]
@@ -416,7 +416,7 @@ def _view_overview(board: Board, issues: list[Issue], score: EngineeringScore, g
       <ol>
         <li><strong>The engine decides.</strong> Deterministic rules with named thresholds find every problem. No machine learning is involved in the score.</li>
         <li><strong>The score is arithmetic.</strong> Each finding removes points based on its severity and how confident the rule is.</li>
-        <li><strong>The AI only explains.</strong> Claude receives a digest of the findings, never the raw board, and its citations are checked in code.</li>
+        <li><strong>The AI only explains.</strong> The LLM receives a digest of the findings, never the raw board. Cited finding IDs are checked in code and mismatches are flagged.</li>
       </ol>
     </div>
     <details class="limits">
@@ -674,7 +674,7 @@ def _finding_card(gi: int, group: list[Issue]) -> str:
 def _view_ai(ai_review: str | None) -> str:
     intro = _intro(
         "What is this?",
-        "<p>After the engine finishes, Claude writes a short engineering review of the findings, the way a senior engineer "
+        "<p>After the engine finishes, an LLM writes a short engineering review of the findings, the way a senior engineer "
         "would in a code review. It is a <strong>narrator, not an analyst</strong>: it receives a structured digest of what "
         "the engine already found and nothing else.</p>",
     )
@@ -682,7 +682,7 @@ def _view_ai(ai_review: str | None) -> str:
     <ol class="flow" aria-label="How the AI review is produced">
       <li><strong>1 &middot; Engine</strong><span>28 deterministic checks produce findings</span></li>
       <li><strong>2 &middot; Digest</strong><span>Findings are summarized. No raw board geometry.</span></li>
-      <li><strong>3 &middot; Claude</strong><span>Writes the narrative from the digest only</span></li>
+      <li><strong>3 &middot; LLM</strong><span>Writes the narrative from the digest only</span></li>
       <li><strong>4 &middot; Check</strong><span>Every citation is verified in code</span></li>
     </ol>
     """
@@ -700,7 +700,7 @@ def _view_ai(ai_review: str | None) -> str:
                 "sentence is omitted. Everything above is verbatim.</p>"
             )
         note = (
-            '<p class="panel-note">Shown verbatim from a real Claude run. It repeats the engine\'s score and confidence values and '
+            '<p class="panel-note">Shown verbatim from a real LLM run. It repeats the engine\'s score and confidence values and '
             "adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p>"
         )
         body = f'{note}<article class="ai-body">{content}</article>'

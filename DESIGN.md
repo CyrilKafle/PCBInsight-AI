@@ -75,7 +75,7 @@ Operating name for this feature is **AI Engineering Review Layer**, not "AI Inte
     "statistics": {"component_count": 42, "net_count": 18}
   }
   ```
-- **Traceability requirement, enforced in code, not just prompt.** `review.find_unsupported_citations(review_text, digest)` regex-extracts issue-ID-shaped tokens (`[A-Z]{2,6}-\d{3}`) from Claude's output and diffs them against the digest's real issue IDs. `generate_review`/`answer_question` call this automatically and log a warning (not a hard failure — the review is still usable, but the mismatch is now observable) if the model cites an ID that doesn't exist. Same defense-in-depth pattern as the raw-geometry boundary: a prompt instruction plus a code-enforced check behind it, not one or the other alone.
+- **Traceability requirement, checked in code, not just prompted.** `review.find_unsupported_citations(review_text, digest)` regex-extracts issue-ID-shaped tokens (`[A-Z]{2,6}-\d{3}`) from Claude's output and diffs them against the digest's real issue IDs. `generate_review`/`answer_question` call this automatically and log a warning (not a hard failure — the review is still usable, but the mismatch is now observable) if the model cites an ID that doesn't exist. Same defense-in-depth pattern as the raw-geometry boundary: a prompt instruction plus a code-enforced check behind it, not one or the other alone.
 
 ## Approaches Considered
 

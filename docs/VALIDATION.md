@@ -49,9 +49,9 @@ python backend/scripts/validate_ai.py
 
 It runs the real review + chat prompts (`backend/app/ai/review.py`) against five boards — two from the corpus plus three synthetic edge cases (a clean minimal board, a multi-issue board, and a board with adversarial/unicode net names) — and checks the properties that matter for a deterministic-first tool:
 
-- **No hallucinated citations** — every issue ID Claude cites must actually exist in the digest (`find_unsupported_citations`, code-enforced, not just prompted for).
-- **The clean board stays clean** — the AI must not invent findings when the deterministic engine reports zero.
-- **Low-confidence findings are hedged** — anything below 0.5 confidence must read as "verify this," not as fact.
+- **No unknown citations** — every issue ID the model cites must exist in the digest (`find_unsupported_citations`). The script reports mismatches; at runtime the app logs them but does not block the text. This checks ID membership only, not whether each sentence is correct.
+- **The clean board stays clean** — the AI must not invent findings when the deterministic engine reports zero. (In the committed v0.5.0 run the "clean minimal" board still had 3 findings, so this case has not been exercised yet.)
+- **Low-confidence findings are hedged** — anything below 0.5 confidence must read as "verify this," not as fact. (The current check is a keyword search over the whole review, not a per-finding check.)
 - **Adversarial net names don't break prompting** — XML-hostile and unicode strings must round-trip safely into the prompt and back.
 
 ### Expected output

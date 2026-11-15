@@ -348,7 +348,7 @@ def _ai_review_section(ai_review: str | None) -> str:
                 "incomplete sentence is omitted. Everything above is verbatim.</p>"
             )
         note = (
-            '<p class="ai-note">Written by Claude <em>over</em> the findings above and shown verbatim. It never sees '
+            '<p class="ai-note">Written by the LLM layer <em>over</em> the findings above and shown verbatim. It never sees '
             "raw board geometry and cannot add findings of its own. It repeats the engine's score and confidence values and adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p>"
         )
         content = note + f'<div class="ai-body">{content}</div>'
