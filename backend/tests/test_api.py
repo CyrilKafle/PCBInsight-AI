@@ -223,3 +223,18 @@ def test_report_pdf_returns_downloadable_pdf():
     assert response.headers["content-disposition"].startswith("attachment")
     assert "simple_board_report.pdf" in response.headers["content-disposition"]
     assert response.content[:4] == b"%PDF"
+
+
+def test_report_pdf_accepts_review_with_ai_error(monkeypatch, caplog):
+    def boom(*a, **k):
+        raise Exception("upstream exploded sk-ant-secret-key")
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setattr(main, "generate_review", boom)
+    review = _review(include_ai_review="true").json()
+    assert review["ai_error"]["category"] == "provider_error"
+    assert "sk-ant-secret-key" not in caplog.text
+
+    response = client.post("/api/report/pdf", json=review)
+    assert response.status_code == 200
+    assert response.content[:4] == b"%PDF"

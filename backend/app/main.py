@@ -151,8 +151,14 @@ async def review(files: list[UploadFile], include_ai_review: bool = Form(False))
                 category="not_configured",
                 message="ANTHROPIC_API_KEY is not set, so no LLM explanation was generated.",
             )
-        except Exception:  # noqa: BLE001 -- the deterministic result must survive any LLM failure
-            logger.exception("AI review failed; returning deterministic result only")
+        except Exception as exc:  # noqa: BLE001 -- the deterministic result must survive any LLM failure
+            # Log only the error type and HTTP status (if any): provider error text can echo request
+            # content or credentials, so neither the message nor the traceback is logged.
+            logger.warning(
+                "AI review failed (%s, status=%s); returning deterministic result only",
+                type(exc).__name__,
+                getattr(exc, "status_code", None),
+            )
             ai_error = AiError(
                 category="provider_error",
                 message="The LLM provider request failed. See the server log for details.",
