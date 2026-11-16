@@ -117,6 +117,12 @@ export default function App() {
                 <p className="whitespace-pre-wrap text-sm text-neutral-200">{result.ai_review}</p>
               </div>
             )}
+            {result.ai_error && (
+              <p className="rounded-md border border-neutral-800 bg-neutral-900 p-3 text-sm text-neutral-400">
+                The optional LLM explanation is unavailable ({result.ai_error.category}). Deterministic findings
+                below are complete.
+              </p>
+            )}
             <BoardView
               board={result.board}
               issues={result.issues}

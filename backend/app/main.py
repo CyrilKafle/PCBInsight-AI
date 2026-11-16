@@ -13,6 +13,7 @@ import logging
 import tempfile
 import time
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, Form, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -48,11 +49,20 @@ app.add_middleware(
 )
 
 
+class AiError(BaseModel):
+    """Why the optional LLM explanation is missing. Never carries the raw
+    exception text (it can echo request details); the full error is logged."""
+
+    category: Literal["not_configured", "provider_error"]
+    message: str
+
+
 class ReviewResponse(BaseModel):
     board: Board
     issues: list[Issue]
     score: EngineeringScore
     ai_review: str | None = None
+    ai_error: AiError | None = None
 
 
 class ChatRequest(BaseModel):
@@ -130,12 +140,24 @@ async def review(files: list[UploadFile], include_ai_review: bool = Form(False))
     score = compute_score(issues)
 
     ai_review = None
+    ai_error = None
     if include_ai_review:
         try:
             digest = summarize(board, issues, score)
             ai_review = generate_review(digest)
-        except Exception as exc:  # noqa: BLE001 -- missing key (RuntimeError) or live API failure both map to 502
-            raise HTTPException(status_code=502, detail=f"AI review failed: {exc}") from exc
+        except RuntimeError:
+            # generate_review raises RuntimeError only when ANTHROPIC_API_KEY is unset.
+            logger.warning("AI review skipped: ANTHROPIC_API_KEY is not set")
+            ai_error = AiError(
+                category="not_configured",
+                message="ANTHROPIC_API_KEY is not set, so no LLM explanation was generated.",
+            )
+        except Exception:  # noqa: BLE001 -- the deterministic result must survive any LLM failure
+            logger.exception("AI review failed; returning deterministic result only")
+            ai_error = AiError(
+                category="provider_error",
+                message="The LLM provider request failed. See the server log for details.",
+            )
 
     logger.info(
         "reviewed %s: %d issues, score %d, ai=%s, %.2fs",
@@ -145,7 +167,9 @@ async def review(files: list[UploadFile], include_ai_review: bool = Form(False))
         ai_review is not None,
         time.perf_counter() - started,
     )
-    return ReviewResponse(board=board, issues=issues, score=score, ai_review=ai_review)
+    return ReviewResponse(
+        board=board, issues=issues, score=score, ai_review=ai_review, ai_error=ai_error
+    )
 
 
 @app.post("/api/chat", response_model=ChatResponse)

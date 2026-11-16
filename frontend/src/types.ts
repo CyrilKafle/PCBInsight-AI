@@ -83,9 +83,15 @@ export interface EngineeringScore {
   subscores: SubScore[];
 }
 
+export interface AiError {
+  category: "not_configured" | "provider_error";
+  message: string;
+}
+
 export interface ReviewResponse {
   board: Board;
   issues: Issue[];
   score: EngineeringScore;
   ai_review: string | null;
+  ai_error?: AiError | null;
 }

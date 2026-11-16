@@ -4,6 +4,9 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+### Changed (LLM failure handling)
+- `/api/review` with `include_ai_review` now always returns 200 with the deterministic board, issues and score. If the optional LLM explanation fails, `ai_review` is null and a new `ai_error` object (`category`: `not_configured` or `provider_error`, plus a short message) says why. Previously this was a 502 that discarded the result. `/api/chat` still returns 502 on failure.
+
 ### Changed (accuracy of public wording)
 - Public docs, the landing page, the demo and report labels now describe the LLM layer as an optional explanation layer, and the claims match current behavior: unknown cited issue IDs are detected and logged, not blocked, and the live AI run covered 5 inputs at v0.5.0. Removed the vendor badge. Model IDs, package names and the `ANTHROPIC_API_KEY` variable are unchanged.
 - Architecture diagram label updated to match.

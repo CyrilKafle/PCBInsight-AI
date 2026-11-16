@@ -70,13 +70,50 @@ def test_review_endpoint_malformed_pcb_returns_400():
     assert "Could not parse" in response.json()["detail"]
 
 
-def test_review_endpoint_ai_review_without_api_key_returns_502(monkeypatch):
+def _review(**data):
+    return client.post("/api/review", files=_project_files(), data=data)
+
+
+def test_review_endpoint_ai_review_without_api_key_keeps_deterministic_result(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    response = client.post(
-        "/api/review", files=_project_files(), data={"include_ai_review": "true"}
-    )
-    assert response.status_code == 502
-    assert "ANTHROPIC_API_KEY" in response.json()["detail"]
+    baseline = _review().json()
+    response = _review(include_ai_review="true")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ai_review"] is None
+    assert body["ai_error"]["category"] == "not_configured"
+    assert body["issues"] == baseline["issues"]
+    assert body["score"] == baseline["score"]
+
+
+def test_review_endpoint_ai_provider_failure_keeps_deterministic_result(monkeypatch):
+    def boom(*a, **k):
+        raise Exception("upstream exploded sk-ant-secret-key")
+
+    monkeypatch.setattr(main, "generate_review", boom)
+    baseline = _review().json()
+    response = _review(include_ai_review="true")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ai_review"] is None
+    assert body["ai_error"]["category"] == "provider_error"
+    assert "sk-ant-secret-key" not in response.text
+    assert body["issues"] == baseline["issues"]
+    assert body["score"] == baseline["score"]
+    assert body["board"] == baseline["board"]
+
+
+def test_review_endpoint_ai_success_has_no_ai_error(monkeypatch):
+    monkeypatch.setattr(main, "generate_review", lambda digest: "Looks fine.")
+    body = _review(include_ai_review="true").json()
+    assert body["ai_review"] == "Looks fine."
+    assert body["ai_error"] is None
+
+
+def test_review_endpoint_without_ai_has_no_ai_error():
+    body = _review().json()
+    assert body["ai_review"] is None
+    assert body["ai_error"] is None
 
 
 def test_review_endpoint_flattens_path_traversal_attempt():
