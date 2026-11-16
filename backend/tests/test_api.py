@@ -86,6 +86,17 @@ def test_review_endpoint_ai_review_without_api_key_keeps_deterministic_result(mo
     assert body["score"] == baseline["score"]
 
 
+def test_review_endpoint_unrelated_runtime_error_is_provider_error(monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("something unrelated to the API key")
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setattr(main, "generate_review", boom)
+    response = _review(include_ai_review="true")
+    assert response.status_code == 200
+    assert response.json()["ai_error"]["category"] == "provider_error"
+
+
 def test_review_endpoint_ai_provider_failure_keeps_deterministic_result(monkeypatch):
     def boom(*a, **k):
         raise Exception("upstream exploded sk-ant-secret-key")

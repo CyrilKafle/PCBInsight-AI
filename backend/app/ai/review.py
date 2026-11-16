@@ -116,9 +116,13 @@ def _warn_on_unsupported_citations(review_text: str, digest: dict) -> None:
         logger.warning("AI review cited issue IDs not present in the digest: %s", unsupported)
 
 
+class MissingApiKeyError(RuntimeError):
+    """Raised when no API key is configured. Subclasses RuntimeError for backward compatibility."""
+
+
 def _default_client() -> anthropic.Anthropic:
     if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise RuntimeError(
+        raise MissingApiKeyError(
             "ANTHROPIC_API_KEY is not set. Set it in the environment, or pass an "
             "explicit `client` argument (e.g. a fake/mock client for testing)."
         )

@@ -19,7 +19,7 @@ from fastapi import FastAPI, Form, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.ai.review import answer_question, generate_review
+from app.ai.review import MissingApiKeyError, answer_question, generate_review
 from app.ai.summarizer import summarize
 from app.analysis import run_all_checks
 from app.analysis.scoring import score as compute_score
@@ -145,8 +145,7 @@ async def review(files: list[UploadFile], include_ai_review: bool = Form(False))
         try:
             digest = summarize(board, issues, score)
             ai_review = generate_review(digest)
-        except RuntimeError:
-            # generate_review raises RuntimeError only when ANTHROPIC_API_KEY is unset.
+        except MissingApiKeyError:
             logger.warning("AI review skipped: ANTHROPIC_API_KEY is not set")
             ai_error = AiError(
                 category="not_configured",
