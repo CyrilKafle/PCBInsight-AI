@@ -1,6 +1,6 @@
 # Devlog — 2026-07-14: Phase 4 completion
 
-**Model:** Claude Opus 4.8 · **Duration:** ~40 min · **Outcome:** Phase 4 complete (all remaining features shipped), 9 local commits, 135 backend tests passing.
+**Duration:** ~40 min · **Outcome:** Phase 4 complete (all remaining features shipped), 9 local commits, 135 backend tests passing.
 
 This is the detailed engineering narrative for the session. The evergreen project snapshot lives in [`knowledge.md`](../../knowledge.md); this file preserves the rationale, the bug found, and how each piece was verified.
 
@@ -54,8 +54,8 @@ Reviewed and deliberately **kept**: `pdf_report.py` imports a few underscore-pri
 6. PDF export (ReportLab report + download button)
 7. Polish (PDF severity chip + page numbers, loading spinner, board fill)
 8. Dedupe severity ordering + colors into `src/severity.ts`
-9. Docs: reflect Phase 4 completion + add session-continuity files (`CLAUDE.md`, `knowledge.md`)
+9. Docs: reflect Phase 4 completion + add session-continuity notes
 
 ## 7. Caveats
 
-The AI chat and `--ai` review paths are proven to wire up and fail gracefully, but **live Claude output quality is still unverified** (no API key in this environment). Needs a real pass once a key is available.
+The AI chat and `--ai` review paths are proven to wire up and fail gracefully, but **live LLM output quality is still unverified** (no API key in this environment). Needs a real pass once a key is available.

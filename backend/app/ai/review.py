@@ -1,8 +1,8 @@
-"""Sends the board digest (from summarizer.py) to Claude for a senior-PCB-
+"""Sends the board digest (from summarizer.py) to the LLM for a senior-PCB-
 engineer-style narrative review, and answers grounded follow-up questions for
 the optional AI chat panel.
 
-Claude is a technical writer over the deterministic engine's output here --
+The LLM is a technical writer over the deterministic engine's output here --
 it never re-derives findings, only synthesizes prose from the structured
 digest. Both system prompts below exist to enforce that boundary. See
 DESIGN.md's "AI Integration Architecture (Phase 3)" section."""
@@ -100,7 +100,7 @@ def find_unsupported_citations(review_text: str, digest: dict) -> list[str]:
     """Return every issue-ID-shaped token (e.g. "PWR-004") cited in
     `review_text` that isn't actually one of `digest`'s real issue IDs.
 
-    The system prompt tells Claude to only cite real issue IDs, but a prompt
+    The system prompt tells the LLM to only cite real issue IDs, but a prompt
     alone can't guarantee that -- this is the code-enforced check, the same
     defense-in-depth approach used for the raw-geometry boundary in
     summarizer.py. Non-empty output means the model likely hallucinated a

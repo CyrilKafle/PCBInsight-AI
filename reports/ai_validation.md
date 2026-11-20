@@ -1,9 +1,9 @@
 # AI Validation Report
 
-Generated 2026-07-16T02:13:32.626367+00:00 against `claude-sonnet-5` via `backend/scripts/validate_ai.py`.
+Generated 2026-07-16T02:13:32.626367+00:00 against the configured LLM via `backend/scripts/validate_ai.py`.
 Repo state: commit `20a2000f35c1`, tag `v0.5.0`.
 
-This is evidence the AI review layer was validated against the real Anthropic API (not just the dependency-injected fake client used in the unit tests) -- see `backend/scripts/validate_ai.py` for what each check verifies.
+This is evidence the AI review layer was validated against the real LLM API (not just the dependency-injected fake client used in the unit tests) -- see `backend/scripts/validate_ai.py` for what each check verifies.
 
 | Board | Score | Issues | Hallucinated citations | Low-conf. hedged | Review cost | Chat cost |
 |---|---:|---:|---:|:---:|---:|---:|

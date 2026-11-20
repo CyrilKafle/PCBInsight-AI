@@ -10,7 +10,7 @@ All notable changes to this project are documented here. Format loosely follows 
 ### Changed (accuracy of public wording)
 - Public docs, the landing page, the demo and report labels now describe the LLM layer as an optional explanation layer, and the claims match current behavior: unknown cited issue IDs are detected and logged, not blocked, and the live AI run covered 5 inputs at v0.5.0. Removed the vendor badge. Model IDs, package names and the `ANTHROPIC_API_KEY` variable are unchanged.
 - Architecture diagram label updated to match.
-- Session-instruction files (`CLAUDE.md`, `knowledge.md`) are no longer tracked; the engineering content lives in `DESIGN.md` and `docs/`.
+- Internal session-notes files are no longer tracked; the engineering content lives in `DESIGN.md` and `docs/`.
 
 ### Changed (interactive demo)
 - **"Try it" is now a tabbed, interactive app** (`backend/app/reports/interactive_report.py`, rendered into `docs/try-it-demo.html`). Instead of one long page with anchor links, each tab (Overview, Scores, Findings, AI review, Board, Try it) is its own view, with a back button on every view, previous/next buttons, a landing-page link, browser back/forward support (hash routing) and arrow-key tab navigation. Every view opens with a plain-language "What is this?" box; findings can be filtered by severity, area and confidence and expanded or collapsed; a glossary defines the PCB terms.
@@ -26,7 +26,7 @@ All notable changes to this project are documented here. Format loosely follows 
 - Independent review loop: six rounds of external grading (74, 82, 84, 85, 87, 90) drove these changes.
 
 ### Added
-- **"Try it" demo** (`docs/try-it-demo.html`), linked from the landing page nav and as the primary hero CTA — a real, unedited report for `examples/stm32_usb_dev`. `backend/scripts/generate_try_it_demo.py` re-runs the deterministic pipeline locally and reuses the AI review text already captured in `reports/ai_validation.json`, so regenerating it makes zero new Anthropic API calls. Carries a disclosure banner explaining what it is and linking back to the landing page and repo.
+- **"Try it" demo** (`docs/try-it-demo.html`), linked from the landing page nav and as the primary hero CTA — a real, unedited report for `examples/stm32_usb_dev`. `backend/scripts/generate_try_it_demo.py` re-runs the deterministic pipeline locally and reuses the AI review text already captured in `reports/ai_validation.json`, so regenerating it makes zero new LLM API calls. Carries a disclosure banner explaining what it is and linking back to the landing page and repo.
 - **Demo GIF** (`docs/images/demo/demo.gif`), embedded at the top of the landing page's dashboard showcase — six real, screen-captured frames from a live run against `examples/stm32_usb_dev` (upload, deterministic score + AI review, board visualization, an expanded issue, a real AI chat answer, and PDF export). No synthetic or AI-generated visuals.
 
 ### Security
@@ -39,9 +39,9 @@ v1.0.0: the deterministic engine, AI review layer, validation corpus, live AI va
 
 ### Added
 - `docs/ENGINEERING_DECISIONS.md` — the "why" behind the major architectural calls (deterministic-first, the AI can't-invent-findings boundary, code-enforced citations, the custom parser, the validation corpus, AI validation staying out of CI, transparent scoring over benchmark scores).
-- **Landing page** (`docs/index.html`), **live at https://cyrilkafle.github.io/PCBInsight-AI/** (GitHub Pages enabled, served from `/docs`): dark-mode-first static page with a real design system (`docs/design-system.md` — IBM Plex Sans + JetBrains Mono, teal accent kept distinct from the AI-purple already used in the architecture diagram). Every screenshot is genuine output from a live run against `examples/stm32_usb_dev` (including a real Claude review and a real chat answer) — no mockups.
+- **Landing page** (`docs/index.html`), **live at https://cyrilkafle.github.io/PCBInsight-AI/** (GitHub Pages enabled, served from `/docs`): dark-mode-first static page with a real design system (`docs/design-system.md` — IBM Plex Sans + JetBrains Mono, teal accent kept distinct from the AI-purple already used in the architecture diagram). Every screenshot is genuine output from a live run against `examples/stm32_usb_dev` (including a real the LLM review and a real chat answer) — no mockups.
 - README: screenshot gallery (4 real dashboard images), a landing-page badge + link, recomputed metrics.
-- **Live AI validation harness** (`backend/scripts/validate_ai.py`) — runs the real review/chat prompts against the live Anthropic API, tracks token usage and cost per call, and writes `reports/ai_validation.md`/`.json` as committed evidence (git commit/tag, per-board cost, hallucination check) that the AI layer was validated against a real model, not just the fake test client.
+- **Live AI validation harness** (`backend/scripts/validate_ai.py`) — runs the real review/chat prompts against the live LLM API, tracks token usage and cost per call, and writes `reports/ai_validation.md`/`.json` as committed evidence (git commit/tag, per-board cost, hallucination check) that the AI layer was validated against a real model, not just the fake test client.
 - `return_usage` flag on `generate_review()`/`answer_question()` (`backend/app/ai/review.py`) — opt-in token-usage capture with zero change to existing call sites.
 - **Engineering Validation Corpus**: seven new purpose-built KiCad boards under `examples/` — `high_quality_reference` (clean board, 100/100, zero findings), `rf_clock_board` (signal-integrity + differential-pair focus), `power_supply_board` (power/decoupling focus), `thermal_reference` (thermal focus), `manufacturing_reference` (DFM focus), `parser_edge_cases` (unicode/escaped-quote/hostile-character parser stress test), and `mixed_realistic_board` (a believable "mostly good, a few real mistakes" board) — plus `flawed_reference` (committed for the first time). Ten boards total, each demonstrating exactly one thing; see `examples/README.md`.
 - `docs/VALIDATION.md` — how the deterministic engine and the AI layer are each validated, and how to interpret a failure in either.
@@ -70,8 +70,8 @@ Completes Phase 4: a local FastAPI + React dashboard with an interactive board v
 - **Grounded AI chat panel** — `POST /api/chat` reuses the Phase 3 `answer_question()`; conversation history is client-side; degrades gracefully when no API key is configured.
 - **PDF report export** — `POST /api/report/pdf` via `app/reports/pdf_report.py` (ReportLab), reusing the HTML report's charts and score-color logic, with a page-numbered footer; "Download PDF" button in the dashboard.
 - **CLI** (`app/cli.py`): `pcbinsight review <path>` single-board + auto-detected batch mode (`summary.html` index); packaged via `pyproject.toml` (`pip install -e .`).
-- `find_unsupported_citations()` — code-enforced check that any issue ID Claude cites actually exists in the digest.
-- Repo hygiene: `docs/images/architecture.png`, README metrics table (computed, not estimated), `LICENSE` (MIT), this changelog, GitHub Actions CI, and `CLAUDE.md` + `docs/devlogs/` session-continuity docs.
+- `find_unsupported_citations()` — code-enforced check that any issue ID the LLM cites actually exists in the digest.
+- Repo hygiene: `docs/images/architecture.png`, README metrics table (computed, not estimated), `LICENSE` (MIT), this changelog, GitHub Actions CI, and `docs/devlogs/` session-continuity docs.
 
 ### Changed
 - AI review system prompts tightened: every recommendation must be backed by a supplied issue; low-confidence findings must be explicitly hedged.
@@ -92,10 +92,10 @@ Completes Phase 4: a local FastAPI + React dashboard with an interactive board v
 
 ## [v0.4.0] — AI Engineering Review Layer complete
 
-- `app/ai/summarizer.py` builds the structured digest sent to Claude: overall/subscores, a deterministically-computed evidence block (severity counts, highest-impact categories, most common recommendation), the issue list (with stable `PWR-004`-style IDs), and board statistics — never raw geometry.
-- `app/ai/review.py` sends the digest to Claude under a strict system prompt: no invented findings, cite issue IDs, treat the deterministic engine as authoritative. `answer_question()` grounds the future AI chat panel the same way.
+- `app/ai/summarizer.py` builds the structured digest sent to the LLM: overall/subscores, a deterministically-computed evidence block (severity counts, highest-impact categories, most common recommendation), the issue list (with stable `PWR-004`-style IDs), and board statistics — never raw geometry.
+- `app/ai/review.py` sends the digest to the LLM under a strict system prompt: no invented findings, cite issue IDs, treat the deterministic engine as authoritative. `answer_question()` grounds the future AI chat panel the same way.
 - Issue IDs assigned once per run, in the `run_all_checks` orchestrator, category-prefixed and sequential.
-- 115 tests passing, all via a dependency-injected fake Anthropic client (no live API key was available in the dev environment).
+- 115 tests passing, all via a dependency-injected fake LLM client (no live API key was available in the dev environment).
 
 ## [v0.3.0] — Deterministic review engine complete
 

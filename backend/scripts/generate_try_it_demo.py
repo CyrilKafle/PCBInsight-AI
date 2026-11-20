@@ -2,9 +2,9 @@
 examples/stm32_usb_dev, embedded on the landing page as a free "Try it" demo.
 
 Deterministic analysis is re-run locally (free). The AI review text is reused
-verbatim from reports/ai_validation.json (a real, already-captured live Claude
+verbatim from reports/ai_validation.json (a real, already-captured live LLM
 response) rather than calling the API again, so this script makes zero
-Anthropic API calls.
+LLM API calls.
 
 Run after regenerating reports/ai_validation.json, or whenever
 examples/stm32_usb_dev or the report renderer changes.

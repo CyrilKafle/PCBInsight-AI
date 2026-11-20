@@ -183,7 +183,7 @@ def chat(request: ChatRequest) -> ChatResponse:
 
     Rebuilds the same digest summarize() feeds the review layer and hands it to
     the existing answer_question() -- the deterministic engine stays the sole
-    source of findings; Claude only narrates over the digest."""
+    source of findings; the LLM only narrates over the digest."""
     question = request.question.strip()
     if not question:
         raise HTTPException(status_code=422, detail="Question must not be empty.")

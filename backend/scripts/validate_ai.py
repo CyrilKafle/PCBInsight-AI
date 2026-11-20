@@ -1,4 +1,4 @@
-"""Live validation of the AI review layer against the real Anthropic API.
+"""Live validation of the AI review layer against the real LLM API.
 
 Unlike the unit tests (which use a dependency-injected fake client to prove the
 plumbing without spending money), this script exercises the *actual* model on
@@ -75,7 +75,7 @@ from factories import make_board, make_component, make_net, make_trace, make_via
 ISSUE_ID_RE = re.compile(r"\b[A-Z]{2,6}-\d{3}\b")
 
 # Standard per-MTok pricing for DEFAULT_MODEL (see backend/app/ai/review.py).
-# Anthropic runs a temporary lower intro rate for claude-sonnet-5 through
+# The provider runs a temporary lower intro rate for this model through
 # 2026-08-31 ($2.00/$10.00) -- this table uses the standard post-intro rate so
 # reported cost stays correct after that date rather than silently
 # under-reporting once the intro pricing lapses.
@@ -240,7 +240,7 @@ def write_reports(results: list[dict]) -> None:
         f"Repo state: commit `{(payload['git_commit'] or 'unknown')[:12]}`"
         + (f", tag `{payload['git_tag']}`" if payload["git_tag"] else "") + ".",
         "",
-        "This is evidence the AI review layer was validated against the real Anthropic API "
+        "This is evidence the AI review layer was validated against the real LLM API "
         "(not just the dependency-injected fake client used in the unit tests) -- see "
         "`backend/scripts/validate_ai.py` for what each check verifies.",
         "",

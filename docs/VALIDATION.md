@@ -32,7 +32,7 @@ cd backend && python -m pytest -q
 ```sh
 cd backend
 python -m app.cli review ../examples/<board_name>            # writes <board_name>_report.html
-python -m app.cli review ../examples/<board_name> --ai        # + Claude narrative (needs ANTHROPIC_API_KEY)
+python -m app.cli review ../examples/<board_name> --ai        # + LLM narrative (needs ANTHROPIC_API_KEY)
 ```
 
 **Interpreting a failure:** if the parametrized test fails for a board, either the parser broke on a construct that board relies on, or the analysis engine now raises on an input shape it used to handle — both are regressions worth fixing before touching anything else. If a board's *score* or *finding count* silently drifts (test still passes since it only asserts the score is in range, not a specific value), that means a check's behavior changed — expected when a threshold is deliberately tuned, worth double-checking otherwise. Re-run the CLI on the affected board and compare against the description in `examples/README.md`.

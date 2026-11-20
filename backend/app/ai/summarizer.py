@@ -1,11 +1,11 @@
-"""Builds the compact structured digest sent to Claude: board size, layer
+"""Builds the compact structured digest sent to the LLM: board size, layer
 count, trace statistics, via count, power/ground nets, detected problems,
 component summary, routing metrics, clock nets, connector locations, power
 tree. This is the privacy/cost boundary -- raw geometry (trace/via
 coordinates, pour polygons) never leaves the backend.
 
 Every number in this digest is computed deterministically here or upstream
-in app/analysis/*.py -- Claude never sees the board, only this summary, and
+in app/analysis/*.py -- the LLM never sees the board, only this summary, and
 never decides what counts as a problem. See DESIGN.md's "AI Integration
 Architecture (Phase 3)" section for the full rationale."""
 
