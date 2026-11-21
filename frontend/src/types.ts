@@ -84,7 +84,7 @@ export interface EngineeringScore {
 }
 
 export interface AiError {
-  category: "not_configured" | "provider_error";
+  category: "not_configured" | "provider_error" | "withheld";
   message: string;
 }
 
@@ -92,6 +92,8 @@ export interface ReviewResponse {
   board: Board;
   issues: Issue[];
   score: EngineeringScore;
+  schema_version?: number;
   ai_review: string | null;
+  ai_review_status?: "valid" | "repaired" | "withheld" | null;
   ai_error?: AiError | null;
 }

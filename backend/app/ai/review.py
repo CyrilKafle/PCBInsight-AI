@@ -13,6 +13,8 @@ import json
 import logging
 import os
 import re
+from dataclasses import dataclass, field
+from typing import Literal
 
 import anthropic
 
@@ -108,6 +110,118 @@ def find_unsupported_citations(review_text: str, digest: dict) -> list[str]:
     known_ids = {issue["id"] for issue in digest.get("issues", [])}
     cited = set(_ISSUE_ID_PATTERN.findall(review_text))
     return sorted(cited - known_ids)
+
+
+# Stop reasons that mean the model finished its answer on its own. Anything
+# else (max_tokens, refusal, pause_turn, ...) is treated as incomplete output.
+# A response object with no stop_reason at all (e.g. a minimal test fake) is
+# accepted, since only the text can be checked.
+_NORMAL_STOP_REASONS = {"end_turn", "stop_sequence", None}
+
+ReviewStatus = Literal["valid", "repaired", "withheld"]
+ReviewProblem = Literal["unknown_citations", "empty", "incomplete"]
+
+
+@dataclass
+class ReviewResult:
+    """Outcome of a checked LLM review.
+
+    status:
+      valid    -- the first response passed every check.
+      repaired -- the first response failed, the single repair attempt passed.
+      withheld -- both attempts failed; `text` is None and the caller must show
+                  only the deterministic findings.
+
+    Passing the checks means the text cites only real finding IDs and was not
+    cut off. It does NOT prove every sentence is supported by those findings."""
+
+    status: ReviewStatus
+    text: str | None
+    problems: list[ReviewProblem] = field(default_factory=list)
+    unknown_ids: list[str] = field(default_factory=list)
+    attempts: int = 1
+    usage: dict = field(default_factory=lambda: {"input_tokens": 0, "output_tokens": 0})
+
+
+def check_review_text(text: str, stop_reason: str | None, digest: dict) -> tuple[list[ReviewProblem], list[str]]:
+    """Return (problems, unknown_ids) for one model response. Empty problems = passes."""
+    problems: list[ReviewProblem] = []
+    if not text.strip():
+        problems.append("empty")
+    if stop_reason not in _NORMAL_STOP_REASONS:
+        problems.append("incomplete")
+    unknown = find_unsupported_citations(text, digest)
+    if unknown:
+        problems.append("unknown_citations")
+    return problems, unknown
+
+
+def generate_checked_review(
+    digest: dict,
+    client: anthropic.Anthropic | None = None,
+    model: str = DEFAULT_MODEL,
+) -> ReviewResult:
+    """Generate the narrative review and enforce the citation/completeness
+    checks: at most one repair attempt, then withhold the prose.
+
+    Provider exceptions (including MissingApiKeyError) propagate unchanged;
+    the caller keeps the deterministic result either way."""
+    client = client or _default_client()
+    usage = {"input_tokens": 0, "output_tokens": 0}
+    base_content = json.dumps(digest)
+
+    text, stop_reason = _review_call(client, model, base_content, usage)
+    problems, unknown = check_review_text(text, stop_reason, digest)
+    if not problems:
+        return ReviewResult("valid", text, attempts=1, usage=usage)
+
+    logger.warning("AI review failed checks %s (unknown ids: %s); trying one repair", problems, unknown)
+    repair_content = base_content + "\n\n" + _repair_instruction(problems, unknown, digest)
+    text, stop_reason = _review_call(client, model, repair_content, usage)
+    repair_problems, repair_unknown = check_review_text(text, stop_reason, digest)
+    if not repair_problems:
+        return ReviewResult("repaired", text, problems=problems, unknown_ids=unknown, attempts=2, usage=usage)
+
+    logger.warning("AI review withheld after repair: %s (unknown ids: %s)", repair_problems, repair_unknown)
+    return ReviewResult(
+        "withheld",
+        None,
+        problems=repair_problems,
+        unknown_ids=repair_unknown,
+        attempts=2,
+        usage=usage,
+    )
+
+
+def _review_call(client, model: str, content: str, usage: dict) -> tuple[str, str | None]:
+    response = client.messages.create(
+        model=model,
+        max_tokens=_MAX_REVIEW_TOKENS,
+        system=REVIEW_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": content}],
+    )
+    call_usage = getattr(response, "usage", None)
+    if call_usage is not None:
+        usage["input_tokens"] += call_usage.input_tokens
+        usage["output_tokens"] += call_usage.output_tokens
+    return _extract_text(response), getattr(response, "stop_reason", None)
+
+
+def _repair_instruction(problems: list[ReviewProblem], unknown: list[str], digest: dict) -> str:
+    known = sorted(issue["id"] for issue in digest.get("issues", []))
+    reasons = []
+    if "unknown_citations" in problems:
+        reasons.append(f"it cited issue IDs that are not in the data: {', '.join(unknown)}")
+    if "empty" in problems:
+        reasons.append("it was empty")
+    if "incomplete" in problems:
+        reasons.append("it was cut off before finishing; keep the review shorter")
+    allowed = ", ".join(known) if known else "none (there are no issues, so cite no IDs)"
+    return (
+        "A previous draft of this review was rejected because "
+        + "; ".join(reasons)
+        + f". Write the review again. The only issue IDs you may cite are: {allowed}."
+    )
 
 
 def _warn_on_unsupported_citations(review_text: str, digest: dict) -> None:

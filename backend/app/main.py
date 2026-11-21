@@ -19,7 +19,7 @@ from fastapi import FastAPI, Form, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.ai.review import MissingApiKeyError, answer_question, generate_review
+from app.ai.review import MissingApiKeyError, answer_question, generate_checked_review
 from app.ai.summarizer import summarize
 from app.analysis import run_all_checks
 from app.analysis.scoring import score as compute_score
@@ -29,6 +29,10 @@ from app.parser.kicad_project import find_project_files, parse_board
 from app.reports import pdf_report
 
 logger = logging.getLogger(__name__)
+
+# Version of the /api/review response shape. 2 = adds ai_review_status and the
+# "withheld" ai_error category (v1.1). One bump per release, not per change.
+REVIEW_SCHEMA_VERSION = 2
 
 MAX_UPLOAD_FILES = 100
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB total across all files
@@ -53,15 +57,20 @@ class AiError(BaseModel):
     """Why the optional LLM explanation is missing. Never carries the raw
     exception text (it can echo request details); the full error is logged."""
 
-    category: Literal["not_configured", "provider_error"]
+    category: Literal["not_configured", "provider_error", "withheld"]
     message: str
 
 
 class ReviewResponse(BaseModel):
+    schema_version: int = REVIEW_SCHEMA_VERSION
     board: Board
     issues: list[Issue]
     score: EngineeringScore
     ai_review: str | None = None
+    # valid / repaired: ai_review passed the citation and completeness checks
+    # (on the first try, or after the single repair attempt). withheld: it did
+    # not, so ai_review is None and ai_error explains why. None: no LLM text.
+    ai_review_status: Literal["valid", "repaired", "withheld"] | None = None
     ai_error: AiError | None = None
 
 
@@ -140,11 +149,19 @@ async def review(files: list[UploadFile], include_ai_review: bool = Form(False))
     score = compute_score(issues)
 
     ai_review = None
+    ai_review_status = None
     ai_error = None
     if include_ai_review:
         try:
             digest = summarize(board, issues, score)
-            ai_review = generate_review(digest)
+            checked = generate_checked_review(digest)
+            ai_review = checked.text
+            ai_review_status = checked.status
+            if checked.status == "withheld":
+                ai_error = AiError(
+                    category="withheld",
+                    message=_withheld_message(checked.problems),
+                )
         except MissingApiKeyError:
             logger.warning("AI review skipped: ANTHROPIC_API_KEY is not set")
             ai_error = AiError(
@@ -173,8 +190,25 @@ async def review(files: list[UploadFile], include_ai_review: bool = Form(False))
         time.perf_counter() - started,
     )
     return ReviewResponse(
-        board=board, issues=issues, score=score, ai_review=ai_review, ai_error=ai_error
+        board=board,
+        issues=issues,
+        score=score,
+        ai_review=ai_review,
+        ai_review_status=ai_review_status,
+        ai_error=ai_error,
     )
+
+
+_PROBLEM_TEXT = {
+    "unknown_citations": "cited finding IDs that this board does not have",
+    "empty": "came back empty",
+    "incomplete": "was cut off before it finished",
+}
+
+
+def _withheld_message(problems: list[str]) -> str:
+    reasons = "; ".join(_PROBLEM_TEXT.get(p, p) for p in problems) or "failed its checks"
+    return f"The LLM explanation was withheld because it {reasons}, even after one retry."
 
 
 @app.post("/api/chat", response_model=ChatResponse)

@@ -126,3 +126,117 @@ def test_generate_review_no_warning_when_citations_are_valid(caplog):
     with caplog.at_level(logging.WARNING):
         generate_review(_DIGEST, client=client)
     assert caplog.records == []
+
+
+# --- v1.1 item 2: citation enforcement (generate_checked_review) ---------------
+
+from app.ai.review import check_review_text, generate_checked_review  # noqa: E402
+
+
+class SequenceMessages:
+    """Returns one scripted (text, stop_reason) response per call."""
+
+    def __init__(self, responses: list[tuple[str, str | None]]):
+        self.responses = list(responses)
+        self.calls: list[dict] = []
+
+    def create(self, **kwargs):
+        self.calls.append(kwargs)
+        text, stop_reason = self.responses.pop(0)
+        return SimpleNamespace(
+            content=[SimpleNamespace(type="text", text=text)],
+            stop_reason=stop_reason,
+            usage=SimpleNamespace(input_tokens=100, output_tokens=20),
+        )
+
+
+class SequenceClient:
+    def __init__(self, *responses: tuple[str, str | None]):
+        self.messages = SequenceMessages(list(responses))
+
+
+_GOOD = ("Power needs attention (PWR-001).", "end_turn")
+_FAKE_ID = ("Check SIG-099 for skew.", "end_turn")
+
+
+def test_checked_review_valid_passes_through_with_one_call():
+    client = SequenceClient(_GOOD)
+    result = generate_checked_review(_DIGEST, client=client)
+    assert result.status == "valid"
+    assert result.text == _GOOD[0]
+    assert result.attempts == 1
+    assert len(client.messages.calls) == 1
+    assert result.usage == {"input_tokens": 100, "output_tokens": 20}
+
+
+def test_checked_review_unknown_id_is_never_returned_as_validated_text():
+    client = SequenceClient(_FAKE_ID, _FAKE_ID)
+    result = generate_checked_review(_DIGEST, client=client)
+    assert result.status == "withheld"
+    assert result.text is None
+    assert result.unknown_ids == ["SIG-099"]
+    assert result.attempts == 2
+
+
+def test_checked_review_repairs_once_then_passes():
+    client = SequenceClient(_FAKE_ID, _GOOD)
+    result = generate_checked_review(_DIGEST, client=client)
+    assert result.status == "repaired"
+    assert result.text == _GOOD[0]
+    assert result.problems == ["unknown_citations"]
+    assert result.unknown_ids == ["SIG-099"]
+    assert result.usage == {"input_tokens": 200, "output_tokens": 40}
+    repair_prompt = client.messages.calls[1]["messages"][0]["content"]
+    assert "SIG-099" in repair_prompt
+    assert "The only issue IDs you may cite are: PWR-001" in repair_prompt
+
+
+def test_checked_review_makes_at_most_two_calls():
+    client = SequenceClient(_FAKE_ID, _FAKE_ID, _GOOD)
+    generate_checked_review(_DIGEST, client=client)
+    assert len(client.messages.calls) == 2
+
+
+def test_checked_review_truncated_output_is_withheld():
+    truncated = ("Power needs attention (PWR-001) because the regul", "max_tokens")
+    client = SequenceClient(truncated, truncated)
+    result = generate_checked_review(_DIGEST, client=client)
+    assert result.status == "withheld"
+    assert result.text is None
+    assert result.problems == ["incomplete"]
+    assert "cut off" in client.messages.calls[1]["messages"][0]["content"]
+
+
+def test_checked_review_empty_output_is_withheld():
+    client = SequenceClient(("   ", "end_turn"), ("", "end_turn"))
+    result = generate_checked_review(_DIGEST, client=client)
+    assert result.status == "withheld"
+    assert result.problems == ["empty"]
+
+
+def test_checked_review_refusal_stop_reason_counts_as_incomplete():
+    problems, _ = check_review_text("I can't help with that.", "refusal", _DIGEST)
+    assert problems == ["incomplete"]
+
+
+def test_check_review_text_accepts_missing_stop_reason():
+    problems, unknown = check_review_text("Looks fine (PWR-001).", None, _DIGEST)
+    assert problems == [] and unknown == []
+
+
+def test_checked_review_no_issues_board_rejects_any_cited_id():
+    digest = {"issues": []}
+    client = SequenceClient(("Clean board, see PWR-001.", "end_turn"), ("Clean board.", "end_turn"))
+    result = generate_checked_review(digest, client=client)
+    assert result.status == "repaired"
+    assert "cite no IDs" in client.messages.calls[1]["messages"][0]["content"]
+
+
+def test_checked_review_provider_exception_propagates():
+    class Boom:
+        def create(self, **kwargs):
+            raise ConnectionError("down")
+
+    client = SimpleNamespace(messages=Boom())
+    with pytest.raises(ConnectionError):
+        generate_checked_review(_DIGEST, client=client)

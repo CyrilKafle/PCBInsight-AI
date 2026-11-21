@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+### Changed (citation enforcement, v1.1 item 2)
+- The LLM review is now checked before it is shown. `generate_checked_review()` returns a `ReviewResult` with `status` `valid`, `repaired` or `withheld`. A response fails if it cites a finding ID the board does not have, is empty, or stopped for any reason other than finishing normally (for example `max_tokens`). A failed response gets one repair attempt that names the problem and lists the allowed IDs; if that also fails, the text is withheld and only the deterministic findings are shown. Previously an unknown ID was only logged and the text was still returned.
+- `/api/review` adds `schema_version` (2) and `ai_review_status`; `ai_error.category` can now be `withheld` with a plain-language reason. The CLI uses the same check and prints a warning when it withholds a review. The dashboard shows the withheld reason.
+- Scope of the check: it proves the cited IDs exist and the output was not cut off. It does not prove that every sentence is supported by those findings. `/api/chat` answers are not covered by this change yet (still log-only).
+- 12 new tests with a fake client (unknown ID never returned as validated text, repair then pass, at most two calls, truncated and empty output withheld, refusal treated as incomplete, end-to-end API test). Backend tests: 176 passing.
+
 ### Changed (LLM failure handling)
 - `/api/review` with `include_ai_review` now always returns 200 with the deterministic board, issues and score. If the optional LLM explanation fails, `ai_review` is null and a new `ai_error` object (`category`: `not_configured` or `provider_error`, plus a short message) says why. Previously this was a 502 that discarded the result. `/api/chat` still returns 502 on failure.
 

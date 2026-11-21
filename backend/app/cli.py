@@ -18,7 +18,7 @@ import sys
 from html import escape
 from pathlib import Path
 
-from app.ai.review import generate_review
+from app.ai.review import generate_checked_review
 from app.ai.summarizer import summarize
 from app.analysis import run_all_checks
 from app.analysis.scoring import score as compute_score
@@ -88,7 +88,13 @@ def _analyze(board_dir: Path, want_ai: bool) -> AnalysisResult:
     if want_ai:
         try:
             digest = summarize(board, issues, score)
-            ai_review = generate_review(digest)
+            checked = generate_checked_review(digest)
+            ai_review = checked.text
+            if checked.status == "withheld":
+                print(
+                    f"warning: withheld the AI review for {board.name}: failed checks {checked.problems}",
+                    file=sys.stderr,
+                )
         except RuntimeError as exc:
             print(f"warning: skipping AI review for {board.name}: {exc}", file=sys.stderr)
 

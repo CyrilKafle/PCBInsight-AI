@@ -3,6 +3,8 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from app import main
+from app.ai import review as review_module
+from app.ai.review import ReviewResult
 from app.main import app
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[2] / "examples"
@@ -91,7 +93,7 @@ def test_review_endpoint_unrelated_runtime_error_is_provider_error(monkeypatch):
         raise RuntimeError("something unrelated to the API key")
 
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
-    monkeypatch.setattr(main, "generate_review", boom)
+    monkeypatch.setattr(main, "generate_checked_review", boom)
     response = _review(include_ai_review="true")
     assert response.status_code == 200
     assert response.json()["ai_error"]["category"] == "provider_error"
@@ -101,7 +103,7 @@ def test_review_endpoint_ai_provider_failure_keeps_deterministic_result(monkeypa
     def boom(*a, **k):
         raise Exception("upstream exploded sk-ant-secret-key")
 
-    monkeypatch.setattr(main, "generate_review", boom)
+    monkeypatch.setattr(main, "generate_checked_review", boom)
     baseline = _review().json()
     response = _review(include_ai_review="true")
     assert response.status_code == 200
@@ -115,10 +117,47 @@ def test_review_endpoint_ai_provider_failure_keeps_deterministic_result(monkeypa
 
 
 def test_review_endpoint_ai_success_has_no_ai_error(monkeypatch):
-    monkeypatch.setattr(main, "generate_review", lambda digest: "Looks fine.")
+    monkeypatch.setattr(main, "generate_checked_review", lambda digest: ReviewResult("valid", "Looks fine."))
     body = _review(include_ai_review="true").json()
     assert body["ai_review"] == "Looks fine."
+    assert body["ai_review_status"] == "valid"
     assert body["ai_error"] is None
+    assert body["schema_version"] == main.REVIEW_SCHEMA_VERSION
+
+
+def test_review_endpoint_withheld_review_returns_no_text_and_keeps_findings(monkeypatch):
+    withheld = ReviewResult("withheld", None, problems=["unknown_citations"], unknown_ids=["SIG-099"], attempts=2)
+    monkeypatch.setattr(main, "generate_checked_review", lambda digest: withheld)
+    baseline = _review().json()
+    response = _review(include_ai_review="true")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ai_review"] is None
+    assert body["ai_review_status"] == "withheld"
+    assert body["ai_error"]["category"] == "withheld"
+    assert "finding IDs" in body["ai_error"]["message"]
+    assert body["issues"] == baseline["issues"]
+    assert body["score"] == baseline["score"]
+
+
+def test_review_endpoint_end_to_end_with_fake_client_withholds_fake_citation(monkeypatch):
+    """Real generate_checked_review, fake provider: the hallucinated ID must not reach the response."""
+    from types import SimpleNamespace
+
+    class FakeMessages:
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                content=[SimpleNamespace(type="text", text="See ZZZ-999 for details.")],
+                stop_reason="end_turn",
+                usage=SimpleNamespace(input_tokens=1, output_tokens=1),
+            )
+
+    monkeypatch.setattr(review_module, "_default_client", lambda: SimpleNamespace(messages=FakeMessages()))
+    response = _review(include_ai_review="true")
+    body = response.json()
+    assert body["ai_review"] is None
+    assert body["ai_review_status"] == "withheld"
+    assert "ZZZ-999" not in response.text
 
 
 def test_review_endpoint_without_ai_has_no_ai_error():
@@ -230,7 +269,7 @@ def test_report_pdf_accepts_review_with_ai_error(monkeypatch, caplog):
         raise Exception("upstream exploded sk-ant-secret-key")
 
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
-    monkeypatch.setattr(main, "generate_review", boom)
+    monkeypatch.setattr(main, "generate_checked_review", boom)
     review = _review(include_ai_review="true").json()
     assert review["ai_error"]["category"] == "provider_error"
     assert "sk-ant-secret-key" not in caplog.text

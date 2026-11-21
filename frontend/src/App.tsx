@@ -119,8 +119,10 @@ export default function App() {
             )}
             {result.ai_error && (
               <p className="rounded-md border border-neutral-800 bg-neutral-900 p-3 text-sm text-neutral-400">
-                The optional LLM explanation is unavailable ({result.ai_error.category}). Deterministic findings
-                below are complete.
+                {result.ai_error.category === "withheld"
+                  ? result.ai_error.message
+                  : `The optional LLM explanation is unavailable (${result.ai_error.category}).`}{" "}
+                Deterministic findings below are complete.
               </p>
             )}
             <BoardView
