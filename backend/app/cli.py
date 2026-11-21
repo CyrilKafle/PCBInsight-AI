@@ -24,7 +24,13 @@ from app.analysis import run_all_checks
 from app.analysis.scoring import score as compute_score
 from app.models.board import Board
 from app.models.issue import EngineeringScore, Issue, Severity
-from app.parser.kicad_project import BoardParseError, MultipleBoardsError, find_project_files, parse_board
+from app.parser.kicad_project import (
+    _AUTOSAVE_PREFIX,
+    BoardParseError,
+    MultipleBoardsError,
+    find_project_files,
+    parse_board,
+)
 from app.reports.html_report import render
 
 AnalysisResult = tuple[Board, list[Issue], EngineeringScore, str | None]
@@ -63,7 +69,7 @@ def _run_review(args: argparse.Namespace) -> int:
     if len(board_dirs) == 1 and board_dirs[0] == input_path:
         try:
             _review_single(board_dirs[0], args.out, args.ai)
-        except (BoardParseError, MultipleBoardsError) as exc:
+        except (BoardParseError, MultipleBoardsError, FileNotFoundError) as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 1
     else:
@@ -77,9 +83,13 @@ def _discover_board_dirs(root: Path) -> list[Path]:
     (at any depth) as a separate board project -- batch mode."""
     if not root.exists():
         return []
-    if list(root.glob("*.kicad_pcb")):
+    if any(not p.name.startswith(_AUTOSAVE_PREFIX) for p in root.glob("*.kicad_pcb")):
         return [root]
-    return sorted(child for child in root.iterdir() if child.is_dir() and list(child.rglob("*.kicad_pcb")))
+    return sorted(
+        child
+        for child in root.iterdir()
+        if child.is_dir() and any(not p.name.startswith(_AUTOSAVE_PREFIX) for p in child.rglob("*.kicad_pcb"))
+    )
 
 
 def _analyze(board_dir: Path, want_ai: bool) -> AnalysisResult:

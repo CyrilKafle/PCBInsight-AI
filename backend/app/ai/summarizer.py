@@ -24,9 +24,10 @@ _HIGH_IMPACT_MAX = 3
 # Bump when the digest shape changes (fields added/removed/renamed) so the
 # prompt in review.py and any future consumer can detect a mismatch instead
 # of silently breaking.
-# 2 = scoring formula v2: unevaluated subscores are null and listed in
-# not_evaluated_subscores; formula_version and input_limitations are included.
-SCHEMA_VERSION = 2
+# 2 = scoring formula v2: unevaluated subscores are listed in
+#     not_evaluated_subscores; score_formula_version is included.
+# 3 = adds input_limitations (what the parser skipped or approximated).
+SCHEMA_VERSION = 3
 
 
 def summarize(board: Board, issues: list[Issue], score: EngineeringScore) -> dict:

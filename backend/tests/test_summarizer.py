@@ -35,7 +35,7 @@ def test_digest_top_level_shape():
         "statistics",
         "input_limitations",
     }
-    assert digest["schema_version"] == 2
+    assert digest["schema_version"] == 3
     assert digest["score_formula_version"] == 2
     assert digest["overall_score"] == 100
     assert digest["subscores"]["Routing"] == 100

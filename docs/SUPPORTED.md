@@ -9,11 +9,12 @@ What the parser (`backend/app/parser/kicad_project.py`) reads from a KiCad proje
 | Tested format version | `20240108` (KiCad 8). Every board in `examples/` uses it. |
 | Other versions | Parsed, with a limitation note in the report: "File format version N has not been tested". |
 | No `(version ...)` | Parsed, with a limitation note. |
-| Encoding | UTF-8 text. Anything else is rejected with a clear error. |
+| Encoding | UTF-8 text, with or without a byte-order mark. Anything else is rejected with a clear error. |
+| Non-numeric `(version ...)` | Parsed, with a limitation note. |
 
 ## One board per review
 
-- Exactly one `.kicad_pcb` file is reviewed. If an upload or folder contains more than one (searched recursively), the review stops with an error that lists them, instead of picking one silently.
+- Exactly one `.kicad_pcb` file is reviewed. Files directly in the project folder are used first; subfolders are searched only when the top level has none, so a `panel/` or `old/` copy does not make a project ambiguous. If more than one candidate remains, the review stops with an error that lists them, instead of picking one silently.
 - KiCad autosave copies (`_autosave-*.kicad_pcb`) are ignored.
 - The CLI's batch mode is unchanged: each subfolder that contains a board is reviewed on its own.
 
@@ -47,7 +48,9 @@ What the parser (`backend/app/parser/kicad_project.py`) reads from a KiCad proje
 
 The parser raises `BoardParseError` (the API returns HTTP 400 with the message) for:
 
-- empty, truncated or unbalanced files,
+- empty files, and files that do not start with `(`,
+- truncated or unbalanced files, including extra content after the board's closing parenthesis,
+- files nested too deeply to be a board (Python recursion limit),
 - files whose top-level element is not `kicad_pcb` (for example a renamed schematic),
 - values it cannot read, such as a non-numeric coordinate or net number,
 - non-UTF-8 files.

@@ -93,7 +93,8 @@ def test_edge_distance_is_measured_from_the_real_outline_not_the_origin(tmp_path
 @pytest.mark.parametrize(
     ("text", "message"),
     [
-        ("", "not a complete S-expression"),
+        ("", "is empty"),
+        ("   \n", "is empty"),
         ('(kicad_pcb (version 20240108) (net 0 ""', "not a complete S-expression"),
         ('(kicad_pcb (net 1 "GND))', "not a complete S-expression"),
         ("hello world", "not a KiCad PCB file"),
@@ -196,3 +197,70 @@ def test_api_returns_limitations_with_the_board():
     response = client.post("/api/review", files=[("files", ("x.kicad_pcb", _pcb(outline="").encode()))])
     assert response.status_code == 200
     assert any("No Edge.Cuts" in n for n in response.json()["board"]["limitations"])
+
+
+# --- review findings on item 5 (20 Nov 2026) ---------------------------------------
+
+
+def test_deeply_nested_file_raises_board_parse_error(tmp_path):
+    with pytest.raises(BoardParseError, match="nested too deeply"):
+        parse_board(_write(tmp_path, "deep.kicad_pcb", "(" * 5000 + ")" * 5000))
+
+
+def test_non_numeric_version_is_a_note_not_a_failure(tmp_path):
+    board = parse_board(_write(tmp_path, "b.kicad_pcb", _pcb().replace(f"(version {_TESTED_VERSION})", "(version abc)")))
+    assert any("not a number this parser recognizes" in n for n in board.limitations)
+
+
+def test_board_saved_with_a_byte_order_mark_parses(tmp_path):
+    path = tmp_path / "bom.kicad_pcb"
+    path.write_bytes(b"\xef\xbb\xbf" + _pcb().encode("utf-8"))
+    assert parse_board(path).width_mm == 50
+
+
+def test_error_message_never_quotes_nested_file_content(tmp_path):
+    with pytest.raises(BoardParseError) as excinfo:
+        parse_board(_write(tmp_path, "x.kicad_pcb", "((secret_token abc123) (more))"))
+    assert "secret_token" not in str(excinfo.value)
+    assert "a nested list" in str(excinfo.value)
+
+
+@pytest.mark.parametrize("text", [_pcb() + ")", _pcb() + _pcb()])
+def test_trailing_content_after_the_board_is_rejected(tmp_path, text):
+    with pytest.raises(BoardParseError, match="not a complete S-expression"):
+        parse_board(_write(tmp_path, "b.kicad_pcb", text))
+
+
+def test_board_in_a_subfolder_does_not_make_a_project_ambiguous(tmp_path):
+    _write(tmp_path, "main.kicad_pcb", _pcb())
+    (tmp_path / "panel").mkdir()
+    _write(tmp_path / "panel", "main_panel.kicad_pcb", _pcb())
+    assert find_project_files(tmp_path)["pcb"].name == "main.kicad_pcb"
+
+
+def test_two_boards_only_in_subfolders_are_still_ambiguous(tmp_path):
+    for sub in ("a", "b"):
+        (tmp_path / sub).mkdir()
+        _write(tmp_path / sub, f"{sub}.kicad_pcb", _pcb())
+    with pytest.raises(MultipleBoardsError):
+        find_project_files(tmp_path)
+
+
+def test_schematic_note_uses_the_same_search_as_the_project(tmp_path):
+    (tmp_path / "sch").mkdir()
+    _write(tmp_path / "sch", "main.kicad_sch", "(kicad_sch)")
+    board = parse_board(_write(tmp_path, "main.kicad_pcb", _pcb()))
+    assert any("no electrical rules check" in n for n in board.limitations)
+
+    other = tmp_path / "only_autosave"
+    other.mkdir()
+    _write(other, "_autosave-main.kicad_sch", "(kicad_sch)")
+    board = parse_board(_write(other, "main.kicad_pcb", _pcb()))
+    assert not any("schematic" in n for n in board.limitations)
+
+
+def test_review_prompts_tell_the_model_about_input_limitations():
+    from app.ai.review import CHAT_SYSTEM_PROMPT, REVIEW_SYSTEM_PROMPT
+
+    assert "input_limitations" in REVIEW_SYSTEM_PROMPT
+    assert "input_limitations" in CHAT_SYSTEM_PROMPT

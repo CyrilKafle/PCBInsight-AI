@@ -22,6 +22,9 @@ def parse(text: str) -> SExpr:
     tokens = _tokenize(text)
     pos = 0
     expr, pos = _read(tokens, pos)
+    if pos != len(tokens):
+        # Extra ')' or a second top-level expression: the file is not one document.
+        raise ValueError(f"unexpected content after the top-level expression (token {pos} of {len(tokens)})")
     return expr
 
 

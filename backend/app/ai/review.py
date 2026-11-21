@@ -40,7 +40,8 @@ REVIEW_SYSTEM_PROMPT = (
     "evidence is insufficient to draw a conclusion, say so explicitly "
     "rather than guessing. When an issue's confidence value is low (below "
     "0.5), say so and note that it should be manually verified rather than "
-    "treated as certain."
+    "treated as certain. If the data lists input_limitations, do not claim the "
+    "review covers that input (for example, do not call routing complete when curved tracks were not parsed)."
 )
 
 CHAT_SYSTEM_PROMPT = (
@@ -52,7 +53,8 @@ CHAT_SYSTEM_PROMPT = (
     "question can't be answered from the supplied data, say so rather than "
     "speculating or inventing new findings. If the relevant issue has a low "
     "confidence value (below 0.5), note that it should be manually "
-    "verified rather than treated as certain."
+    "verified rather than treated as certain. If the data lists input_limitations, say so when the "
+    "question touches that input instead of answering as if it had been analyzed."
 )
 
 

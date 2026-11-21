@@ -49,7 +49,7 @@ def find_project_files(project_dir: Path) -> dict[str, Path]:
     }
     files: dict[str, Path] = {}
     for key, pattern in patterns.items():
-        matches = sorted(m for m in project_dir.rglob(pattern) if not m.name.startswith(_AUTOSAVE_PREFIX))
+        matches = project_matches(project_dir, pattern)
         if key == "pcb" and len(matches) > 1:
             names = ", ".join(m.name for m in matches)
             raise MultipleBoardsError(
@@ -62,6 +62,18 @@ def find_project_files(project_dir: Path) -> dict[str, Path]:
     return files
 
 
+def project_matches(project_dir: Path, pattern: str) -> list[Path]:
+    """Files matching `pattern` that belong to this project, autosave copies
+    excluded. Files directly in `project_dir` win; subfolders are searched
+    only when there are none at the top level (so a panel/ or old/ copy does
+    not make a normal project ambiguous)."""
+
+    def keep(paths):
+        return sorted(p for p in paths if not p.name.startswith(_AUTOSAVE_PREFIX))
+
+    return keep(project_dir.glob(pattern)) or keep(project_dir.rglob(pattern))
+
+
 def parse_board(pcb_file: Path) -> Board:
     """Parse a .kicad_pcb file into the internal Board representation.
 
@@ -69,16 +81,25 @@ def parse_board(pcb_file: Path) -> Board:
     malformed upload never turns into an empty board with a perfect score."""
     name = pcb_file.name
     try:
-        text = pcb_file.read_text(encoding="utf-8")
+        text = pcb_file.read_text(encoding="utf-8-sig")  # tolerate a byte-order mark
     except UnicodeDecodeError as exc:
         raise BoardParseError(f"{name} is not UTF-8 text, so it is not a KiCad .kicad_pcb file") from exc
+    if not text.strip():
+        raise BoardParseError(f"{name} is empty")
+    if not text.lstrip().startswith("("):
+        raise BoardParseError(f"{name} is not a KiCad PCB file: it does not start with a parenthesized (kicad_pcb ...) list")
     try:
         root = parse_sexpr(text)
     except (IndexError, ValueError) as exc:
         raise BoardParseError(f"{name} is not a complete S-expression (empty, truncated or unbalanced)") from exc
-    if not isinstance(root, list) or not root or root[0] != "kicad_pcb":
-        top = root[0] if isinstance(root, list) and root else "no list"
-        raise BoardParseError(f"{name} is not a KiCad PCB file: it starts with '{str(top)[:40]}', not 'kicad_pcb'")
+    except RecursionError as exc:
+        raise BoardParseError(f"{name} is nested too deeply to be a KiCad board file") from exc
+    if not isinstance(root, list) or not root:
+        raise BoardParseError(f"{name} is not a KiCad PCB file: it does not start with a parenthesized (kicad_pcb ...) list")
+    if root[0] != "kicad_pcb":
+        top = root[0]
+        what = f"'{top[:40]}'" if isinstance(top, str) else "a nested list"
+        raise BoardParseError(f"{name} is not a KiCad PCB file: it starts with {what}, not 'kicad_pcb'")
     try:
         return _build_board(pcb_file, root)
     except (ValueError, TypeError, IndexError) as exc:
@@ -119,10 +140,12 @@ def _limitations(root: SExpr, pcb_file: Path, has_outline: bool) -> list[str]:
     list of unsupported constructs lives in docs/SUPPORTED.md."""
     notes: list[str] = []
     version = child_values(root, "version")
+    tested = ", ".join(f"{v} ({label})" for v, label in TESTED_FORMAT_VERSIONS.items())
     if not version:
         notes.append("The file has no format version, so it may not match the tested KiCad 8 format.")
+    elif not isinstance(version[0], float) or version[0] != int(version[0]):
+        notes.append(f"The file's format version is not a number this parser recognizes; tested: {tested}.")
     elif int(version[0]) not in TESTED_FORMAT_VERSIONS:
-        tested = ", ".join(f"{v} ({label})" for v, label in TESTED_FORMAT_VERSIONS.items())
         notes.append(f"File format version {int(version[0])} has not been tested; tested: {tested}.")
 
     arcs = [item for item in root if isinstance(item, list) and item and item[0] == "arc"]
@@ -141,7 +164,7 @@ def _limitations(root: SExpr, pcb_file: Path, has_outline: bool) -> list[str]:
             "points, not the exact curve."
         )
 
-    if list(pcb_file.parent.glob("*.kicad_sch")):
+    if project_matches(pcb_file.parent, "*.kicad_sch"):
         notes.append("A schematic was found but is not analyzed; no electrical rules check (ERC) was run.")
     return notes
 

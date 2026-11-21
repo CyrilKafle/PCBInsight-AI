@@ -7,13 +7,15 @@ All notable changes to this project are documented here. Format loosely follows 
 ### Added (expected-findings tests for the corpus, v1.1 item 6)
 - `tests/test_corpus_expected.py` checks every board in `examples/` against `tests/corpus_expected.py`: the exact set of finding IDs and, for each, its severity, rule weight and summary (which carries the measured value), plus the overall score and that the board has no input limitations. Before, the corpus test only checked that each board parsed and scored between 0 and 100.
 - The expected values were captured from the engine and then checked against `examples/README.md`. That check found one wrong claim in the README: `thermal_reference`'s two heat sources are 4.1 mm apart center to center (the engine is right), not 5.4 mm. The README is corrected. The expected values pin current behavior; they are not an independent ground truth (a KiCad DRC comparison is planned for the P3 case study).
-- Backend tests: 223 passing.
+- Backend tests: 248 passing after items 5 to 7.
 
 ### Changed (explicit input boundary, v1.1 item 5)
 - **Several boards in one upload are rejected** with an error that lists the `.kicad_pcb` files, instead of reviewing whichever sorted first. KiCad `_autosave-` copies are ignored.
 - **Malformed input fails clearly.** Empty, truncated or unbalanced files, files that are not `kicad_pcb` (for example a renamed schematic), unreadable values and non-UTF-8 files raise `BoardParseError`; the API returns 400 with a plain message and the CLI prints it. Before, garbage text or a schematic parsed as an empty board that scored 100/100, and other cases crashed with `IndexError` or `UnicodeDecodeError`.
 - **Per-board limitation notes** (`Board.limitations`) for input the parser skips or approximates: curved copper tracks (`arc`), a missing or curved Edge.Cuts outline, a schematic that is not analyzed, and an untested or missing file-format version. They appear in the HTML report, PDF, interactive demo, dashboard and the LLM digest. No board in `examples/` triggers one.
 - New `docs/SUPPORTED.md`: tested format version, what is parsed, what is not, and how each gap is reported.
+- Fixes from code review of this item: a folder holding only an autosave copy no longer crashes the CLI; deeply nested files and content after the closing parenthesis (a pre-existing gap in the S-expression reader) raise `BoardParseError`; empty files say so; a byte-order mark is accepted; a non-numeric format version adds a note instead of rejecting the board; boards in subfolders no longer make a project with a top-level board ambiguous; the schematic note uses the same file search as the rest of the parser; parse errors never quote nested file content.
+- The LLM digest moves to schema 3 (`input_limitations`), and both system prompts now tell the model not to claim coverage of listed limitations. This changes model input, so the live validation run (item 7) is due.
 - New `tests/test_input_boundary.py` (23 tests): rotated footprints, a board outline away from the origin (edge distance measured from the real outline), malformed files, multiple boards, autosave copies, each limitation note, and the API responses. Backend tests: 212 passing (2 more cover the CLI error path).
 
 ### Changed ("confidence" is labeled as what it is, v1.1 item 4)
