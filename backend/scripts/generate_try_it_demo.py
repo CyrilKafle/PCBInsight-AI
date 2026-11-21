@@ -43,6 +43,13 @@ def _real_review_text() -> str:
     raise SystemExit("stm32_usb_dev not found in reports/ai_validation.json")
 
 
+_AI_NOTE = (
+    "<strong>Older score in this text.</strong> This explanation was captured in a live run at v0.5.0, when score "
+    "formula v1 gave this board 98/100, and it still says 98. Formula v2 leaves the unchecked Documentation area out "
+    "of the average, so the current score is {score}/100. The findings it discusses are unchanged."
+)
+
+
 def main() -> None:
     pcb_file = find_project_files(BOARD_DIR)["pcb"]
     board = parse_board(pcb_file)
@@ -50,7 +57,15 @@ def main() -> None:
     engineering_score = compute_score(issues)
     ai_review = _real_review_text()
 
-    html = render(board, issues, engineering_score, ai_review, landing_href="index.html", demo_note=_DEMO_NOTE)
+    html = render(
+        board,
+        issues,
+        engineering_score,
+        ai_review,
+        landing_href="index.html",
+        demo_note=_DEMO_NOTE,
+        ai_note=_AI_NOTE.format(score=engineering_score.overall),
+    )
     OUTPUT_PATH.write_text(html, encoding="utf-8")
     print(f"Wrote {OUTPUT_PATH} ({len(html):,} bytes)")
     print(f"Score: {engineering_score.overall}/100, {len(issues)} issues")

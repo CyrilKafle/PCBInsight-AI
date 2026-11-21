@@ -308,3 +308,11 @@ def test_js_rule_checker_matches_python_engine():
         if [tuple(x) for x in act] != [tuple(x) for x in exp]
     ]
     assert not mismatches, mismatches[:5]
+
+
+def test_ai_note_is_shown_directly_above_the_ai_review_text():
+    html = ir.render(make_board(), [], compute_score([]), "Overall score: 98/100.", ai_note="Captured under formula v1.")
+    view = html[html.index('id="view-ai-review"'):html.index('id="view-board"')]
+    note = view.index('class="ai-version-note"')
+    assert "Captured under formula v1." in view[note:view.index('class="ai-body"')]
+    assert 'class="ai-version-note"' not in ir.render(make_board(), [], compute_score([]), "Text.")

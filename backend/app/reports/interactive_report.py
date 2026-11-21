@@ -79,7 +79,11 @@ def render(
     *,
     landing_href: str | None = None,
     demo_note: str | None = None,
+    ai_note: str | None = None,
 ) -> str:
+    """ai_note: trusted HTML shown directly above the AI review text, for
+    context the reader needs next to it (e.g. it was captured under an older
+    score formula). Not escaped; never pass user input."""
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     ordered = sorted(issues, key=lambda i: SEVERITY_ORDER.index(i.severity))
     groups = base._group_issues(ordered)
@@ -89,7 +93,7 @@ def render(
         "overview": _view_overview(board, issues, score, groups, demo_note),
         "scores": _view_scores(score, issues, groups),
         "findings": _view_findings(issues, groups),
-        "ai-review": _view_ai(ai_review),
+        "ai-review": _view_ai(ai_review, ai_note),
         "board": _view_board(board, issues),
         "try-it": _view_try_it(),
     }
@@ -684,7 +688,7 @@ def _finding_card(gi: int, group: list[Issue]) -> str:
 # --- AI review -------------------------------------------------------------------------
 
 
-def _view_ai(ai_review: str | None) -> str:
+def _view_ai(ai_review: str | None, ai_note: str | None = None) -> str:
     intro = _intro(
         "What is this?",
         "<p>After the engine finishes, an LLM writes a short engineering review of the findings, the way a senior engineer "
@@ -716,7 +720,8 @@ def _view_ai(ai_review: str | None) -> str:
             '<p class="panel-note">Shown verbatim from a real LLM run. It repeats the engine\'s score and confidence values and '
             "adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p>"
         )
-        body = f'{note}<article class="ai-body">{content}</article>'
+        version_note = f'<p class="ai-version-note" role="note">{ai_note}</p>' if ai_note else ""
+        body = f'{version_note}{note}<article class="ai-body">{content}</article>'
     else:
         body = '<p class="muted">No AI narrative review was generated for this report. The findings come entirely from the deterministic check engine.</p>'
     return f'<h2 id="h-ai-review"><span class="h-label ai-label">03</span> AI review</h2>{intro}{flow}{body}'
@@ -901,6 +906,8 @@ def _rules_table_rows() -> str:
 # --- document shell ----------------------------------------------------------------------
 
 _EXTRA_CSS = """
+  .ai-version-note { margin: 0 0 12px; padding: 10px 12px; border-left: 3px solid #e3b341; background: var(--surface); border-radius: 3px; font-size: 0.875rem; color: var(--text); }
+
   html { scroll-behavior: auto; }
   body { padding-bottom: 0; }
   .page { padding-top: 8px; min-height: 70vh; }
