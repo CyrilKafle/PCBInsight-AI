@@ -24,14 +24,18 @@ _HIGH_IMPACT_MAX = 3
 # Bump when the digest shape changes (fields added/removed/renamed) so the
 # prompt in review.py and any future consumer can detect a mismatch instead
 # of silently breaking.
-SCHEMA_VERSION = 1
+# 2 = scoring formula v2: unevaluated subscores are null and listed in
+# not_evaluated_subscores; formula_version is included.
+SCHEMA_VERSION = 2
 
 
 def summarize(board: Board, issues: list[Issue], score: EngineeringScore) -> dict:
     return {
         "schema_version": SCHEMA_VERSION,
         "overall_score": score.overall,
-        "subscores": {s.category: s.score for s in score.subscores},
+        "score_formula_version": score.formula_version,
+        "subscores": {s.category: s.score for s in score.evaluated},
+        "not_evaluated_subscores": [s.category for s in score.not_evaluated],
         "evidence": _evidence(issues, score),
         "issues": [_issue_dict(issue) for issue in issues],
         "statistics": _board_statistics(board),
@@ -45,7 +49,7 @@ def _evidence(issues: list[Issue], score: EngineeringScore) -> dict:
 
     highest_impact = [
         subscore.category
-        for subscore in sorted(score.subscores, key=lambda s: s.score)
+        for subscore in sorted(score.evaluated, key=lambda s: s.score)
         if subscore.score < _HIGH_IMPACT_THRESHOLD
     ][:_HIGH_IMPACT_MAX]
 

@@ -73,7 +73,8 @@ def test_render_shows_subscore_bars_and_severity_counts():
     issues = [_issue(severity=Severity.CRITICAL), _issue(severity=Severity.LOW)]
     score = compute_score(issues)
     html = render(board, issues, score)
-    assert html.count('class="subscore"') == len(score.subscores)
+    assert html.count('class="subscore"') == len(score.evaluated)
+    assert html.count('class="subscore is-na"') == len(score.not_evaluated) == 1
     assert 'class="sev-tile"' in html
 
 
@@ -116,3 +117,23 @@ def test_render_produces_valid_utf8_string_for_larger_board():
     assert html.encode("utf-8")
     for i in range(20):
         assert f"Issue {i}" in html
+
+
+def test_critical_finding_is_listed_above_the_overall_score():
+    critical = _issue(summary="Regulator output shorted to ground", category="power", severity=Severity.CRITICAL)
+    critical.id = "PWR-001"
+    minor = _issue(summary="Slightly long trace", severity=Severity.LOW)
+    minor.id = "RTE-001"
+    issues = [critical, minor]
+    html = render(make_board(name="board"), issues, compute_score(issues))
+    top = html.index("Most severe: 1 critical")
+    score_value = html.index('class="hero-score-value"')
+    assert top < score_value
+    assert "PWR-001" in html[top:score_value]
+    assert "RTE-001" not in html[top:score_value]
+
+
+def test_score_states_formula_version_and_na_subscore():
+    html = render(make_board(name="board"), [], compute_score([]))
+    assert "formula v2" in html
+    assert "Documentation is N/A" in html

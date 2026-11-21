@@ -12,6 +12,8 @@ import subprocess
 
 import pytest
 
+node = shutil.which("node")
+
 from app.analysis import decoupling, differential_pairs, ground, manufacturability, placement, power, routing, signal_integrity, thermal
 from app.analysis.scoring import score as compute_score
 from app.analysis.scoring import subscore_for
@@ -93,8 +95,76 @@ def test_scores_view_matches_backend_score():
     html = ir.render(make_board(), issues, score)
     data = json.loads(re.search(r'<script id="pcbi-data" type="application/json">(.*?)</script>', html, re.S).group(1))
     assert {s["name"]: s["score"] for s in data["subscores"]} == {s.category: s.score for s in score.subscores}
+    assert data["overall"] == score.overall
+    assert data["formulaVersion"] == 2
+    assert "Documentation" not in data["evaluated"]
     assert data["severityPoints"]["medium"] == 8.0
     assert data["issues"][0]["sub"] == subscore_for("power")
+
+
+def test_overview_lists_most_severe_findings_above_the_score():
+    issues = [
+        _issue(severity=Severity.CRITICAL, category="power", id_="PWR-001"),
+        _issue(severity=Severity.LOW, category="routing", id_="RTE-001"),
+    ]
+    html = ir.render(make_board(), issues, compute_score(issues))
+    overview = html[html.index('id="view-overview"'):html.index('id="view-scores"')]
+    top = overview.index("Most severe: 1 critical")
+    assert top < overview.index("hero-score-value")
+    assert "PWR-001" in overview[top:overview.index("hero-score-value")]
+    assert "RTE-001" not in overview[top:overview.index("hero-score-value")]
+
+
+def test_documentation_row_shows_na_in_scores_view():
+    html = ir.render(make_board(), [], compute_score([]))
+    assert 'class="subscore is-na" data-sub="Documentation"' in html
+    assert "formula v2" in html
+
+
+# --- JS score simulator parity with scoring.py (formula v2) -----------------------
+
+_SCORE_HARNESS = """
+const input = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+const SCORE_API = (function () { %s; return SCORE; })();
+const out = input.cases.map(function (c) { return SCORE_API.compute(input.evaluated, input.points, c); });
+process.stdout.write(JSON.stringify(out));
+"""
+
+
+@pytest.mark.skipif(node is None, reason="node is not installed")
+def test_js_score_simulator_matches_python_scoring():
+    import random
+
+    from app.analysis.scoring import EVALUATED_SUBSCORES, severity_points
+
+    rng = random.Random(1234)
+    categories = ["routing", "power", "ground", "decoupling", "differential_pairs", "signal_integrity",
+                  "manufacturability", "placement", "thermal"]
+    confidences = [0.3, 0.4, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
+    sets = [[]]
+    for _ in range(200):
+        sets.append([
+            _issue(severity=rng.choice(list(Severity)), category=rng.choice(categories),
+                   confidence=rng.choice(confidences), id_="X-001")
+            for _ in range(rng.randint(1, 25))
+        ])
+    cases = [[{"sub": subscore_for(i.category), "sev": i.severity.value, "conf": i.confidence} for i in s] for s in sets]
+    payload = json.dumps({
+        "evaluated": list(EVALUATED_SUBSCORES),
+        "points": {sev.value: severity_points(sev) for sev in Severity},
+        "cases": cases,
+    })
+    proc = subprocess.run([node, "-e", _SCORE_HARNESS % ir._SCORE_JS], input=payload,
+                          capture_output=True, text=True, timeout=60)
+    assert proc.returncode == 0, proc.stderr
+    actual = json.loads(proc.stdout)
+    mismatches = []
+    for s, js in zip(sets, actual):
+        py = compute_score(s)
+        expected = {"subs": {x.category: x.score for x in py.evaluated}, "overall": py.overall}
+        if js != expected:
+            mismatches.append((expected, js))
+    assert not mismatches, json.dumps(mismatches[:2])
 
 
 # --- JS rule checker parity with the engine ---------------------------------------

@@ -1,5 +1,7 @@
 # Engineering Validation Corpus
 
+Scores below use score formula v2 (v1.1): the Documentation area has no checks yet, so it is N/A and left out of the overall average. Under formula v1 some boards scored 1 to 2 points higher.
+
 This is not a folder of demo files — it's a curated set of KiCad boards, each authored for a specific reason, that validates the parser, the deterministic analysis engine, the AI layer, and the dashboard end to end. Every board exists to prove something the others don't; there are no filler fixtures. See `docs/VALIDATION.md` for how to run the full validation flow (this corpus + `backend/scripts/validate_ai.py`) and how to interpret the results.
 
 | Board | Primary purpose |
@@ -21,13 +23,13 @@ Hand-authored minimal two-layer board (`simple_board.kicad_pcb` + `.kicad_pro`) 
 
 ## stm32_usb_dev
 
-A richer four-layer example board (`stm32_usb_dev.kicad_pcb` + `.kicad_pro`) — an STM32F103 USB dev board: MCU, AMS1117-3.3 LDO, 8&nbsp;MHz crystal with load caps, USB-C connector with a D+/D− pair and series resistors, an SWD header, decoupling caps, an LED, and GND / +3V3 / GND power-and-ground pours across the inner and back copper layers (18 components, 12 nets). It exists to exercise the analysis engine on a more substantial board than `simple_board` — PCBInsight scores it 98/100 with 8 findings across routing, power, and decoupling (a thin +3V3 trace, a decoupling cap placed a little far from the MCU, and several low-confidence dangling-trace-end warnings from partial routing).
+A richer four-layer example board (`stm32_usb_dev.kicad_pcb` + `.kicad_pro`) — an STM32F103 USB dev board: MCU, AMS1117-3.3 LDO, 8&nbsp;MHz crystal with load caps, USB-C connector with a D+/D− pair and series resistors, an SWD header, decoupling caps, an LED, and GND / +3V3 / GND power-and-ground pours across the inner and back copper layers (18 components, 12 nets). It exists to exercise the analysis engine on a more substantial board than `simple_board` — PCBInsight scores it 97/100 with 8 findings across routing, power, and decoupling (a thin +3V3 trace, a decoupling cap placed a little far from the MCU, and several low-confidence dangling-trace-end warnings from partial routing).
 
 > **AI-generated example board.** This `.kicad_pcb` was authored with AI assistance as synthetic test/demo data for the analyzer — not a hand-routed, fab-ready design and not a substitute for real KiCad layout work. It is intentionally only partially routed. Treat it as example input for the tool, not as reference PCB design.
 
 ## flawed_reference
 
-A deliberately low-quality two-layer board (`flawed_reference.kicad_pcb` + `.kicad_pro`) — same STM32/USB/LDO component set as `stm32_usb_dev`, but routed to trip nearly every check category at once: acute-angle trace bends, thin power/ground traces (0.15mm), two disconnected ground nets with no copper pour on either, a decoupling cap placed tens of mm from the ICs it should serve, a regulator with no decoupling cap on its input net at all, undersized via annular rings, no thermal relief pour near the regulator, and an unnecessarily long/via-heavy clock net. PCBInsight scores it 83/100 with 24 findings across all 7 active check categories (routing, power, ground, decoupling, manufacturability, thermal, signal integrity) — this is the board to reach for when demonstrating that the tool actually catches problems, not just when it says everything's fine.
+A deliberately low-quality two-layer board (`flawed_reference.kicad_pcb` + `.kicad_pro`) — same STM32/USB/LDO component set as `stm32_usb_dev`, but routed to trip nearly every check category at once: acute-angle trace bends, thin power/ground traces (0.15mm), two disconnected ground nets with no copper pour on either, a decoupling cap placed tens of mm from the ICs it should serve, a regulator with no decoupling cap on its input net at all, undersized via annular rings, no thermal relief pour near the regulator, and an unnecessarily long/via-heavy clock net. PCBInsight scores it 81/100 with 24 findings across all 7 active check categories (routing, power, ground, decoupling, manufacturability, thermal, signal integrity) — this is the board to reach for when demonstrating that the tool actually catches problems, not just when it says everything's fine.
 
 > **AI-generated example board.** Same caveat as `stm32_usb_dev` above: synthetic test/demo data, not a real design (in this case, deliberately a bad one on purpose).
 
@@ -51,13 +53,13 @@ A two-layer board (`power_supply_board.kicad_pcb` + `.kicad_pro`) — USB-C inpu
 
 ## thermal_reference
 
-A two-layer board (`thermal_reference.kicad_pcb` + `.kicad_pro`) — LM1117-3.3 regulator and an N-MOSFET placed close together, both correctly decoupled, with a ground pour present on the board but positioned nowhere near either heat source. This isolates the thermal category cleanly: no copper pour within range of the regulator, no copper pour within range of the MOSFET, and the two heat sources are close enough together (5.4mm) to compound each other's thermal rise. PCBInsight scores it 99/100 with exactly 3 findings, all thermal.
+A two-layer board (`thermal_reference.kicad_pcb` + `.kicad_pro`) — LM1117-3.3 regulator and an N-MOSFET placed close together, both correctly decoupled, with a ground pour present on the board but positioned nowhere near either heat source. This isolates the thermal category cleanly: no copper pour within range of the regulator, no copper pour within range of the MOSFET, and the two heat sources are close enough together (5.4mm) to compound each other's thermal rise. PCBInsight scores it 98/100 with exactly 3 findings, all thermal.
 
 > **AI-generated example board.** Synthetic test/demo data, authored with AI assistance to hit exact deterministic-check thresholds cleanly.
 
 ## manufacturing_reference
 
-A tiny two-layer board (`manufacturing_reference.kicad_pcb` + `.kicad_pro`, 12mm × 12mm) built to trip every manufacturability (DFM) check: a 0.10mm trace segment (below the 0.15mm fab-minimum), two vias with a 0.025mm annular ring (below the 0.075mm fab-minimum), and eight stitching vias packed into the small board area to push via density over 5/cm². The dense via cluster also trips routing's excessive-via-count check on that net — a realistic secondary effect of the same root cause, not a separate story. PCBInsight scores it 95/100 with 6 findings, 4 of them manufacturability.
+A tiny two-layer board (`manufacturing_reference.kicad_pcb` + `.kicad_pro`, 12mm × 12mm) built to trip every manufacturability (DFM) check: a 0.10mm trace segment (below the 0.15mm fab-minimum), two vias with a 0.025mm annular ring (below the 0.075mm fab-minimum), and eight stitching vias packed into the small board area to push via density over 5/cm². The dense via cluster also trips routing's excessive-via-count check on that net — a realistic secondary effect of the same root cause, not a separate story. PCBInsight scores it 94/100 with 6 findings, 4 of them manufacturability.
 
 > **AI-generated example board.** Synthetic test/demo data, authored with AI assistance to hit exact deterministic-check thresholds cleanly.
 
@@ -69,7 +71,7 @@ A small two-layer board (`parser_edge_cases.kicad_pcb` + `.kicad_pro`) that exis
 
 ## mixed_realistic_board
 
-A two-layer board (`mixed_realistic_board.kicad_pcb` + `.kicad_pro`) meant to look like what an intermediate engineer actually ships — not a showcase of best practices (`high_quality_reference`) and not a pile of violations (`flawed_reference`). Power delivery, grounding, and most decoupling are done correctly; the realistic slips are a single decoupling cap placed too far from its MCU, one clock net that ran a bit longer than ideal (47mm, no other clock issues), one isolated trace segment that came in under the manufacturing minimum, and one incidental dangling-stub note. PCBInsight scores it 98/100 with 4 findings spread across four different categories — the board to reach for when you want "good work with a couple of real mistakes," not either extreme.
+A two-layer board (`mixed_realistic_board.kicad_pcb` + `.kicad_pro`) meant to look like what an intermediate engineer actually ships — not a showcase of best practices (`high_quality_reference`) and not a pile of violations (`flawed_reference`). Power delivery, grounding, and most decoupling are done correctly; the realistic slips are a single decoupling cap placed too far from its MCU, one clock net that ran a bit longer than ideal (47mm, no other clock issues), one isolated trace segment that came in under the manufacturing minimum, and one incidental dangling-stub note. PCBInsight scores it 97/100 with 4 findings spread across four different categories — the board to reach for when you want "good work with a couple of real mistakes," not either extreme.
 
 > **AI-generated example board.** Synthetic test/demo data, authored with AI assistance to hit exact deterministic-check thresholds cleanly.
 

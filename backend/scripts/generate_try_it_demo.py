@@ -29,6 +29,8 @@ _DEMO_NOTE = (
     'This is the report PCBInsight generated for <code>examples/stm32_usb_dev</code>, a synthetic board in the '
     'ten-board <a href="https://github.com/CyrilKafle/PCBInsight-AI/tree/master/examples">validation corpus</a>; '
     "its low-confidence stub warnings were not checked against a real design. "
+    "The AI review text was captured in a live run at v0.5.0, under score formula v1 (98/100); "
+    "formula v2 leaves the unchecked Documentation area out of the average, so the score shown here is 97. "
     'Run it on your own boards from the <a href="https://github.com/CyrilKafle/PCBInsight-AI">GitHub repository</a>.'
 )
 

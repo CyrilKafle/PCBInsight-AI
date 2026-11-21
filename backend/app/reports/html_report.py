@@ -23,7 +23,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from app.analysis.scoring import deduction, severity_points, subscore_for
+from app.analysis.scoring import deduction, severity_points, subscore_for, top_findings
 from app.models.board import Board
 from app.models.issue import EngineeringScore, Issue, Severity, SubScore
 from app.reports.theme import SEVERITY_COLORS, SEVERITY_ORDER, score_color
@@ -97,12 +97,6 @@ def _hero(board: Board, issues: list[Issue], score: EngineeringScore, severity_c
     ]
     facts_html = "".join(f"<span>{fact}</span>" for fact in facts)
     tiles = "".join(_severity_tile(sev, severity_counts[sev]) for sev in SEVERITY_ORDER[:4])
-    checked = [sub_.score for sub_ in score.subscores if sub_.category != "Documentation"]
-    excl_note = (
-        f" Excluding Documentation, which has no checks yet: {round(sum(checked) / len(checked))}."
-        if checked and len(checked) < len(score.subscores)
-        else ""
-    )
     unverified = sum(1 for issue in issues if issue.confidence < _CONFIDENCE_FLOOR)
     unverified_cats = {issue.category.replace("_", " ") for issue in issues if issue.confidence < _CONFIDENCE_FLOOR}
     where = f" (all {next(iter(unverified_cats))})" if len(unverified_cats) == 1 else ""
@@ -124,14 +118,45 @@ def _hero(board: Board, issues: list[Issue], score: EngineeringScore, severity_c
         </p>
       </div>
       <div class="hero-score" style="--score-color:{color}">
+        {top_findings_html(issues)}
         <div class="hero-score-value"><span>{score.overall}</span><small>/100</small></div>
         <div class="meter" role="meter" aria-labelledby="overall-label" aria-valuetext="{score.overall} of 100" aria-valuenow="{score.overall}" aria-valuemin="0" aria-valuemax="100"><div class="meter-fill" style="width:{score.overall}%"></div></div>
         <p class="hero-score-label" id="overall-label">Overall score</p>
-        <p class="hero-score-note">Mean of seven subscores. Unverified findings are discounted by confidence, not excluded.{excl_note}</p>
+        <p class="hero-score-note">{escape(overall_note(score))} Unverified findings are discounted by confidence, not excluded.</p>
       </div>
     </header>
     <div class="severity-strip">{tiles}</div>
     """
+
+
+def overall_note(score: EngineeringScore) -> str:
+    """One sentence saying what the overall score averages. Shared by every report."""
+    text = f"Mean of the {len(score.evaluated)} evaluated subscores (formula v{score.formula_version})."
+    skipped = [s.category for s in score.not_evaluated]
+    if len(skipped) == 1:
+        text += f" {skipped[0]} is N/A: no checks feed it."
+    elif skipped:
+        text += f" {', '.join(skipped)} are N/A: no checks feed them."
+    return text
+
+
+def top_findings_html(issues: list[Issue]) -> str:
+    """The highest-severity findings, shown above the score so the average
+    cannot hide them. Shared by the HTML report and the interactive demo."""
+    top, total = top_findings(issues)
+    if not top:
+        return '<div class="top-findings"><p class="top-findings-head">No findings</p></div>'
+    sev = top[0].severity
+    items = "".join(f"<li><code>{escape(i.id)}</code> {escape(i.summary)}</li>" for i in top)
+    more = (
+        f'<p class="top-findings-more">and {total - len(top)} more {escape(sev.value)}</p>'
+        if total > len(top)
+        else ""
+    )
+    return f"""<div class="top-findings" style="--sev:{_DARK_SEVERITY[sev]}">
+          <p class="top-findings-head">Most severe: {total} {escape(sev.value)}</p>
+          <ul>{items}</ul>{more}
+        </div>"""
 
 
 def _severity_tile(severity: Severity, count: int) -> str:
@@ -170,12 +195,19 @@ def _score_section(score: EngineeringScore, issues: list[Issue]) -> str:
 
 
 def _subscore_row(subscore: SubScore, lost: float) -> str:
+    if not subscore.evaluated:
+        return f"""
+        <div class="subscore is-na" style="--score-color:#8B96A5" title="Not evaluated: no checks feed this subscore, so it is left out of the overall score">
+          <span class="subscore-name">{escape(subscore.category)}<small class="subscore-sub">no checks yet, not in overall</small></span>
+          <span class="meter" aria-hidden="true"><span class="meter-fill" style="width:0%"></span></span>
+          <span class="subscore-loss">&ndash;</span>
+          <span class="subscore-value">N/A</span>
+        </div>
+    """
     color = _dark_score_color(subscore.score)
     loss = f"&minus;{lost:.1f}" if lost else "0.0"
-    unchecked = subscore.category == "Documentation"
-    title = ' title="Not assessed: no checks feed this subscore yet"' if unchecked else ""
-    note = '<small class="subscore-sub">no checks yet</small>' if unchecked else ""
-    color = "#8B96A5" if unchecked else color
+    title = ""
+    note = ""
     return f"""
         <div class="subscore" style="--score-color:{color}"{title}>
           <span class="subscore-name">{escape(subscore.category)}{note}</span>
@@ -209,13 +241,13 @@ def _derivation(score: EngineeringScore, issues: list[Issue]) -> str:
         )
     body = "\n".join(rows) or '<tr><td colspan="4" class="muted">No deductions.</td></tr>'
     scale = ", ".join(f"{sev.value} {severity_points(sev):g}" for sev in SEVERITY_ORDER)
-    parts = " + ".join(str(s.score) for s in score.subscores)
-    mean = sum(s.score for s in score.subscores) / len(score.subscores)
+    parts, mean, n = derivation_parts(score)
     return f"""
       <div class="derivation">
         <h3>How the score is computed</h3>
         <p class="formula"><code>subscore = 100 &minus; &Sigma; (severity points &times; confidence)</code></p>
-        <p class="derivation-note">Severity points: {scale}. Overall is the plain mean of the seven rounded subscores.
+        <p class="derivation-note">Severity points: {scale}. Overall is the plain mean of the evaluated subscores, computed from the
+        unrounded values and rounded once (formula v{score.formula_version}). Subscores with no checks are N/A and left out.
         Decoupling and ground findings roll into Power. Weighting by confidence, rather than a hard cutoff, keeps
         uncertain findings from being either ignored or counted in full. The confidence values are set by hand
         per rule by the rule's author, not calibrated against labelled boards.</p>
@@ -227,9 +259,16 @@ def _derivation(score: EngineeringScore, issues: list[Issue]) -> str:
           </tbody>
         </table>
         </div>
-        <p class="derivation-note">Each row multiplies severity points by confidence, by the number of findings in the group. Overall = ({parts}) / {len(score.subscores)} = {mean:.1f}, shown as {score.overall}.</p>
+        <p class="derivation-note">Each row multiplies severity points by confidence, by the number of findings in the group. Overall = ({parts}) / {n} = {mean:.2f}, shown as {score.overall}.</p>
       </div>
     """
+
+
+def derivation_parts(score: EngineeringScore) -> tuple[str, float, int]:
+    """(sum expression, mean, count) over the evaluated subscores' unrounded values."""
+    values = [s.unrounded if s.unrounded is not None else float(s.score) for s in score.evaluated]
+    parts = " + ".join(f"{v:g}" if v == int(v) else f"{v:.2f}" for v in values)
+    return parts, sum(values) / len(values), len(values)
 
 
 # --- findings ----------------------------------------------------------------
@@ -450,7 +489,7 @@ def _footer() -> str:
       <p class="eyebrow">Known limits</p>
       <ul>
         <li>The 0 to 100 score has no pass threshold; it summarizes deductions and is not a certification.</li>
-        <li>Documentation has no checks yet, so it reads 100 by default. More generally, a subscore at 100 means no deductions were found, not that the area was validated.</li>
+        <li>Documentation has no checks yet, so it shows N/A and is left out of the overall score. A subscore at 100 means no deductions were found, not that the area was validated.</li>
         <li>Dangling-end detection compares endpoints to pads, vias and traces within a position tolerance, so it can
         flag ends that are actually connected. This is why those findings carry low confidence.</li>
         <li>Manufacturability checks currently cover trace width, annular ring, and via density.
@@ -465,8 +504,9 @@ def _footer() -> str:
 
 
 def render_subscore_chart(score: EngineeringScore) -> str:
-    names = [s.category for s in score.subscores]
-    values = [s.score for s in score.subscores]
+    # Evaluated subscores only: a bar for an N/A subscore would read as a score.
+    names = [s.category for s in score.evaluated]
+    values = [s.score for s in score.evaluated]
     colors = [score_color(v) for v in values]
 
     fig, ax = plt.subplots(figsize=(5.5, 3.2), dpi=150)
@@ -572,6 +612,12 @@ _CSS = """
     text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); }
 
   .hero-score-note { margin: 8px 0 0; font-size: 0.8125rem; color: var(--text-muted); max-width: 30ch; }
+  .top-findings { margin: 0 0 14px; padding: 8px 10px; border-left: 3px solid var(--sev, var(--border)); background: var(--surface); border-radius: 3px; font-size: 0.8125rem; max-width: 34ch; }
+  .top-findings-head { margin: 0 0 4px; font-weight: 600; color: var(--sev, var(--text)); text-transform: capitalize; }
+  .top-findings ul { margin: 0; padding-left: 1.1em; }
+  .top-findings li { margin: 2px 0; }
+  .top-findings-more { margin: 4px 0 0; color: var(--text-muted); }
+  .subscore.is-na .subscore-value { font-size: 0.875rem; color: var(--text-muted); }
   .meter { display: block; height: 6px; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; margin-top: 14px; }
   .meter-fill { display: block; height: 100%; background: var(--score-color); }
 

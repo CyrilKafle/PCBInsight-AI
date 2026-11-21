@@ -3,7 +3,11 @@
 Deliberately a transparent, explainable weighted aggregate rather than a
 black-box model — the scoring method must be defensible in an interview:
 each subscore starts at 100 and loses points per issue, scaled by severity
-and confidence. Overall score is the plain average of the subscores.
+and confidence. Overall score is the plain average of the evaluated subscores.
+
+Formula version 2 (v1.1): a subscore no check feeds (Documentation today) is
+N/A and excluded from the overall score, instead of counting as 100. The
+overall is the mean of the unrounded subscores, rounded once.
 """
 
 from __future__ import annotations
@@ -34,11 +38,11 @@ _CATEGORY_TO_SUBSCORE = {
     "thermal": "Thermals",
 }
 
-# "Documentation" has no Phase 1 check category feeding it yet (no check
-# module inspects silkscreen labeling, README presence, etc.) — it always
-# scores 100 until a future phase adds real documentation checks. Listed
-# here (not omitted) so the report always shows all seven DESIGN.md
-# subscores, with this one visibly neutral rather than silently missing.
+# "Documentation" has no check category feeding it yet (no check module
+# inspects silkscreen labeling, README presence, etc.), so it is reported as
+# N/A and left out of the overall score. Listed here (not omitted) so the
+# report always shows all seven DESIGN.md subscores, with this one visibly
+# not evaluated rather than silently missing or shown as a perfect 100.
 _SUBSCORE_NAMES = [
     "Routing",
     "Power",
@@ -48,6 +52,19 @@ _SUBSCORE_NAMES = [
     "Thermals",
     "Documentation",
 ]
+
+
+FORMULA_VERSION = 2
+
+# Subscores at least one check category feeds. The rest are N/A.
+EVALUATED_SUBSCORES = [name for name in _SUBSCORE_NAMES if name in set(_CATEGORY_TO_SUBSCORE.values())]
+
+_SEVERITY_RANK = [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW, Severity.INFO]
+
+
+def subscore_names() -> list[str]:
+    """All seven subscores in display order, evaluated or not."""
+    return list(_SUBSCORE_NAMES)
 
 
 def subscore_for(category: str) -> str | None:
@@ -66,7 +83,7 @@ def deduction(issue: Issue) -> float:
 
 
 def score(issues: list[Issue]) -> EngineeringScore:
-    totals = {name: 100.0 for name in _SUBSCORE_NAMES}
+    totals = {name: 100.0 for name in EVALUATED_SUBSCORES}
 
     for issue in issues:
         subscore_name = _CATEGORY_TO_SUBSCORE.get(issue.category)
@@ -74,6 +91,29 @@ def score(issues: list[Issue]) -> EngineeringScore:
             continue
         totals[subscore_name] = max(0.0, totals[subscore_name] - deduction(issue))
 
-    subscores = [SubScore(category=name, score=round(totals[name])) for name in _SUBSCORE_NAMES]
-    overall = round(sum(s.score for s in subscores) / len(subscores))
-    return EngineeringScore(overall=overall, subscores=subscores)
+    # Strip float noise first (100 - 8*0.65 - ... can land on 43.4999999 instead
+    # of 43.5), then round half to even. The JS simulator does the same.
+    totals = {name: round(value, 6) for name, value in totals.items()}
+    subscores = [
+        SubScore(category=name, score=_round_score(totals[name]), unrounded=totals[name])
+        if name in totals
+        else SubScore(category=name, score=None)
+        for name in _SUBSCORE_NAMES
+    ]
+    overall = _round_score(sum(totals.values()) / len(totals))
+    return EngineeringScore(overall=overall, subscores=subscores, formula_version=FORMULA_VERSION)
+
+
+def _round_score(value: float) -> int:
+    return round(round(value, 6))
+
+
+def top_findings(issues: list[Issue], limit: int = 3) -> tuple[list[Issue], int]:
+    """The findings at the highest severity present, so an average can't hide
+    them. Returns (up to `limit` of them, total count at that severity)."""
+    if not issues:
+        return [], 0
+    worst = min(issues, key=lambda i: _SEVERITY_RANK.index(i.severity)).severity
+    at_worst = [i for i in issues if i.severity == worst]
+    at_worst.sort(key=lambda i: (-i.confidence, i.id or ""))
+    return at_worst[:limit], len(at_worst)

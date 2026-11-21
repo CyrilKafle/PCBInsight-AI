@@ -110,7 +110,7 @@ export default function App() {
             {pdfStatus === "error" && pdfError && (
               <p className="rounded-md border border-red-900 bg-red-950/50 p-3 text-sm text-red-300">{pdfError}</p>
             )}
-            <ScoreCards score={result.score} />
+            <ScoreCards score={result.score} issues={result.issues} />
             {result.ai_review && (
               <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
                 <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-400">AI Review</h3>

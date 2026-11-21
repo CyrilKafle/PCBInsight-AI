@@ -24,10 +24,23 @@ def test_digest_top_level_shape():
     board = make_board()
     result = compute_score([])
     digest = summarize(board, [], result)
-    assert set(digest.keys()) == {"schema_version", "overall_score", "subscores", "evidence", "issues", "statistics"}
-    assert digest["schema_version"] == 1
+    assert set(digest.keys()) == {
+        "schema_version",
+        "overall_score",
+        "score_formula_version",
+        "subscores",
+        "not_evaluated_subscores",
+        "evidence",
+        "issues",
+        "statistics",
+    }
+    assert digest["schema_version"] == 2
+    assert digest["score_formula_version"] == 2
     assert digest["overall_score"] == 100
     assert digest["subscores"]["Routing"] == 100
+    # N/A subscores are listed separately, never given a number the LLM could read as "perfect".
+    assert "Documentation" not in digest["subscores"]
+    assert digest["not_evaluated_subscores"] == ["Documentation"]
 
 
 def test_issue_dicts_carry_id_and_no_raw_geometry():

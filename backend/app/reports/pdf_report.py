@@ -31,7 +31,8 @@ from reportlab.platypus import (
 
 from app.models.board import Board
 from app.models.issue import EngineeringScore, Issue
-from app.reports.html_report import render_severity_chart, render_subscore_chart
+from app.analysis.scoring import top_findings
+from app.reports.html_report import overall_note, render_severity_chart, render_subscore_chart
 from app.reports.theme import SEVERITY_COLORS, SEVERITY_ORDER, score_color
 
 # Figure aspect ratios (figsize in html_report), used to size the embedded
@@ -129,16 +130,27 @@ def _executive_summary(
     text = (
         f"This board scored <b>{score.overall}/100</b> overall across {len(board.components)} components "
         f"and {len(board.nets)} nets. The deterministic engineering-check engine raised {len(issues)} "
-        f"issue(s): {escape(counts_line)}."
+        f"issue(s): {escape(counts_line)}. {escape(overall_note(score))}"
     )
-    return _section_title("Executive Summary", styles) + [Paragraph(text, styles["body"])]
+    out = _section_title("Executive Summary", styles)
+    top, total = top_findings(issues)
+    if top:
+        sev = top[0].severity.value
+        lines = "<br/>".join(f"<b>{escape(i.id)}</b> {escape(i.summary)}" for i in top)
+        more = f"<br/>and {total - len(top)} more {escape(sev)}" if total > len(top) else ""
+        out.append(Paragraph(f"<b>Most severe: {total} {escape(sev)}</b><br/>{lines}{more}", styles["body"]))
+        out.append(Spacer(1, 6))
+    return out + [Paragraph(text, styles["body"])]
 
 
 def _scores(score: EngineeringScore, styles: dict) -> list:
     cells = [
         Paragraph(
             f'<para align="center"><font size="13" color="{score_color(s.score)}"><b>{s.score}</b></font><br/>'
-            f'<font size="7" color="#57606a">{escape(s.category)}</font></para>',
+            f'<font size="7" color="#57606a">{escape(s.category)}</font></para>'
+            if s.evaluated
+            else f'<para align="center"><font size="11" color="#8b96a5"><b>N/A</b></font><br/>'
+            f'<font size="7" color="#57606a">{escape(s.category)} (no checks)</font></para>',
             styles["cell"],
         )
         for s in score.subscores

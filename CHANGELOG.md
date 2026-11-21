@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+### Changed (coverage-aware scoring, formula v2, v1.1 item 3)
+- **Documentation is N/A, not 100.** A subscore that no check feeds now has `score: null`, shows "N/A" in every report, and is left out of the overall score. Before, it counted as a perfect 100 and lifted every board's average.
+- **Overall is the mean of the unrounded subscores, rounded once.** Subscores carry an `unrounded` value and reports show the exact arithmetic. Float noise is stripped to 6 decimals before rounding half to even, in both Python and the demo's JavaScript; this fixes a latent mismatch where the JS what-if simulator rounded some x.5 values differently from the engine.
+- **`formula_version: 2`** on every score. A score payload without the field is read as v1. The LLM digest moves to schema 2 (`score_formula_version`, `not_evaluated_subscores`; N/A subscores are not sent as numbers).
+- **Most severe findings above the score** in the HTML report, the interactive demo, the PDF executive summary and the dashboard (the findings at the highest severity present, up to 3, with a count of the rest).
+- **Effect on the corpus:** overall scores fall by 0 to 2 points (`flawed_reference` 83 to 81, `stm32_usb_dev` 98 to 97, `manufacturing_reference` 95 to 94, `mixed_realistic_board` 98 to 97, `thermal_reference` 99 to 98; the others unchanged). `examples/README.md` is updated and says which formula it uses. The try-it demo is regenerated; its AI review text was captured under v1 and still says 98/100, and the demo note now says so.
+- New tests: N/A handling, rounding once versus twice on a case where they disagree, top-findings order and cap, v1 payload default, and a node parity test that runs the demo's JS score simulator against `scoring.score()` on 201 random finding sets. Backend tests: 185 passing.
+
 ### Changed (citation enforcement, v1.1 item 2)
 - The LLM review is now checked before it is shown. `generate_checked_review()` returns a `ReviewResult` with `status` `valid`, `repaired` or `withheld`. A response fails if it cites a finding ID the board does not have, is empty, or stopped for any reason other than finishing normally (for example `max_tokens`). A failed response gets one repair attempt that names the problem and lists the allowed IDs; if that also fails, the text is withheld and only the deterministic findings are shown. Previously an unknown ID was only logged and the text was still returned.
 - `/api/review` adds `schema_version` (2) and `ai_review_status`; `ai_error.category` can now be `withheld` with a plain-language reason. The CLI uses the same check and prints a warning when it withholds a review. The dashboard shows the withheld reason.

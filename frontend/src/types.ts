@@ -75,12 +75,16 @@ export interface Issue {
 
 export interface SubScore {
   category: string;
-  score: number;
+  /** 0-100, or null when no check feeds this subscore (N/A, not in the overall). */
+  score: number | null;
+  unrounded?: number | null;
 }
 
 export interface EngineeringScore {
   overall: number;
   subscores: SubScore[];
+  /** 2 = N/A subscores excluded, unrounded mean rounded once. Missing = 1. */
+  formula_version?: number;
 }
 
 export interface AiError {

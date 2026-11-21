@@ -32,9 +32,29 @@ class Issue(BaseModel):
 
 class SubScore(BaseModel):
     category: str
-    score: int  # 0-100
+    # 0-100, or None when no check feeds this subscore (shown as N/A and left
+    # out of the overall score). None never means "perfect".
+    score: int | None
+    # The value before rounding, so reports can show the exact arithmetic.
+    unrounded: float | None = None
+
+    @property
+    def evaluated(self) -> bool:
+        return self.score is not None
 
 
 class EngineeringScore(BaseModel):
-    overall: int  # 0-100
+    overall: int  # 0-100, mean of the evaluated subscores only
     subscores: list[SubScore]
+    # 1 = original formula (every subscore, including unchecked ones at 100,
+    # averaged after rounding). 2 = unevaluated subscores are N/A and excluded,
+    # mean of unrounded values, rounded once. Payloads without the field are v1.
+    formula_version: int = 1
+
+    @property
+    def evaluated(self) -> list[SubScore]:
+        return [s for s in self.subscores if s.score is not None]
+
+    @property
+    def not_evaluated(self) -> list[SubScore]:
+        return [s for s in self.subscores if s.score is None]

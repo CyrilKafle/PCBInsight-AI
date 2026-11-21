@@ -33,7 +33,7 @@ from app.analysis import (
     signal_integrity,
     thermal,
 )
-from app.analysis.scoring import deduction, severity_points, subscore_for
+from app.analysis.scoring import EVALUATED_SUBSCORES, deduction, severity_points, subscore_for, subscore_names
 from app.models.board import Board
 from app.models.issue import EngineeringScore, Issue, Severity
 from app.reports import html_report as base
@@ -49,7 +49,7 @@ VIEWS = [
     ("try-it", "Try it"),
 ]
 
-_SUBSCORE_ORDER = ["Routing", "Power", "Signal Integrity", "Manufacturability", "Placement", "Thermals", "Documentation"]
+_SUBSCORE_ORDER = subscore_names()
 
 _CATEGORY_LABELS = {
     "routing": "Routing",
@@ -111,7 +111,10 @@ def render(
 def _build_data(board: Board, issues: list[Issue], score: EngineeringScore, groups: list[list[Issue]]) -> dict:
     return {
         "subscores": [{"name": s.category, "score": s.score} for s in score.subscores],
+        "overall": score.overall,
+        "formulaVersion": score.formula_version,
         "order": _SUBSCORE_ORDER,
+        "evaluated": list(EVALUATED_SUBSCORES),
         "severityPoints": {sev.value: severity_points(sev) for sev in SEVERITY_ORDER},
         "severityColors": {sev.value: _DARK_SEVERITY[sev] for sev in SEVERITY_ORDER},
         "issues": [
@@ -402,10 +405,11 @@ def _view_overview(board: Board, issues: list[Issue], score: EngineeringScore, g
         <button type="button" class="btn-ghost" data-go="try-it">Jump to Try it</button></p>
       </div>
       <div class="hero-score" style="--score-color:{color}">
+        {base.top_findings_html(issues)}
         <div class="hero-score-value"><span>{score.overall}</span><small>/100</small></div>
         <div class="meter"><span class="meter-fill" style="width:{score.overall}%"></span></div>
         <p class="hero-score-label">Overall score</p>
-        <p class="hero-score-note">The plain average of seven subscores. {unverified} of {len(issues)} findings are low confidence and need a manual look.</p>
+        <p class="hero-score-note">{escape(base.overall_note(score))} {unverified} of {len(issues)} findings are low confidence and need a manual look.</p>
       </div>
     </div>
     {note}
@@ -416,14 +420,14 @@ def _view_overview(board: Board, issues: list[Issue], score: EngineeringScore, g
       <ol>
         <li><strong>The engine decides.</strong> Deterministic rules with named thresholds find every problem. No machine learning is involved in the score.</li>
         <li><strong>The score is arithmetic.</strong> Each finding removes points based on its severity and how confident the rule is.</li>
-        <li><strong>The AI only explains.</strong> The LLM receives a digest of the findings, never the raw board. Cited finding IDs are checked in code and mismatches are flagged.</li>
+        <li><strong>The AI only explains.</strong> The LLM receives a digest of the findings, never the raw board. Cited finding IDs are checked in code; an explanation that cites an ID the board does not have is withheld.</li>
       </ol>
     </div>
     <details class="limits">
       <summary>Known limits of this demo</summary>
       <ul>
         <li>The 0 to 100 score has no pass threshold. It summarizes deductions and is not a certification.</li>
-        <li>Documentation has no checks yet, so it reads 100 by default. A subscore of 100 means no deductions were found, not that the area was validated.</li>
+        <li>Documentation has no checks yet, so it shows N/A and is left out of the overall score. A subscore of 100 means no deductions were found, not that the area was validated.</li>
         <li>Dangling-end detection compares endpoints to pads, vias and traces within a position tolerance, so it can flag ends that are actually connected. That is why those findings carry low confidence.</li>
         <li>Manufacturability checks currently cover trace width, annular ring, and via density.</li>
         <li>Confidence values are set by hand per rule, not calibrated against labelled boards.</li>
@@ -443,9 +447,19 @@ def _view_scores(score: EngineeringScore, issues: list[Issue], groups: list[list
             lost[name] += deduction(issue)
     rows = []
     for sub_ in score.subscores:
-        unchecked = sub_.category == "Documentation"
-        note = '<small class="subscore-sub">no checks yet</small>' if unchecked else ""
-        color = "#8B96A5" if unchecked else _dark_score_color(sub_.score)
+        if not sub_.evaluated:
+            rows.append(
+                f"""<div class="subscore is-na" data-sub="{escape(sub_.category)}" style="--score-color:#8B96A5">
+              <span class="subscore-name">{escape(sub_.category)}<small class="subscore-sub">no checks yet, not in overall</small></span>
+              <span class="meter" aria-hidden="true"><span class="meter-fill" style="width:0%"></span></span>
+              <span class="subscore-loss">&ndash;</span>
+              <span class="subscore-value">N/A</span>
+              <span class="subscore-delta"></span>
+            </div>"""
+            )
+            continue
+        note = ""
+        color = _dark_score_color(sub_.score)
         loss = f"&minus;{lost[sub_.category]:.1f}" if lost[sub_.category] else "0.0"
         rows.append(
             f"""<div class="subscore" data-sub="{escape(sub_.category)}" style="--score-color:{color}">
@@ -479,7 +493,7 @@ def _view_scores(score: EngineeringScore, issues: list[Issue], groups: list[list
         "What is this?",
         "<p>Every finding removes points from the area it belongs to. The size of the penalty depends on how "
         "<strong>severe</strong> the problem is and how <strong>confident</strong> the rule is that it is real. "
-        "Each area starts at 100, and the overall score is the average of all seven areas.</p>",
+        "Each area starts at 100, and the overall score is the average of the areas that have checks. An area with no checks shows N/A and is left out.</p>",
     )
     return f"""
     <h2 id="h-scores"><span class="h-label">01</span> Engineering scores</h2>
@@ -533,8 +547,7 @@ def _derivation_panel(score: EngineeringScore, issues: list[Issue], groups: list
         )
     body = "\n".join(rows) or '<tr><td colspan="4" class="muted">No deductions.</td></tr>'
     scale = ", ".join(f"{s.value} {severity_points(s):g}" for s in SEVERITY_ORDER)
-    parts = " + ".join(str(s.score) for s in score.subscores)
-    mean = sum(s.score for s in score.subscores) / len(score.subscores)
+    parts, mean, n = base.derivation_parts(score)
     return f"""
     <details class="panel derivation">
       <summary><h3>Show the exact arithmetic</h3></summary>
@@ -547,7 +560,7 @@ def _derivation_panel(score: EngineeringScore, issues: list[Issue], groups: list
           <tbody>{body}</tbody>
         </table>
       </div>
-      <p class="panel-note">Overall = ({parts}) / {len(score.subscores)} = {mean:.1f}, shown as {score.overall}.</p>
+      <p class="panel-note">Overall = ({parts}) / {n} = {mean:.2f}, shown as {score.overall} (formula v{score.formula_version}: unrounded values, rounded once; N/A areas left out).</p>
     </details>
     """
 
@@ -1134,9 +1147,40 @@ def _wrap(title: str, body: str, data: dict) -> str:
 {body}
 <script id="pcbi-data" type="application/json">{payload}</script>
 <script>(function () {{ 'use strict'; {_RULES_JS}
+{_SCORE_JS}
 {_JS} }})();</script>
 </body>
 </html>
+"""
+
+
+# Scoring formula v2 in JavaScript for the what-if simulator. Kept as its own
+# block so tests can run it under node against scoring.score().
+_SCORE_JS = r"""
+  var SCORE = (function () {
+    // Same as scoring.py: strip float noise to 6 decimals, then round half to even.
+    function clean(x) { return Math.round(x * 1e6) / 1e6; }
+    function roundHalfEven(x) {
+      x = clean(x);
+      var f = Math.floor(x), d = clean(x - f);
+      if (d === 0.5) return f % 2 === 0 ? f : f + 1;
+      return Math.round(x);
+    }
+    // evaluated: subscore names that have checks; findings: [{sub, sev, conf}].
+    // Findings whose sub is not evaluated are ignored, like scoring.py.
+    function compute(evaluated, severityPoints, findings) {
+      var totals = {};
+      evaluated.forEach(function (n) { totals[n] = 100; });
+      findings.forEach(function (f) {
+        if (!(f.sub in totals)) return;
+        totals[f.sub] = Math.max(0, totals[f.sub] - severityPoints[f.sev] * f.conf);
+      });
+      var subs = {}, sum = 0;
+      evaluated.forEach(function (n) { var t = clean(totals[n]); subs[n] = roundHalfEven(t); sum += t; });
+      return { subs: subs, overall: roundHalfEven(sum / evaluated.length) };
+    }
+    return { compute: compute, roundHalfEven: roundHalfEven };
+  })();
 """
 
 
@@ -1258,37 +1302,21 @@ _JS = r"""
   });
   show(currentFromHash(), { noFocus: true });
 
-  /* ---------- scoring (mirrors backend/app/analysis/scoring.py) ---------- */
-  function roundHalfEven(x) {
-    var f = Math.floor(x), d = x - f;
-    if (Math.abs(d - 0.5) < 1e-9) return f % 2 === 0 ? f : f + 1;
-    return Math.round(x);
-  }
+  /* scoring lives in _SCORE_JS (mirrors backend/app/analysis/scoring.py, formula v2) */
   var fixed = {};          // group index -> true
   var extra = [];          // findings added from the checker
   function compute() {
-    var totals = {};
-    DATA.order.forEach(function (n) { totals[n] = 100; });
-    DATA.issues.forEach(function (i) {
-      if (!i.sub || fixed[i.group]) return;
-      totals[i.sub] = Math.max(0, totals[i.sub] - DATA.severityPoints[i.sev] * i.conf);
-    });
-    extra.forEach(function (f) {
-      totals[f.sub] = Math.max(0, totals[f.sub] - DATA.severityPoints[f.sev] * f.conf);
-    });
-    var res = {}, sum = 0;
-    DATA.order.forEach(function (n) { res[n] = roundHalfEven(totals[n]); sum += res[n]; });
-    return { subs: res, overall: roundHalfEven(sum / DATA.order.length) };
+    var live = DATA.issues.filter(function (i) { return i.sub && !fixed[i.group]; });
+    return SCORE.compute(DATA.evaluated, DATA.severityPoints, live.concat(extra));
   }
   function colorFor(v) { return v >= 90 ? '#3fb98a' : v >= 75 ? '#e3b341' : v >= 50 ? '#f0883e' : '#ff7b72'; }
   var baseline = {};
   DATA.subscores.forEach(function (s) { baseline[s.name] = s.score; });
-  var baseOverall = roundHalfEven(DATA.subscores.reduce(function (a, s) { return a + s.score; }, 0) / DATA.subscores.length);
+  var baseOverall = DATA.overall;
 
   function paintRow(row, value, base) {
     if (!row) return;
-    var unchecked = row.getAttribute('data-sub') === 'Documentation';
-    row.style.setProperty('--score-color', unchecked ? '#8B96A5' : colorFor(value));
+    row.style.setProperty('--score-color', colorFor(value));
     $('.meter-fill', row).style.width = value + '%';
     $('.subscore-value', row).textContent = value;
     var d = $('.subscore-delta', row), diff = value - base;
@@ -1297,7 +1325,7 @@ _JS = r"""
   }
   function paintScores() {
     var r = compute();
-    DATA.order.forEach(function (n) { paintRow($('.subscore[data-sub="' + n + '"]'), r.subs[n], baseline[n]); });
+    DATA.evaluated.forEach(function (n) { paintRow($('.subscore[data-sub="' + n + '"]'), r.subs[n], baseline[n]); });
     paintRow($('#overall-row'), r.overall, baseOverall);
     var note = $('#sim-test-note');
     if (note) note.textContent = extra.length ? ' Includes ' + extra.length + ' finding' + (extra.length > 1 ? 's' : '') + ' you added in Try it.' : '';

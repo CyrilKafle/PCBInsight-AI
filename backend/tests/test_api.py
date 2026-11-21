@@ -227,7 +227,7 @@ def test_chat_endpoint_returns_grounded_answer(monkeypatch):
     # The endpoint must rebuild the digest itself and pass the question through
     # unchanged -- never let the client supply the digest directly.
     assert captured["question"] == "What is the worst issue?"
-    assert captured["digest"]["schema_version"] == 1
+    assert captured["digest"]["schema_version"] == 2
     assert any(issue["id"] == "SIG-001" for issue in captured["digest"]["issues"])
 
 

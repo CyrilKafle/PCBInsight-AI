@@ -74,6 +74,12 @@
     text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); }
 
   .hero-score-note { margin: 8px 0 0; font-size: 0.8125rem; color: var(--text-muted); max-width: 30ch; }
+  .top-findings { margin: 0 0 14px; padding: 8px 10px; border-left: 3px solid var(--sev, var(--border)); background: var(--surface); border-radius: 3px; font-size: 0.8125rem; max-width: 34ch; }
+  .top-findings-head { margin: 0 0 4px; font-weight: 600; color: var(--sev, var(--text)); text-transform: capitalize; }
+  .top-findings ul { margin: 0; padding-left: 1.1em; }
+  .top-findings li { margin: 2px 0; }
+  .top-findings-more { margin: 4px 0 0; color: var(--text-muted); }
+  .subscore.is-na .subscore-value { font-size: 0.875rem; color: var(--text-muted); }
   .meter { display: block; height: 6px; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; margin-top: 14px; }
   .meter-fill { display: block; height: 100%; background: var(--score-color); }
 
@@ -439,7 +445,7 @@
       <div class="topbar-inner">
         <div class="topbar-row">
           <a class="brand" href="#overview" data-go="overview">PCBInsight<span class="brand-slash"> / </span>demo</a>
-          <span class="topbar-meta">stm32_usb_dev &middot; generated 2026-11-15 19:48 UTC</span>
+          <span class="topbar-meta">stm32_usb_dev &middot; generated 2026-11-21 02:35 UTC</span>
           <a class="landing-link" href="index.html">&larr; Landing page</a>
         </div>
         <nav class="tabs" role="tablist" aria-label="Report sections"><a role="tab" class="tab" href="#overview" data-go="overview" id="tab-overview" aria-controls="view-overview">Overview</a><a role="tab" class="tab" href="#scores" data-go="scores" id="tab-scores" aria-controls="view-scores">Scores</a><a role="tab" class="tab" href="#findings" data-go="findings" id="tab-findings" aria-controls="view-findings">Findings</a><a role="tab" class="tab" href="#ai-review" data-go="ai-review" id="tab-ai-review" aria-controls="view-ai-review">AI review</a><a role="tab" class="tab" href="#board" data-go="board" id="tab-board" aria-controls="view-board">Board</a><a role="tab" class="tab" href="#try-it" data-go="try-it" id="tab-try-it" aria-controls="view-try-it">Try it</a></nav>
@@ -458,17 +464,21 @@
         <button type="button" class="btn-ghost" data-go="try-it">Jump to Try it</button></p>
       </div>
       <div class="hero-score" style="--score-color:#3fb98a">
-        <div class="hero-score-value"><span>98</span><small>/100</small></div>
-        <div class="meter"><span class="meter-fill" style="width:98%"></span></div>
+        <div class="top-findings" style="--sev:#f0883e">
+          <p class="top-findings-head">Most severe: 2 medium</p>
+          <ul><li><code>PWR-001</code> Thin power trace on net +3V3 (0.25mm)</li><li><code>DECAP-001</code> Decoupling capacitor C1 is 3.2mm from U1</li></ul>
+        </div>
+        <div class="hero-score-value"><span>97</span><small>/100</small></div>
+        <div class="meter"><span class="meter-fill" style="width:97%"></span></div>
         <p class="hero-score-label">Overall score</p>
-        <p class="hero-score-note">The plain average of seven subscores. 6 of 8 findings are low confidence and need a manual look.</p>
+        <p class="hero-score-note">Mean of the 6 evaluated subscores (formula v2). Documentation is N/A: no checks feed it. 6 of 8 findings are low confidence and need a manual look.</p>
       </div>
     </div>
-    <div class="demo-note"><strong>Real output, not a mockup.</strong> This is the report PCBInsight generated for <code>examples/stm32_usb_dev</code>, a synthetic board in the ten-board <a href="https://github.com/CyrilKafle/PCBInsight-AI/tree/master/examples">validation corpus</a>; its low-confidence stub warnings were not checked against a real design. Run it on your own boards from the <a href="https://github.com/CyrilKafle/PCBInsight-AI">GitHub repository</a>.</div>
+    <div class="demo-note"><strong>Real output, not a mockup.</strong> This is the report PCBInsight generated for <code>examples/stm32_usb_dev</code>, a synthetic board in the ten-board <a href="https://github.com/CyrilKafle/PCBInsight-AI/tree/master/examples">validation corpus</a>; its low-confidence stub warnings were not checked against a real design. The AI review text was captured in a live run at v0.5.0, under score formula v1 (98/100); formula v2 leaves the unchecked Documentation area out of the average, so the score shown here is 97. Run it on your own boards from the <a href="https://github.com/CyrilKafle/PCBInsight-AI">GitHub repository</a>.</div>
     <h2 class="section-title">Explore the report</h2>
     <div class="cards"><a class="card" href="#scores" data-go="scores">
           <span class="card-top"><span class="card-title">Scores</span><span class="card-arrow" aria-hidden="true">&rarr;</span></span>
-          <span class="card-stat">98/100 overall</span>
+          <span class="card-stat">97/100 overall</span>
           <span class="card-desc">Seven subscores and the exact arithmetic behind them. Mark findings as fixed to see the score move.</span>
         </a><a class="card" href="#findings" data-go="findings">
           <span class="card-top"><span class="card-title">Findings</span><span class="card-arrow" aria-hidden="true">&rarr;</span></span>
@@ -492,14 +502,14 @@
       <ol>
         <li><strong>The engine decides.</strong> Deterministic rules with named thresholds find every problem. No machine learning is involved in the score.</li>
         <li><strong>The score is arithmetic.</strong> Each finding removes points based on its severity and how confident the rule is.</li>
-        <li><strong>The AI only explains.</strong> The LLM receives a digest of the findings, never the raw board. Cited finding IDs are checked in code and mismatches are flagged.</li>
+        <li><strong>The AI only explains.</strong> The LLM receives a digest of the findings, never the raw board. Cited finding IDs are checked in code; an explanation that cites an ID the board does not have is withheld.</li>
       </ol>
     </div>
     <details class="limits">
       <summary>Known limits of this demo</summary>
       <ul>
         <li>The 0 to 100 score has no pass threshold. It summarizes deductions and is not a certification.</li>
-        <li>Documentation has no checks yet, so it reads 100 by default. A subscore of 100 means no deductions were found, not that the area was validated.</li>
+        <li>Documentation has no checks yet, so it shows N/A and is left out of the overall score. A subscore of 100 means no deductions were found, not that the area was validated.</li>
         <li>Dangling-end detection compares endpoints to pads, vias and traces within a position tolerance, so it can flag ends that are actually connected. That is why those findings carry low confidence.</li>
         <li>Manufacturability checks currently cover trace width, annular ring, and via density.</li>
         <li>Confidence values are set by hand per rule, not calibrated against labelled boards.</li>
@@ -516,7 +526,7 @@
     
     <div class="what">
       <p class="what-title">What is this?</p>
-      <p>Every finding removes points from the area it belongs to. The size of the penalty depends on how <strong>severe</strong> the problem is and how <strong>confident</strong> the rule is that it is real. Each area starts at 100, and the overall score is the average of all seven areas.</p>
+      <p>Every finding removes points from the area it belongs to. The size of the penalty depends on how <strong>severe</strong> the problem is and how <strong>confident</strong> the rule is that it is real. Each area starts at 100, and the overall score is the average of the areas that have checks. An area with no checks shows N/A and is left out.</p>
     </div>
     
     <div class="subscores">
@@ -557,18 +567,18 @@
               <span class="subscore-loss">0.0</span>
               <span class="subscore-value">100</span>
               <span class="subscore-delta" aria-live="polite"></span>
-            </div><div class="subscore" data-sub="Documentation" style="--score-color:#8B96A5">
-              <span class="subscore-name">Documentation<small class="subscore-sub">no checks yet</small></span>
-              <span class="meter"><span class="meter-fill" style="width:100%"></span></span>
-              <span class="subscore-loss">0.0</span>
-              <span class="subscore-value">100</span>
-              <span class="subscore-delta" aria-live="polite"></span>
+            </div><div class="subscore is-na" data-sub="Documentation" style="--score-color:#8B96A5">
+              <span class="subscore-name">Documentation<small class="subscore-sub">no checks yet, not in overall</small></span>
+              <span class="meter" aria-hidden="true"><span class="meter-fill" style="width:0%"></span></span>
+              <span class="subscore-loss">&ndash;</span>
+              <span class="subscore-value">N/A</span>
+              <span class="subscore-delta"></span>
             </div>
       <div class="subscore subscore-total" id="overall-row" style="--score-color:#3fb98a">
         <span class="subscore-name">Overall</span>
-        <span class="meter"><span class="meter-fill" style="width:98%"></span></span>
+        <span class="meter"><span class="meter-fill" style="width:97%"></span></span>
         <span class="subscore-loss">average</span>
-        <span class="subscore-value">98</span>
+        <span class="subscore-value">97</span>
         <span class="subscore-delta" aria-live="polite"></span>
       </div>
     </div>
@@ -613,7 +623,7 @@
 <tr><td class="nowrap"><code>RTE-001 to RTE-006</code></td><td>Routing</td><td class="num">&minus;7.2</td><td class="num">6 &times; 3 &times; 0.40</td></tr></tbody>
         </table>
       </div>
-      <p class="panel-note">Overall = (93 + 91 + 100 + 100 + 100 + 100 + 100) / 7 = 97.7, shown as 98.</p>
+      <p class="panel-note">Overall = (92.80 + 90.80 + 100 + 100 + 100 + 100) / 6 = 97.27, shown as 97 (formula v2: unrounded values, rounded once; N/A areas left out).</p>
     </details>
     
     <div class="view-pager"><button type="button" class="pager" data-go="overview"><span aria-hidden="true">&larr;</span> Overview</button><button type="button" class="pager pager-home" data-go="overview">All sections</button><button type="button" class="pager pager-next" data-go="findings">Next: Findings <span aria-hidden="true">&rarr;</span></button></div></section>
@@ -848,7 +858,7 @@
       <a href="https://github.com/CyrilKafle/PCBInsight-AI">Source on GitHub</a></p>
     </footer>
     
-<script id="pcbi-data" type="application/json">{"subscores": [{"name": "Routing", "score": 93}, {"name": "Power", "score": 91}, {"name": "Signal Integrity", "score": 100}, {"name": "Manufacturability", "score": 100}, {"name": "Placement", "score": 100}, {"name": "Thermals", "score": 100}, {"name": "Documentation", "score": 100}], "order": ["Routing", "Power", "Signal Integrity", "Manufacturability", "Placement", "Thermals", "Documentation"], "severityPoints": {"critical": 25.0, "high": 15.0, "medium": 8.0, "low": 3.0, "info": 1.0}, "severityColors": {"critical": "#ff5d5d", "high": "#ff7b72", "medium": "#f0883e", "low": "#e3b341", "info": "#8b96a5"}, "issues": [{"id": "PWR-001", "sub": "Power", "sev": "medium", "conf": 0.65, "group": 0}, {"id": "DECAP-001", "sub": "Power", "sev": "medium", "conf": 0.5, "group": 1}, {"id": "RTE-001", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-002", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-003", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-004", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-005", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-006", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}], "rules": [{"id": "trace_width", "sub": "Power", "label": "Trace width", "what": "How wide a copper trace is, in millimetres. Wider traces carry more current with less heating and are easier to manufacture.", "fields": [{"key": "width", "label": "Trace width", "unit": "mm", "value": 0.25, "step": 0.01, "min": 0.01}, {"key": "net", "label": "What does it carry?", "type": "select", "options": [["signal", "A signal"], ["power", "Power (VCC, 3V3, ...)"], ["ground", "Ground"]], "value": "power"}], "limits": {"power_min": 0.3, "power_crit": 0.15, "ground_min": 0.3, "fab_min": 0.15}, "rule": "Power and ground traces under {power_min} mm are flagged (under {power_crit} mm is high severity). Any trace under {fab_min} mm is flagged as hard to manufacture.", "presets": [["Passes", {"width": 0.5, "net": "power"}], ["Fails", {"width": 0.12, "net": "power"}]]}, {"id": "annular_ring", "sub": "Manufacturability", "label": "Via annular ring", "what": "The ring of copper left around a via's drill hole. Drill wander can break a ring that is too thin and cut the connection.", "fields": [{"key": "pad", "label": "Via pad diameter", "unit": "mm", "value": 0.6, "step": 0.01, "min": 0.1}, {"key": "drill", "label": "Drill diameter", "unit": "mm", "value": 0.3, "step": 0.01, "min": 0.05}], "limits": {"min": 0.075}, "rule": "Ring = (pad - drill) / 2. Flagged when the ring is under {min} mm.", "presets": [["Passes", {"pad": 0.6, "drill": 0.3}], ["Fails", {"pad": 0.4, "drill": 0.3}]]}, {"id": "long_trace", "sub": "Routing", "label": "Long trace segment", "what": "The length of one straight trace segment. Long runs add resistance, pick up noise and are more likely to need rerouting.", "fields": [{"key": "length", "label": "Segment length", "unit": "mm", "value": 45, "step": 1, "min": 0}], "limits": {"warn": 60.0, "crit": 120.0}, "rule": "Flagged at {warn} mm or more (medium) and {crit} mm or more (high).", "presets": [["Passes", {"length": 25}], ["Fails", {"length": 130}]]}, {"id": "via_count", "sub": "Routing", "label": "Vias on one net", "what": "How many layer changes (vias) one net makes. Each via adds inductance and a place for a fabrication defect.", "fields": [{"key": "vias", "label": "Number of vias", "unit": "", "value": 3, "step": 1, "min": 0}, {"key": "clock", "label": "This is a clock net", "type": "checkbox", "value": false}], "limits": {"max": 4, "clock_max": 2}, "rule": "Flagged above {max} vias. Clock nets are stricter: flagged above {clock_max} vias.", "presets": [["Passes", {"vias": 2, "clock": false}], ["Fails", {"vias": 7, "clock": true}]]}, {"id": "segments", "sub": "Routing", "label": "Segments on one net", "what": "How many separate straight pieces a net is routed with. Many tiny segments usually mean a messy, hard-to-maintain route.", "fields": [{"key": "segments", "label": "Number of segments", "unit": "", "value": 6, "step": 1, "min": 1}], "limits": {"max": 8}, "rule": "Flagged above {max} segments.", "presets": [["Passes", {"segments": 4}], ["Fails", {"segments": 14}]]}, {"id": "acute_angle", "sub": "Routing", "label": "Trace bend angle", "what": "The angle where two trace segments meet. Sharp bends can trap etchant during fabrication and disturb fast signals.", "fields": [{"key": "angle", "label": "Angle between segments", "unit": "degrees", "value": 90, "step": 1, "min": 1, "max": 180}], "limits": {"max": 90.0}, "rule": "Flagged when the angle is under {max} degrees.", "presets": [["Passes", {"angle": 135}], ["Fails", {"angle": 45}]]}, {"id": "decoupling", "sub": "Power", "label": "Decoupling capacitor distance", "what": "How far the nearest bypass capacitor sits from the chip it protects. Close capacitors supply fast current spikes; distant ones cannot.", "fields": [{"key": "kind", "label": "Chip type", "type": "select", "options": [["MCU", "Microcontroller"], ["FPGA", "FPGA"], ["regulator", "Voltage regulator"], ["IC", "Other IC"]], "value": "MCU"}, {"key": "gap", "label": "Distance to nearest capacitor", "unit": "mm", "value": 2.0, "step": 0.1, "min": 0}, {"key": "none", "label": "No capacitor on this power net at all", "type": "checkbox", "value": false}], "limits": {"MCU": 3.0, "FPGA": 2.5, "regulator": 5.0, "IC": 4.0}, "rule": "Allowed distance by chip type (mm): MCU {MCU}, FPGA {FPGA}, regulator {regulator}, other IC {IC}. A missing capacitor is a separate, higher severity finding.", "presets": [["Passes", {"kind": "MCU", "gap": 1.5, "none": false}], ["Fails", {"kind": "FPGA", "gap": 6, "none": false}]]}, {"id": "supply_path", "sub": "Power", "label": "Supply path length", "what": "Total copper length of one power net. Long supply paths drop voltage and add noise.", "fields": [{"key": "length", "label": "Total length of the net", "unit": "mm", "value": 50, "step": 1, "min": 0}], "limits": {"max": 80.0}, "rule": "Flagged at {max} mm or more of total trace on one supply net.", "presets": [["Passes", {"length": 40}], ["Fails", {"length": 110}]]}, {"id": "diff_pair", "sub": "Signal Integrity", "label": "Differential pair matching", "what": "A differential pair (like USB D+ and D-) works best when both wires are the same length and shape, so the signal arrives together.", "fields": [{"key": "lenP", "label": "Length of positive wire", "unit": "mm", "value": 42.0, "step": 0.1, "min": 0}, {"key": "lenN", "label": "Length of negative wire", "unit": "mm", "value": 42.1, "step": 0.1, "min": 0}, {"key": "viaP", "label": "Vias on positive wire", "unit": "", "value": 1, "step": 1, "min": 0}, {"key": "viaN", "label": "Vias on negative wire", "unit": "", "value": 1, "step": 1, "min": 0}, {"key": "segP", "label": "Segments on positive wire", "unit": "", "value": 4, "step": 1, "min": 1}, {"key": "segN", "label": "Segments on negative wire", "unit": "", "value": 4, "step": 1, "min": 1}], "limits": {"len": 0.2, "seg": 2}, "rule": "Length mismatch above {len} mm is flagged. Different via counts are flagged. Segment counts differing by more than {seg} are flagged.", "presets": [["Passes", {"lenP": 42, "lenN": 42.1, "viaP": 1, "viaN": 1, "segP": 4, "segN": 4}], ["Fails", {"lenP": 42, "lenN": 44.5, "viaP": 2, "viaN": 0, "segP": 3, "segN": 8}]]}, {"id": "clock_length", "sub": "Signal Integrity", "label": "Clock net length", "what": "Total length of a clock net. Long clock routes radiate noise and degrade edges.", "fields": [{"key": "length", "label": "Clock net length", "unit": "mm", "value": 25, "step": 1, "min": 0}], "limits": {"max": 40.0}, "rule": "Flagged at {max} mm or more.", "presets": [["Passes", {"length": 20}], ["Fails", {"length": 65}]]}, {"id": "via_density", "sub": "Manufacturability", "label": "Via density", "what": "Vias per square centimetre of board. Very dense via fields raise fabrication cost and reduce yield.", "fields": [{"key": "vias", "label": "Total vias on board", "unit": "", "value": 40, "step": 1, "min": 0}, {"key": "w", "label": "Board width", "unit": "mm", "value": 60, "step": 1, "min": 1}, {"key": "h", "label": "Board height", "unit": "mm", "value": 40, "step": 1, "min": 1}], "limits": {"max": 5.0}, "rule": "Density = vias / board area in cm2. Flagged at {max} per cm2 or more.", "presets": [["Passes", {"vias": 40, "w": 60, "h": 40}], ["Fails", {"vias": 160, "w": 40, "h": 30}]]}, {"id": "connector_edge", "sub": "Placement", "label": "Connector distance from board edge", "what": "How far a connector sits from the nearest board edge. Connectors away from the edge are awkward to plug into and to fit in an enclosure.", "fields": [{"key": "dist", "label": "Distance to nearest edge", "unit": "mm", "value": 4, "step": 0.5, "min": 0}], "limits": {"max": 10.0}, "rule": "Flagged when a connector is more than {max} mm from the edge.", "presets": [["Passes", {"dist": 3}], ["Fails", {"dist": 18}]]}, {"id": "crowding", "sub": "Placement", "label": "Component crowding", "what": "Centre-to-centre spacing between two parts. Parts packed too tightly are hard to assemble, probe and rework.", "fields": [{"key": "gap", "label": "Centre-to-centre spacing", "unit": "mm", "value": 3, "step": 0.1, "min": 0}], "limits": {"min": 1.0}, "rule": "Flagged when two components are closer than {min} mm.", "presets": [["Passes", {"gap": 3}], ["Fails", {"gap": 0.6}]]}, {"id": "heat_spacing", "sub": "Thermals", "label": "Heat source spacing", "what": "Spacing between two parts that run hot (regulators, power transistors). Hot parts side by side heat each other up.", "fields": [{"key": "gap", "label": "Distance between the two hot parts", "unit": "mm", "value": 12, "step": 0.5, "min": 0}], "limits": {"min": 8.0}, "rule": "Flagged when two heat sources are closer than {min} mm.", "presets": [["Passes", {"gap": 15}], ["Fails", {"gap": 4}]]}], "confidenceFloor": 0.5}</script>
+<script id="pcbi-data" type="application/json">{"subscores": [{"name": "Routing", "score": 93}, {"name": "Power", "score": 91}, {"name": "Signal Integrity", "score": 100}, {"name": "Manufacturability", "score": 100}, {"name": "Placement", "score": 100}, {"name": "Thermals", "score": 100}, {"name": "Documentation", "score": null}], "overall": 97, "formulaVersion": 2, "order": ["Routing", "Power", "Signal Integrity", "Manufacturability", "Placement", "Thermals", "Documentation"], "evaluated": ["Routing", "Power", "Signal Integrity", "Manufacturability", "Placement", "Thermals"], "severityPoints": {"critical": 25.0, "high": 15.0, "medium": 8.0, "low": 3.0, "info": 1.0}, "severityColors": {"critical": "#ff5d5d", "high": "#ff7b72", "medium": "#f0883e", "low": "#e3b341", "info": "#8b96a5"}, "issues": [{"id": "PWR-001", "sub": "Power", "sev": "medium", "conf": 0.65, "group": 0}, {"id": "DECAP-001", "sub": "Power", "sev": "medium", "conf": 0.5, "group": 1}, {"id": "RTE-001", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-002", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-003", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-004", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-005", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}, {"id": "RTE-006", "sub": "Routing", "sev": "low", "conf": 0.4, "group": 2}], "rules": [{"id": "trace_width", "sub": "Power", "label": "Trace width", "what": "How wide a copper trace is, in millimetres. Wider traces carry more current with less heating and are easier to manufacture.", "fields": [{"key": "width", "label": "Trace width", "unit": "mm", "value": 0.25, "step": 0.01, "min": 0.01}, {"key": "net", "label": "What does it carry?", "type": "select", "options": [["signal", "A signal"], ["power", "Power (VCC, 3V3, ...)"], ["ground", "Ground"]], "value": "power"}], "limits": {"power_min": 0.3, "power_crit": 0.15, "ground_min": 0.3, "fab_min": 0.15}, "rule": "Power and ground traces under {power_min} mm are flagged (under {power_crit} mm is high severity). Any trace under {fab_min} mm is flagged as hard to manufacture.", "presets": [["Passes", {"width": 0.5, "net": "power"}], ["Fails", {"width": 0.12, "net": "power"}]]}, {"id": "annular_ring", "sub": "Manufacturability", "label": "Via annular ring", "what": "The ring of copper left around a via's drill hole. Drill wander can break a ring that is too thin and cut the connection.", "fields": [{"key": "pad", "label": "Via pad diameter", "unit": "mm", "value": 0.6, "step": 0.01, "min": 0.1}, {"key": "drill", "label": "Drill diameter", "unit": "mm", "value": 0.3, "step": 0.01, "min": 0.05}], "limits": {"min": 0.075}, "rule": "Ring = (pad - drill) / 2. Flagged when the ring is under {min} mm.", "presets": [["Passes", {"pad": 0.6, "drill": 0.3}], ["Fails", {"pad": 0.4, "drill": 0.3}]]}, {"id": "long_trace", "sub": "Routing", "label": "Long trace segment", "what": "The length of one straight trace segment. Long runs add resistance, pick up noise and are more likely to need rerouting.", "fields": [{"key": "length", "label": "Segment length", "unit": "mm", "value": 45, "step": 1, "min": 0}], "limits": {"warn": 60.0, "crit": 120.0}, "rule": "Flagged at {warn} mm or more (medium) and {crit} mm or more (high).", "presets": [["Passes", {"length": 25}], ["Fails", {"length": 130}]]}, {"id": "via_count", "sub": "Routing", "label": "Vias on one net", "what": "How many layer changes (vias) one net makes. Each via adds inductance and a place for a fabrication defect.", "fields": [{"key": "vias", "label": "Number of vias", "unit": "", "value": 3, "step": 1, "min": 0}, {"key": "clock", "label": "This is a clock net", "type": "checkbox", "value": false}], "limits": {"max": 4, "clock_max": 2}, "rule": "Flagged above {max} vias. Clock nets are stricter: flagged above {clock_max} vias.", "presets": [["Passes", {"vias": 2, "clock": false}], ["Fails", {"vias": 7, "clock": true}]]}, {"id": "segments", "sub": "Routing", "label": "Segments on one net", "what": "How many separate straight pieces a net is routed with. Many tiny segments usually mean a messy, hard-to-maintain route.", "fields": [{"key": "segments", "label": "Number of segments", "unit": "", "value": 6, "step": 1, "min": 1}], "limits": {"max": 8}, "rule": "Flagged above {max} segments.", "presets": [["Passes", {"segments": 4}], ["Fails", {"segments": 14}]]}, {"id": "acute_angle", "sub": "Routing", "label": "Trace bend angle", "what": "The angle where two trace segments meet. Sharp bends can trap etchant during fabrication and disturb fast signals.", "fields": [{"key": "angle", "label": "Angle between segments", "unit": "degrees", "value": 90, "step": 1, "min": 1, "max": 180}], "limits": {"max": 90.0}, "rule": "Flagged when the angle is under {max} degrees.", "presets": [["Passes", {"angle": 135}], ["Fails", {"angle": 45}]]}, {"id": "decoupling", "sub": "Power", "label": "Decoupling capacitor distance", "what": "How far the nearest bypass capacitor sits from the chip it protects. Close capacitors supply fast current spikes; distant ones cannot.", "fields": [{"key": "kind", "label": "Chip type", "type": "select", "options": [["MCU", "Microcontroller"], ["FPGA", "FPGA"], ["regulator", "Voltage regulator"], ["IC", "Other IC"]], "value": "MCU"}, {"key": "gap", "label": "Distance to nearest capacitor", "unit": "mm", "value": 2.0, "step": 0.1, "min": 0}, {"key": "none", "label": "No capacitor on this power net at all", "type": "checkbox", "value": false}], "limits": {"MCU": 3.0, "FPGA": 2.5, "regulator": 5.0, "IC": 4.0}, "rule": "Allowed distance by chip type (mm): MCU {MCU}, FPGA {FPGA}, regulator {regulator}, other IC {IC}. A missing capacitor is a separate, higher severity finding.", "presets": [["Passes", {"kind": "MCU", "gap": 1.5, "none": false}], ["Fails", {"kind": "FPGA", "gap": 6, "none": false}]]}, {"id": "supply_path", "sub": "Power", "label": "Supply path length", "what": "Total copper length of one power net. Long supply paths drop voltage and add noise.", "fields": [{"key": "length", "label": "Total length of the net", "unit": "mm", "value": 50, "step": 1, "min": 0}], "limits": {"max": 80.0}, "rule": "Flagged at {max} mm or more of total trace on one supply net.", "presets": [["Passes", {"length": 40}], ["Fails", {"length": 110}]]}, {"id": "diff_pair", "sub": "Signal Integrity", "label": "Differential pair matching", "what": "A differential pair (like USB D+ and D-) works best when both wires are the same length and shape, so the signal arrives together.", "fields": [{"key": "lenP", "label": "Length of positive wire", "unit": "mm", "value": 42.0, "step": 0.1, "min": 0}, {"key": "lenN", "label": "Length of negative wire", "unit": "mm", "value": 42.1, "step": 0.1, "min": 0}, {"key": "viaP", "label": "Vias on positive wire", "unit": "", "value": 1, "step": 1, "min": 0}, {"key": "viaN", "label": "Vias on negative wire", "unit": "", "value": 1, "step": 1, "min": 0}, {"key": "segP", "label": "Segments on positive wire", "unit": "", "value": 4, "step": 1, "min": 1}, {"key": "segN", "label": "Segments on negative wire", "unit": "", "value": 4, "step": 1, "min": 1}], "limits": {"len": 0.2, "seg": 2}, "rule": "Length mismatch above {len} mm is flagged. Different via counts are flagged. Segment counts differing by more than {seg} are flagged.", "presets": [["Passes", {"lenP": 42, "lenN": 42.1, "viaP": 1, "viaN": 1, "segP": 4, "segN": 4}], ["Fails", {"lenP": 42, "lenN": 44.5, "viaP": 2, "viaN": 0, "segP": 3, "segN": 8}]]}, {"id": "clock_length", "sub": "Signal Integrity", "label": "Clock net length", "what": "Total length of a clock net. Long clock routes radiate noise and degrade edges.", "fields": [{"key": "length", "label": "Clock net length", "unit": "mm", "value": 25, "step": 1, "min": 0}], "limits": {"max": 40.0}, "rule": "Flagged at {max} mm or more.", "presets": [["Passes", {"length": 20}], ["Fails", {"length": 65}]]}, {"id": "via_density", "sub": "Manufacturability", "label": "Via density", "what": "Vias per square centimetre of board. Very dense via fields raise fabrication cost and reduce yield.", "fields": [{"key": "vias", "label": "Total vias on board", "unit": "", "value": 40, "step": 1, "min": 0}, {"key": "w", "label": "Board width", "unit": "mm", "value": 60, "step": 1, "min": 1}, {"key": "h", "label": "Board height", "unit": "mm", "value": 40, "step": 1, "min": 1}], "limits": {"max": 5.0}, "rule": "Density = vias / board area in cm2. Flagged at {max} per cm2 or more.", "presets": [["Passes", {"vias": 40, "w": 60, "h": 40}], ["Fails", {"vias": 160, "w": 40, "h": 30}]]}, {"id": "connector_edge", "sub": "Placement", "label": "Connector distance from board edge", "what": "How far a connector sits from the nearest board edge. Connectors away from the edge are awkward to plug into and to fit in an enclosure.", "fields": [{"key": "dist", "label": "Distance to nearest edge", "unit": "mm", "value": 4, "step": 0.5, "min": 0}], "limits": {"max": 10.0}, "rule": "Flagged when a connector is more than {max} mm from the edge.", "presets": [["Passes", {"dist": 3}], ["Fails", {"dist": 18}]]}, {"id": "crowding", "sub": "Placement", "label": "Component crowding", "what": "Centre-to-centre spacing between two parts. Parts packed too tightly are hard to assemble, probe and rework.", "fields": [{"key": "gap", "label": "Centre-to-centre spacing", "unit": "mm", "value": 3, "step": 0.1, "min": 0}], "limits": {"min": 1.0}, "rule": "Flagged when two components are closer than {min} mm.", "presets": [["Passes", {"gap": 3}], ["Fails", {"gap": 0.6}]]}, {"id": "heat_spacing", "sub": "Thermals", "label": "Heat source spacing", "what": "Spacing between two parts that run hot (regulators, power transistors). Hot parts side by side heat each other up.", "fields": [{"key": "gap", "label": "Distance between the two hot parts", "unit": "mm", "value": 12, "step": 0.5, "min": 0}], "limits": {"min": 8.0}, "rule": "Flagged when two heat sources are closer than {min} mm.", "presets": [["Passes", {"gap": 15}], ["Fails", {"gap": 4}]]}], "confidenceFloor": 0.5}</script>
 <script>(function () { 'use strict'; 
   function fnd(sub, sev, conf, title, why, fix) { return { sub: sub, sev: sev, conf: conf, title: title, why: why, fix: fix }; }
   var f2 = function (x) { return (Math.round(x * 100) / 100).toString(); };
@@ -920,6 +930,32 @@
   };
 
 
+  var SCORE = (function () {
+    // Same as scoring.py: strip float noise to 6 decimals, then round half to even.
+    function clean(x) { return Math.round(x * 1e6) / 1e6; }
+    function roundHalfEven(x) {
+      x = clean(x);
+      var f = Math.floor(x), d = clean(x - f);
+      if (d === 0.5) return f % 2 === 0 ? f : f + 1;
+      return Math.round(x);
+    }
+    // evaluated: subscore names that have checks; findings: [{sub, sev, conf}].
+    // Findings whose sub is not evaluated are ignored, like scoring.py.
+    function compute(evaluated, severityPoints, findings) {
+      var totals = {};
+      evaluated.forEach(function (n) { totals[n] = 100; });
+      findings.forEach(function (f) {
+        if (!(f.sub in totals)) return;
+        totals[f.sub] = Math.max(0, totals[f.sub] - severityPoints[f.sev] * f.conf);
+      });
+      var subs = {}, sum = 0;
+      evaluated.forEach(function (n) { var t = clean(totals[n]); subs[n] = roundHalfEven(t); sum += t; });
+      return { subs: subs, overall: roundHalfEven(sum / evaluated.length) };
+    }
+    return { compute: compute, roundHalfEven: roundHalfEven };
+  })();
+
+
   var DATA = JSON.parse(document.getElementById('pcbi-data').textContent);
   var BASE_TITLE = document.title;
   var VIEWS = ['overview', 'scores', 'findings', 'ai-review', 'board', 'try-it'];
@@ -965,37 +1001,21 @@
   });
   show(currentFromHash(), { noFocus: true });
 
-  /* ---------- scoring (mirrors backend/app/analysis/scoring.py) ---------- */
-  function roundHalfEven(x) {
-    var f = Math.floor(x), d = x - f;
-    if (Math.abs(d - 0.5) < 1e-9) return f % 2 === 0 ? f : f + 1;
-    return Math.round(x);
-  }
+  /* scoring lives in _SCORE_JS (mirrors backend/app/analysis/scoring.py, formula v2) */
   var fixed = {};          // group index -> true
   var extra = [];          // findings added from the checker
   function compute() {
-    var totals = {};
-    DATA.order.forEach(function (n) { totals[n] = 100; });
-    DATA.issues.forEach(function (i) {
-      if (!i.sub || fixed[i.group]) return;
-      totals[i.sub] = Math.max(0, totals[i.sub] - DATA.severityPoints[i.sev] * i.conf);
-    });
-    extra.forEach(function (f) {
-      totals[f.sub] = Math.max(0, totals[f.sub] - DATA.severityPoints[f.sev] * f.conf);
-    });
-    var res = {}, sum = 0;
-    DATA.order.forEach(function (n) { res[n] = roundHalfEven(totals[n]); sum += res[n]; });
-    return { subs: res, overall: roundHalfEven(sum / DATA.order.length) };
+    var live = DATA.issues.filter(function (i) { return i.sub && !fixed[i.group]; });
+    return SCORE.compute(DATA.evaluated, DATA.severityPoints, live.concat(extra));
   }
   function colorFor(v) { return v >= 90 ? '#3fb98a' : v >= 75 ? '#e3b341' : v >= 50 ? '#f0883e' : '#ff7b72'; }
   var baseline = {};
   DATA.subscores.forEach(function (s) { baseline[s.name] = s.score; });
-  var baseOverall = roundHalfEven(DATA.subscores.reduce(function (a, s) { return a + s.score; }, 0) / DATA.subscores.length);
+  var baseOverall = DATA.overall;
 
   function paintRow(row, value, base) {
     if (!row) return;
-    var unchecked = row.getAttribute('data-sub') === 'Documentation';
-    row.style.setProperty('--score-color', unchecked ? '#8B96A5' : colorFor(value));
+    row.style.setProperty('--score-color', colorFor(value));
     $('.meter-fill', row).style.width = value + '%';
     $('.subscore-value', row).textContent = value;
     var d = $('.subscore-delta', row), diff = value - base;
@@ -1004,7 +1024,7 @@
   }
   function paintScores() {
     var r = compute();
-    DATA.order.forEach(function (n) { paintRow($('.subscore[data-sub="' + n + '"]'), r.subs[n], baseline[n]); });
+    DATA.evaluated.forEach(function (n) { paintRow($('.subscore[data-sub="' + n + '"]'), r.subs[n], baseline[n]); });
     paintRow($('#overall-row'), r.overall, baseOverall);
     var note = $('#sim-test-note');
     if (note) note.textContent = extra.length ? ' Includes ' + extra.length + ' finding' + (extra.length > 1 ? 's' : '') + ' you added in Try it.' : '';
