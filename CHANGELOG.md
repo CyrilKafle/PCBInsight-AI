@@ -4,6 +4,11 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+### Added (expected-findings tests for the corpus, v1.1 item 6)
+- `tests/test_corpus_expected.py` checks every board in `examples/` against `tests/corpus_expected.py`: the exact set of finding IDs and, for each, its severity, rule weight and summary (which carries the measured value), plus the overall score and that the board has no input limitations. Before, the corpus test only checked that each board parsed and scored between 0 and 100.
+- The expected values were captured from the engine and then checked against `examples/README.md`. That check found one wrong claim in the README: `thermal_reference`'s two heat sources are 4.1 mm apart center to center (the engine is right), not 5.4 mm. The README is corrected. The expected values pin current behavior; they are not an independent ground truth (a KiCad DRC comparison is planned for the P3 case study).
+- Backend tests: 223 passing.
+
 ### Changed (explicit input boundary, v1.1 item 5)
 - **Several boards in one upload are rejected** with an error that lists the `.kicad_pcb` files, instead of reviewing whichever sorted first. KiCad `_autosave-` copies are ignored.
 - **Malformed input fails clearly.** Empty, truncated or unbalanced files, files that are not `kicad_pcb` (for example a renamed schematic), unreadable values and non-UTF-8 files raise `BoardParseError`; the API returns 400 with a plain message and the CLI prints it. Before, garbage text or a schematic parsed as an empty board that scored 100/100, and other cases crashed with `IndexError` or `UnicodeDecodeError`.

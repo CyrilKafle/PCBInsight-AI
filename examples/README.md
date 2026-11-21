@@ -53,7 +53,7 @@ A two-layer board (`power_supply_board.kicad_pcb` + `.kicad_pro`) — USB-C inpu
 
 ## thermal_reference
 
-A two-layer board (`thermal_reference.kicad_pcb` + `.kicad_pro`) — LM1117-3.3 regulator and an N-MOSFET placed close together, both correctly decoupled, with a ground pour present on the board but positioned nowhere near either heat source. This isolates the thermal category cleanly: no copper pour within range of the regulator, no copper pour within range of the MOSFET, and the two heat sources are close enough together (5.4mm) to compound each other's thermal rise. PCBInsight scores it 98/100 with exactly 3 findings, all thermal.
+A two-layer board (`thermal_reference.kicad_pcb` + `.kicad_pro`) — LM1117-3.3 regulator and an N-MOSFET placed close together, both correctly decoupled, with a ground pour present on the board but positioned nowhere near either heat source. This isolates the thermal category cleanly: no copper pour within range of the regulator, no copper pour within range of the MOSFET, and the two heat sources are close enough together (4.1mm center to center) to compound each other's thermal rise. PCBInsight scores it 98/100 with exactly 3 findings, all thermal.
 
 > **AI-generated example board.** Synthetic test/demo data, authored with AI assistance to hit exact deterministic-check thresholds cleanly.
 
