@@ -25,7 +25,7 @@ _HIGH_IMPACT_MAX = 3
 # prompt in review.py and any future consumer can detect a mismatch instead
 # of silently breaking.
 # 2 = scoring formula v2: unevaluated subscores are null and listed in
-# not_evaluated_subscores; formula_version is included.
+# not_evaluated_subscores; formula_version and input_limitations are included.
 SCHEMA_VERSION = 2
 
 
@@ -39,6 +39,9 @@ def summarize(board: Board, issues: list[Issue], score: EngineeringScore) -> dic
         "evidence": _evidence(issues, score),
         "issues": [_issue_dict(issue) for issue in issues],
         "statistics": _board_statistics(board),
+        # What the parser skipped or approximated; the review must not claim
+        # coverage of these.
+        "input_limitations": list(board.limitations),
     }
 
 

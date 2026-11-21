@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+### Changed (explicit input boundary, v1.1 item 5)
+- **Several boards in one upload are rejected** with an error that lists the `.kicad_pcb` files, instead of reviewing whichever sorted first. KiCad `_autosave-` copies are ignored.
+- **Malformed input fails clearly.** Empty, truncated or unbalanced files, files that are not `kicad_pcb` (for example a renamed schematic), unreadable values and non-UTF-8 files raise `BoardParseError`; the API returns 400 with a plain message and the CLI prints it. Before, garbage text or a schematic parsed as an empty board that scored 100/100, and other cases crashed with `IndexError` or `UnicodeDecodeError`.
+- **Per-board limitation notes** (`Board.limitations`) for input the parser skips or approximates: curved copper tracks (`arc`), a missing or curved Edge.Cuts outline, a schematic that is not analyzed, and an untested or missing file-format version. They appear in the HTML report, PDF, interactive demo, dashboard and the LLM digest. No board in `examples/` triggers one.
+- New `docs/SUPPORTED.md`: tested format version, what is parsed, what is not, and how each gap is reported.
+- New `tests/test_input_boundary.py` (23 tests): rotated footprints, a board outline away from the origin (edge distance measured from the real outline), malformed files, multiple boards, autosave copies, each limitation note, and the API responses. Backend tests: 212 passing (2 more cover the CLI error path).
+
 ### Changed ("confidence" is labeled as what it is, v1.1 item 4)
 - The per-finding `confidence` value is a number from 0 to 1 that each rule's author set by hand. It scales the score deduction; it was never measured against labelled boards. Reports, the PDF, the interactive demo, the dashboard and the landing page now call it **rule weight** and say it is not a probability (the dashboard showed it as a percentage before). No numbers change.
 - The field keeps the name `confidence` in the API, the `Issue` model and the LLM digest, so existing payloads stay valid and the LLM prompt is unchanged; `DESIGN.md`, the model and the report legends say that `confidence` is the rule weight.

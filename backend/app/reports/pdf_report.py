@@ -60,6 +60,7 @@ def render(board: Board, issues: list[Issue], score: EngineeringScore, ai_review
     story: list = []
     story += _header(board, score, generated_at, styles)
     story += _executive_summary(board, issues, score, severity_counts, styles)
+    story += _input_limitations(board, styles)
     story += _scores(score, styles)
     story += _charts(score, severity_counts)
     story += _statistics(board, styles)
@@ -141,6 +142,13 @@ def _executive_summary(
         out.append(Paragraph(f"<b>Most severe: {total} {escape(sev)}</b><br/>{lines}{more}", styles["body"]))
         out.append(Spacer(1, 6))
     return out + [Paragraph(text, styles["body"])]
+
+
+def _input_limitations(board: Board, styles: dict) -> list:
+    if not board.limitations:
+        return []
+    lines = "<br/>".join(f"&bull; {escape(note)}" for note in board.limitations)
+    return [Spacer(1, 6), Paragraph(f"<b>Input limitations for this board</b><br/>{lines}", styles["body"])]
 
 
 def _scores(score: EngineeringScore, styles: dict) -> list:

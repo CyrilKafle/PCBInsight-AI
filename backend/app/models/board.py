@@ -61,3 +61,6 @@ class Board(BaseModel):
     components: list[Component] = []
     nets: list[Net] = []
     pours: list[CopperPour] = []
+    # Plain-language notes about input this parser skipped or approximated
+    # for this board (e.g. copper arc tracks). Shown in every report.
+    limitations: list[str] = []

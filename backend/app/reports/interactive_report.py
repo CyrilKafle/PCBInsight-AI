@@ -416,6 +416,7 @@ def _view_overview(board: Board, issues: list[Issue], score: EngineeringScore, g
         <p class="hero-score-note">{escape(base.overall_note(score))} {unverified} of {len(issues)} findings have a low rule weight and need a manual look.</p>
       </div>
     </div>
+    {base.input_limitations_html(board)}
     {note}
     <h2 class="section-title">Explore the report</h2>
     <div class="cards">{card_html}</div>

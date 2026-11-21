@@ -56,6 +56,7 @@ def render(board: Board, issues: list[Issue], score: EngineeringScore, ai_review
         [
             _topbar(board, generated_at),
             _hero(board, issues, score, severity_counts),
+            input_limitations_html(board),
             _score_section(score, issues),
             _issues_section(issues),
             _ai_review_section(ai_review),
@@ -127,6 +128,18 @@ def _hero(board: Board, issues: list[Issue], score: EngineeringScore, severity_c
     </header>
     <div class="severity-strip">{tiles}</div>
     """
+
+
+def input_limitations_html(board: Board) -> str:
+    """Board-specific parser notes (skipped or approximated input). Empty when
+    there are none. Shared by the HTML report and the interactive demo."""
+    if not board.limitations:
+        return ""
+    items = "".join(f"<li>{escape(note)}</li>" for note in board.limitations)
+    return f"""<div class="input-limits" role="note">
+      <p class="eyebrow">Input limitations for this board</p>
+      <ul>{items}</ul>
+    </div>"""
 
 
 def overall_note(score: EngineeringScore) -> str:
@@ -614,6 +627,8 @@ _CSS = """
     text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); }
 
   .hero-score-note { margin: 8px 0 0; font-size: 0.8125rem; color: var(--text-muted); max-width: 30ch; }
+  .input-limits { margin: 0 0 24px; padding: 12px 16px; border-left: 3px solid #e3b341; background: var(--surface); border-radius: 3px; font-size: 0.875rem; }
+  .input-limits ul { margin: 6px 0 0; padding-left: 1.2em; }
   .top-findings { margin: 0 0 14px; padding: 8px 10px; border-left: 3px solid var(--sev, var(--border)); background: var(--surface); border-radius: 3px; font-size: 0.8125rem; max-width: 34ch; }
   .top-findings-head { margin: 0 0 4px; font-weight: 600; color: var(--sev, var(--text)); text-transform: capitalize; }
   .top-findings ul { margin: 0; padding-left: 1.1em; }

@@ -33,6 +33,7 @@ def test_digest_top_level_shape():
         "evidence",
         "issues",
         "statistics",
+        "input_limitations",
     }
     assert digest["schema_version"] == 2
     assert digest["score_formula_version"] == 2

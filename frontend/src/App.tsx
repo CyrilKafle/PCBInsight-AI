@@ -110,6 +110,16 @@ export default function App() {
             {pdfStatus === "error" && pdfError && (
               <p className="rounded-md border border-red-900 bg-red-950/50 p-3 text-sm text-red-300">{pdfError}</p>
             )}
+            {(result.board.limitations?.length ?? 0) > 0 && (
+              <div className="rounded-md border-l-4 border-yellow-500 bg-neutral-900 p-3 text-sm text-neutral-300" role="note">
+                <p className="mb-1 font-semibold text-yellow-400">Input limitations for this board</p>
+                <ul className="list-disc space-y-0.5 pl-5">
+                  {result.board.limitations!.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <ScoreCards score={result.score} issues={result.issues} />
             {result.ai_review && (
               <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-6">

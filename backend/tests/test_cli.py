@@ -78,3 +78,17 @@ def test_review_batch_skips_unparseable_board_and_continues(tmp_path, capsys):
 
     captured = capsys.readouterr()
     assert "warning: skipping" in captured.err
+
+
+def test_review_two_boards_in_one_folder_prints_error_not_traceback(tmp_path, capsys):
+    pcb = (SIMPLE_BOARD_DIR / "simple_board.kicad_pcb").read_text(encoding="utf-8")
+    (tmp_path / "a.kicad_pcb").write_text(pcb, encoding="utf-8")
+    (tmp_path / "b.kicad_pcb").write_text(pcb, encoding="utf-8")
+    assert main(["review", str(tmp_path)]) == 1
+    assert "2 .kicad_pcb files" in capsys.readouterr().err
+
+
+def test_review_malformed_board_prints_error_not_traceback(tmp_path, capsys):
+    (tmp_path / "bad.kicad_pcb").write_text("hello world", encoding="utf-8")
+    assert main(["review", str(tmp_path)]) == 1
+    assert "not a KiCad PCB file" in capsys.readouterr().err

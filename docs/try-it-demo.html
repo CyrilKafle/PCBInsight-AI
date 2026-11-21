@@ -74,6 +74,8 @@
     text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); }
 
   .hero-score-note { margin: 8px 0 0; font-size: 0.8125rem; color: var(--text-muted); max-width: 30ch; }
+  .input-limits { margin: 0 0 24px; padding: 12px 16px; border-left: 3px solid #e3b341; background: var(--surface); border-radius: 3px; font-size: 0.875rem; }
+  .input-limits ul { margin: 6px 0 0; padding-left: 1.2em; }
   .top-findings { margin: 0 0 14px; padding: 8px 10px; border-left: 3px solid var(--sev, var(--border)); background: var(--surface); border-radius: 3px; font-size: 0.8125rem; max-width: 34ch; }
   .top-findings-head { margin: 0 0 4px; font-weight: 600; color: var(--sev, var(--text)); text-transform: capitalize; }
   .top-findings ul { margin: 0; padding-left: 1.1em; }
@@ -447,7 +449,7 @@
       <div class="topbar-inner">
         <div class="topbar-row">
           <a class="brand" href="#overview" data-go="overview">PCBInsight<span class="brand-slash"> / </span>demo</a>
-          <span class="topbar-meta">stm32_usb_dev &middot; generated 2026-11-21 02:51 UTC</span>
+          <span class="topbar-meta">stm32_usb_dev &middot; generated 2026-11-21 02:55 UTC</span>
           <a class="landing-link" href="index.html">&larr; Landing page</a>
         </div>
         <nav class="tabs" role="tablist" aria-label="Report sections"><a role="tab" class="tab" href="#overview" data-go="overview" id="tab-overview" aria-controls="view-overview">Overview</a><a role="tab" class="tab" href="#scores" data-go="scores" id="tab-scores" aria-controls="view-scores">Scores</a><a role="tab" class="tab" href="#findings" data-go="findings" id="tab-findings" aria-controls="view-findings">Findings</a><a role="tab" class="tab" href="#ai-review" data-go="ai-review" id="tab-ai-review" aria-controls="view-ai-review">AI review</a><a role="tab" class="tab" href="#board" data-go="board" id="tab-board" aria-controls="view-board">Board</a><a role="tab" class="tab" href="#try-it" data-go="try-it" id="tab-try-it" aria-controls="view-try-it">Try it</a></nav>
@@ -476,6 +478,7 @@
         <p class="hero-score-note">Mean of the 6 evaluated subscores (formula v2). Documentation is N/A: no checks feed it. 6 of 8 findings have a low rule weight and need a manual look.</p>
       </div>
     </div>
+    
     <div class="demo-note"><strong>Real output, not a mockup.</strong> This is the report PCBInsight generated for <code>examples/stm32_usb_dev</code>, a synthetic board in the ten-board <a href="https://github.com/CyrilKafle/PCBInsight-AI/tree/master/examples">validation corpus</a>; its low-confidence stub warnings were not checked against a real design. The AI review text was captured in a live run at v0.5.0, under score formula v1 (98/100); formula v2 leaves the unchecked Documentation area out of the average, so the score shown here is 97. Run it on your own boards from the <a href="https://github.com/CyrilKafle/PCBInsight-AI">GitHub repository</a>.</div>
     <h2 class="section-title">Explore the report</h2>
     <div class="cards"><a class="card" href="#scores" data-go="scores">

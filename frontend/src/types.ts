@@ -56,6 +56,8 @@ export interface Board {
   components: Component[];
   nets: Net[];
   pours: CopperPour[];
+  /** Parser notes: input skipped or approximated for this board. */
+  limitations?: string[];
 }
 
 export type Severity = "info" | "low" | "medium" | "high" | "critical";

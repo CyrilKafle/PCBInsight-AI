@@ -24,7 +24,7 @@ from app.analysis import run_all_checks
 from app.analysis.scoring import score as compute_score
 from app.models.board import Board
 from app.models.issue import EngineeringScore, Issue, Severity
-from app.parser.kicad_project import find_project_files, parse_board
+from app.parser.kicad_project import BoardParseError, MultipleBoardsError, find_project_files, parse_board
 from app.reports.html_report import render
 
 AnalysisResult = tuple[Board, list[Issue], EngineeringScore, str | None]
@@ -61,7 +61,11 @@ def _run_review(args: argparse.Namespace) -> int:
         return 1
 
     if len(board_dirs) == 1 and board_dirs[0] == input_path:
-        _review_single(board_dirs[0], args.out, args.ai)
+        try:
+            _review_single(board_dirs[0], args.out, args.ai)
+        except (BoardParseError, MultipleBoardsError) as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
     else:
         _review_batch(board_dirs, args.out or Path("pcbinsight_reports"), args.ai)
     return 0

@@ -25,7 +25,7 @@ from app.analysis import run_all_checks
 from app.analysis.scoring import score as compute_score
 from app.models.board import Board
 from app.models.issue import EngineeringScore, Issue
-from app.parser.kicad_project import find_project_files, parse_board
+from app.parser.kicad_project import BoardParseError, MultipleBoardsError, find_project_files, parse_board
 from app.reports import pdf_report
 
 logger = logging.getLogger(__name__)
@@ -137,13 +137,20 @@ async def review(files: list[UploadFile], include_ai_review: bool = Form(False))
 
         try:
             project_files = find_project_files(tmp_path)
-        except FileNotFoundError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except FileNotFoundError:
+            raise HTTPException(status_code=400, detail="No .kicad_pcb file was found in the upload.") from None
+        except MultipleBoardsError as exc:
+            raise HTTPException(status_code=400, detail=f"Ambiguous upload: {exc}.") from exc
 
         try:
             board = parse_board(project_files["pcb"])
-        except Exception as exc:  # noqa: BLE001 -- a malformed upload should be a clean 400, not a raw 500 traceback
+        except BoardParseError as exc:
             raise HTTPException(status_code=400, detail=f"Could not parse KiCad project: {exc}") from exc
+        except Exception as exc:  # noqa: BLE001 -- an unexpected parser bug is still a clean 400, not a raw 500
+            logger.warning("unexpected parser error: %s", type(exc).__name__)
+            raise HTTPException(
+                status_code=400, detail="Could not parse KiCad project: unexpected parser error."
+            ) from exc
 
     issues = run_all_checks(board)
     score = compute_score(issues)

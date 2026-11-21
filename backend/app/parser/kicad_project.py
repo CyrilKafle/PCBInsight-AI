@@ -21,6 +21,22 @@ _MCU_MARKERS = ("STM32", "ATMEGA", "ATTINY", "PIC", "ESP32", "ESP8266", "MSP430"
 _FPGA_MARKERS = ("FPGA", "ICE40", "ECP5", "XC6", "XC7", "XC9", "CYCLONE", "ARTIX")
 _CONNECTOR_PREFIXES = {"J", "P", "CN"}
 
+# File-format versions every board in examples/ uses. Other versions still
+# parse, with a limitation note, because they have not been tested here.
+TESTED_FORMAT_VERSIONS = {20240108: "KiCad 8"}
+
+# KiCad's own autosave copies; never the board the user means.
+_AUTOSAVE_PREFIX = "_autosave-"
+
+
+class BoardParseError(ValueError):
+    """The upload is not a readable KiCad .kicad_pcb file. The message is
+    written for the user and never includes file contents."""
+
+
+class MultipleBoardsError(ValueError):
+    """More than one .kicad_pcb file was found, so the board to review is ambiguous."""
+
 
 def find_project_files(project_dir: Path) -> dict[str, Path]:
     """Locate .kicad_pcb, .kicad_sch, netlist, and project metadata files
@@ -33,7 +49,12 @@ def find_project_files(project_dir: Path) -> dict[str, Path]:
     }
     files: dict[str, Path] = {}
     for key, pattern in patterns.items():
-        matches = sorted(project_dir.rglob(pattern))
+        matches = sorted(m for m in project_dir.rglob(pattern) if not m.name.startswith(_AUTOSAVE_PREFIX))
+        if key == "pcb" and len(matches) > 1:
+            names = ", ".join(m.name for m in matches)
+            raise MultipleBoardsError(
+                f"found {len(matches)} .kicad_pcb files ({names}); review one board at a time"
+            )
         if matches:
             files[key] = matches[0]
     if "pcb" not in files:
@@ -42,9 +63,29 @@ def find_project_files(project_dir: Path) -> dict[str, Path]:
 
 
 def parse_board(pcb_file: Path) -> Board:
-    """Parse a .kicad_pcb file into the internal Board representation."""
-    root = parse_sexpr(pcb_file.read_text(encoding="utf-8"))
+    """Parse a .kicad_pcb file into the internal Board representation.
 
+    Raises BoardParseError for input that is not a readable KiCad board, so a
+    malformed upload never turns into an empty board with a perfect score."""
+    name = pcb_file.name
+    try:
+        text = pcb_file.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise BoardParseError(f"{name} is not UTF-8 text, so it is not a KiCad .kicad_pcb file") from exc
+    try:
+        root = parse_sexpr(text)
+    except (IndexError, ValueError) as exc:
+        raise BoardParseError(f"{name} is not a complete S-expression (empty, truncated or unbalanced)") from exc
+    if not isinstance(root, list) or not root or root[0] != "kicad_pcb":
+        top = root[0] if isinstance(root, list) and root else "no list"
+        raise BoardParseError(f"{name} is not a KiCad PCB file: it starts with '{str(top)[:40]}', not 'kicad_pcb'")
+    try:
+        return _build_board(pcb_file, root)
+    except (ValueError, TypeError, IndexError) as exc:
+        raise BoardParseError(f"{name} has a value the parser cannot read ({type(exc).__name__})") from exc
+
+
+def _build_board(pcb_file: Path, root: SExpr) -> Board:
     net_names = _net_names(root)
     traces = _parse_traces(root, net_names)
     vias = _parse_vias(root, net_names)
@@ -69,7 +110,45 @@ def parse_board(pcb_file: Path) -> Board:
         components=components,
         nets=nets,
         pours=pours,
+        limitations=_limitations(root, pcb_file, has_outline=bool(edge_points)),
     )
+
+
+def _limitations(root: SExpr, pcb_file: Path, has_outline: bool) -> list[str]:
+    """Board-specific notes on what was skipped or approximated. The static
+    list of unsupported constructs lives in docs/SUPPORTED.md."""
+    notes: list[str] = []
+    version = child_values(root, "version")
+    if not version:
+        notes.append("The file has no format version, so it may not match the tested KiCad 8 format.")
+    elif int(version[0]) not in TESTED_FORMAT_VERSIONS:
+        tested = ", ".join(f"{v} ({label})" for v, label in TESTED_FORMAT_VERSIONS.items())
+        notes.append(f"File format version {int(version[0])} has not been tested; tested: {tested}.")
+
+    arcs = [item for item in root if isinstance(item, list) and item and item[0] == "arc"]
+    if arcs:
+        notes.append(
+            f"{len(arcs)} curved copper track{'s' if len(arcs) != 1 else ''} (arc) "
+            f"{'were' if len(arcs) != 1 else 'was'} not parsed, so routing and length checks ignore "
+            f"{'them' if len(arcs) != 1 else 'it'}."
+        )
+
+    if not has_outline:
+        notes.append("No Edge.Cuts board outline was found, so board size and edge-distance checks are unavailable.")
+    elif any(_on_edge_cuts(item) for tag in ("gr_arc", "gr_circle") for item in find_all(root, tag)):
+        notes.append(
+            "The board outline has arcs or circles; board size is estimated from their end, mid and center "
+            "points, not the exact curve."
+        )
+
+    if list(pcb_file.parent.glob("*.kicad_sch")):
+        notes.append("A schematic was found but is not analyzed; no electrical rules check (ERC) was run.")
+    return notes
+
+
+def _on_edge_cuts(item: SExpr) -> bool:
+    layer = child_values(item, "layer")
+    return bool(layer) and layer[0] == "Edge.Cuts"
 
 
 def classify_component(reference: str, value: str) -> str:
