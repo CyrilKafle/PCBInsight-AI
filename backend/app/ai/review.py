@@ -141,6 +141,10 @@ class ReviewResult:
     unknown_ids: list[str] = field(default_factory=list)
     attempts: int = 1
     usage: dict = field(default_factory=lambda: {"input_tokens": 0, "output_tokens": 0})
+    # The provider's stop reason for each attempt, in order (None if not reported).
+    stop_reasons: list[str | None] = field(default_factory=list)
+    # Unknown IDs cited by the first attempt, before any repair (for validation reports).
+    first_attempt_unknown_ids: list[str] = field(default_factory=list)
 
 
 def check_review_text(text: str, stop_reason: str | None, digest: dict) -> tuple[list[ReviewProblem], list[str]]:
@@ -168,19 +172,31 @@ def generate_checked_review(
     the caller keeps the deterministic result either way."""
     client = client or _default_client()
     usage = {"input_tokens": 0, "output_tokens": 0}
+    stops: list[str | None] = []
     base_content = json.dumps(digest)
 
     text, stop_reason = _review_call(client, model, base_content, usage)
+    stops.append(stop_reason)
     problems, unknown = check_review_text(text, stop_reason, digest)
     if not problems:
-        return ReviewResult("valid", text, attempts=1, usage=usage)
+        return ReviewResult("valid", text, attempts=1, usage=usage, stop_reasons=stops)
 
     logger.warning("AI review failed checks %s (unknown ids: %s); trying one repair", problems, unknown)
     repair_content = base_content + "\n\n" + _repair_instruction(problems, unknown, digest)
     text, stop_reason = _review_call(client, model, repair_content, usage)
+    stops.append(stop_reason)
     repair_problems, repair_unknown = check_review_text(text, stop_reason, digest)
     if not repair_problems:
-        return ReviewResult("repaired", text, problems=problems, unknown_ids=unknown, attempts=2, usage=usage)
+        return ReviewResult(
+            "repaired",
+            text,
+            problems=problems,
+            unknown_ids=unknown,
+            attempts=2,
+            usage=usage,
+            stop_reasons=stops,
+            first_attempt_unknown_ids=unknown,
+        )
 
     logger.warning("AI review withheld after repair: %s (unknown ids: %s)", repair_problems, repair_unknown)
     return ReviewResult(
@@ -190,6 +206,8 @@ def generate_checked_review(
         unknown_ids=repair_unknown,
         attempts=2,
         usage=usage,
+        stop_reasons=stops,
+        first_attempt_unknown_ids=unknown,
     )
 
 
@@ -249,4 +267,8 @@ def _extract_text(response) -> str:
 
 def _extract_usage(response) -> dict:
     usage = response.usage
-    return {"input_tokens": usage.input_tokens, "output_tokens": usage.output_tokens}
+    return {
+        "input_tokens": usage.input_tokens,
+        "output_tokens": usage.output_tokens,
+        "stop_reason": getattr(response, "stop_reason", None),
+    }

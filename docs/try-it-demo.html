@@ -449,7 +449,7 @@
       <div class="topbar-inner">
         <div class="topbar-row">
           <a class="brand" href="#overview" data-go="overview">PCBInsight<span class="brand-slash"> / </span>demo</a>
-          <span class="topbar-meta">stm32_usb_dev &middot; generated 2026-11-21 02:55 UTC</span>
+          <span class="topbar-meta">stm32_usb_dev &middot; generated 2026-11-21 03:04 UTC</span>
           <a class="landing-link" href="index.html">&larr; Landing page</a>
         </div>
         <nav class="tabs" role="tablist" aria-label="Report sections"><a role="tab" class="tab" href="#overview" data-go="overview" id="tab-overview" aria-controls="view-overview">Overview</a><a role="tab" class="tab" href="#scores" data-go="scores" id="tab-scores" aria-controls="view-scores">Scores</a><a role="tab" class="tab" href="#findings" data-go="findings" id="tab-findings" aria-controls="view-findings">Findings</a><a role="tab" class="tab" href="#ai-review" data-go="ai-review" id="tab-ai-review" aria-controls="view-ai-review">AI review</a><a role="tab" class="tab" href="#board" data-go="board" id="tab-board" aria-controls="view-board">Board</a><a role="tab" class="tab" href="#try-it" data-go="try-it" id="tab-try-it" aria-controls="view-try-it">Try it</a></nav>
@@ -479,7 +479,7 @@
       </div>
     </div>
     
-    <div class="demo-note"><strong>Real output, not a mockup.</strong> This is the report PCBInsight generated for <code>examples/stm32_usb_dev</code>, a synthetic board in the ten-board <a href="https://github.com/CyrilKafle/PCBInsight-AI/tree/master/examples">validation corpus</a>; its low-confidence stub warnings were not checked against a real design. The AI review text was captured in a live run at v0.5.0, under score formula v1 (98/100); formula v2 leaves the unchecked Documentation area out of the average, so the score shown here is 97. Run it on your own boards from the <a href="https://github.com/CyrilKafle/PCBInsight-AI">GitHub repository</a>.</div>
+    <div class="demo-note"><strong>Real output, not a mockup.</strong> This is the report PCBInsight generated for <code>examples/stm32_usb_dev</code>, a synthetic board in the ten-board <a href="https://github.com/CyrilKafle/PCBInsight-AI/tree/master/examples">validation corpus</a>; its low-confidence stub warnings were not checked against a real design. Run it on your own boards from the <a href="https://github.com/CyrilKafle/PCBInsight-AI">GitHub repository</a>.</div>
     <h2 class="section-title">Explore the report</h2>
     <div class="cards"><a class="card" href="#scores" data-go="scores">
           <span class="card-top"><span class="card-title">Scores</span><span class="card-arrow" aria-hidden="true">&rarr;</span></span>
@@ -749,7 +749,7 @@
       <li><strong>3 &middot; LLM</strong><span>Writes the narrative from the digest only</span></li>
       <li><strong>4 &middot; Check</strong><span>Every citation is verified in code</span></li>
     </ol>
-    <p class="ai-version-note" role="note"><strong>Older score in this text.</strong> This explanation was captured in a live run at v0.5.0, when score formula v1 gave this board 98/100, and it still says 98. Formula v2 leaves the unchecked Documentation area out of the average, so the current score is 97/100. The findings it discusses are unchanged.</p><p class="panel-note">Shown verbatim from a real LLM run. It repeats the engine's score and rule weights and adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p><article class="ai-body"><h3>PCB Review Summary — stm32_usb_dev</h3>
+    <p class="ai-version-note" role="note"><strong>Older score in this text.</strong> This explanation was captured in an earlier live run, when score formula v1 gave this board 98/100, and it still says 98. The current score is 97/100. The findings it discusses are unchanged.</p><p class="panel-note">Shown verbatim from a real LLM run. It repeats the engine's score and rule weights and adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p><article class="ai-body"><h3>PCB Review Summary — stm32_usb_dev</h3>
 <p><strong>Overall score: 98/100</strong> — a strong result. No critical or high-severity issues were found; the deterministic analysis surfaced only 2 medium and 6 low-severity items across a 4-layer, 18-component board.</p>
 <h4>Recurring Theme: Possible Dangling Trace Stubs</h4>
 <p>Six of the eight findings (RTE-001 through RTE-006) share the identical pattern — a trace endpoint that doesn&#x27;t clearly terminate at a pad, via, or same-net trace within tolerance. These span several functionally distinct nets: USB differential pair (/USB_DP, /USB_DM), crystal lines (/XTAL_IN, /XTAL_OUT), and SWD programming/debug lines (/SWDIO, /SWCLK).</p>

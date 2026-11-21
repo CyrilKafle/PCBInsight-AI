@@ -29,25 +29,34 @@ _DEMO_NOTE = (
     'This is the report PCBInsight generated for <code>examples/stm32_usb_dev</code>, a synthetic board in the '
     'ten-board <a href="https://github.com/CyrilKafle/PCBInsight-AI/tree/master/examples">validation corpus</a>; '
     "its low-confidence stub warnings were not checked against a real design. "
-    "The AI review text was captured in a live run at v0.5.0, under score formula v1 (98/100); "
-    "formula v2 leaves the unchecked Documentation area out of the average, so the score shown here is 97. "
     'Run it on your own boards from the <a href="https://github.com/CyrilKafle/PCBInsight-AI">GitHub repository</a>.'
 )
 
 
-def _real_review_text() -> str:
+def _captured_review() -> dict:
+    """The stm32_usb_dev entry from the last live validation run."""
     data = json.loads(VALIDATION_JSON.read_text(encoding="utf-8"))
     for board in data["boards"]:
         if board["board_name"] == "stm32_usb_dev":
-            return board["review"]["text"]
+            if not board["review"].get("text"):
+                raise SystemExit("The captured stm32_usb_dev review was withheld; rerun validate_ai.py first.")
+            return board
     raise SystemExit("stm32_usb_dev not found in reports/ai_validation.json")
 
 
-_AI_NOTE = (
-    "<strong>Older score in this text.</strong> This explanation was captured in a live run at v0.5.0, when score "
-    "formula v1 gave this board 98/100, and it still says 98. Formula v2 leaves the unchecked Documentation area out "
-    "of the average, so the current score is {score}/100. The findings it discusses are unchanged."
-)
+def _ai_note(captured: dict, current_score: int) -> str | None:
+    """A notice beside the AI text when it was captured under a different score
+    than the one shown now. None when they match."""
+    det = captured["deterministic"]
+    captured_score = det["score"]
+    if captured_score == current_score:
+        return None
+    formula = det.get("formula_version", 1)
+    return (
+        f"<strong>Older score in this text.</strong> This explanation was captured in an earlier live run, when score "
+        f"formula v{formula} gave this board {captured_score}/100, and it still says {captured_score}. The current "
+        f"score is {current_score}/100. The findings it discusses are unchanged."
+    )
 
 
 def main() -> None:
@@ -55,7 +64,8 @@ def main() -> None:
     board = parse_board(pcb_file)
     issues = run_all_checks(board)
     engineering_score = compute_score(issues)
-    ai_review = _real_review_text()
+    captured = _captured_review()
+    ai_review = captured["review"]["text"]
 
     html = render(
         board,
@@ -64,7 +74,7 @@ def main() -> None:
         ai_review,
         landing_href="index.html",
         demo_note=_DEMO_NOTE,
-        ai_note=_AI_NOTE.format(score=engineering_score.overall),
+        ai_note=_ai_note(captured, engineering_score.overall),
     )
     OUTPUT_PATH.write_text(html, encoding="utf-8")
     print(f"Wrote {OUTPUT_PATH} ({len(html):,} bytes)")

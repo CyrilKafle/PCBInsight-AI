@@ -109,7 +109,7 @@ def test_generate_review_logs_warning_on_hallucinated_citation(caplog):
 def test_generate_review_return_usage_returns_text_and_token_counts():
     client = FakeClient("This board looks solid overall.")
     result = generate_review(_DIGEST, client=client, return_usage=True)
-    assert result == ("This board looks solid overall.", {"input_tokens": 123, "output_tokens": 45})
+    assert result == ("This board looks solid overall.", {"input_tokens": 123, "output_tokens": 45, "stop_reason": None})
 
 
 def test_answer_question_return_usage_returns_text_and_token_counts():
@@ -117,7 +117,7 @@ def test_answer_question_return_usage_returns_text_and_token_counts():
     result = answer_question(_DIGEST, "Why?", client=client, return_usage=True)
     assert result == (
         "Because decoupling caps filter high-frequency noise close to the IC.",
-        {"input_tokens": 123, "output_tokens": 45},
+        {"input_tokens": 123, "output_tokens": 45, "stop_reason": None},
     )
 
 
@@ -167,6 +167,7 @@ def test_checked_review_valid_passes_through_with_one_call():
     assert result.attempts == 1
     assert len(client.messages.calls) == 1
     assert result.usage == {"input_tokens": 100, "output_tokens": 20}
+    assert result.stop_reasons == ["end_turn"]
 
 
 def test_checked_review_unknown_id_is_never_returned_as_validated_text():
@@ -175,6 +176,7 @@ def test_checked_review_unknown_id_is_never_returned_as_validated_text():
     assert result.status == "withheld"
     assert result.text is None
     assert result.unknown_ids == ["SIG-099"]
+    assert result.first_attempt_unknown_ids == ["SIG-099"]
     assert result.attempts == 2
 
 
@@ -204,6 +206,7 @@ def test_checked_review_truncated_output_is_withheld():
     assert result.status == "withheld"
     assert result.text is None
     assert result.problems == ["incomplete"]
+    assert result.stop_reasons == ["max_tokens", "max_tokens"]
     assert "cut off" in client.messages.calls[1]["messages"][0]["content"]
 
 
