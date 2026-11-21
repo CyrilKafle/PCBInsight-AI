@@ -204,7 +204,8 @@ def weird_names_board():
 
 
 def load_example(name: str):
-    return parse_board(find_project_files(REPO / "examples" / name)["pcb"])
+    project = REPO / "examples" / name
+    return parse_board(find_project_files(project)["pcb"], project)
 
 
 def boards() -> list[tuple[str, object]]:

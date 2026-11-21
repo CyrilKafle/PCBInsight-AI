@@ -218,11 +218,36 @@ def test_board_saved_with_a_byte_order_mark_parses(tmp_path):
     assert parse_board(path).width_mm == 50
 
 
-def test_error_message_never_quotes_nested_file_content(tmp_path):
+@pytest.mark.parametrize("text", ["((secret_token abc123) (more))", "(apikey_sk-live-abcdef rest)", "(123 foo)"])
+def test_error_message_never_quotes_file_content(tmp_path, text):
     with pytest.raises(BoardParseError) as excinfo:
-        parse_board(_write(tmp_path, "x.kicad_pcb", "((secret_token abc123) (more))"))
-    assert "secret_token" not in str(excinfo.value)
-    assert "a nested list" in str(excinfo.value)
+        parse_board(_write(tmp_path, "x.kicad_pcb", text))
+    message = str(excinfo.value)
+    assert "does not start with (kicad_pcb ...)" in message
+    for fragment in ("secret_token", "apikey", "123"):
+        assert fragment not in message
+
+
+@pytest.mark.parametrize("version", ["inf", "nan", "1e999", "-inf"])
+def test_non_finite_version_is_a_note_not_a_crash(tmp_path, version):
+    text = _pcb().replace(f"(version {_TESTED_VERSION})", f"(version {version})")
+    board = parse_board(_write(tmp_path, "b.kicad_pcb", text))
+    assert any("not a number this parser recognizes" in n for n in board.limitations)
+
+
+def test_nesting_just_under_python_limit_is_rejected_before_any_tree_walk(tmp_path):
+    # 250 levels: under Python's default recursion limit, over the reader's cap.
+    with pytest.raises(BoardParseError, match="nested too deeply"):
+        parse_board(_write(tmp_path, "deep.kicad_pcb", "(kicad_pcb " + "(a " * 250 + ")" * 251))
+
+
+def test_schematic_at_project_level_is_noted_when_the_board_is_in_a_subfolder(tmp_path):
+    _write(tmp_path, "main.kicad_sch", "(kicad_sch)")
+    (tmp_path / "pcb").mkdir()
+    _write(tmp_path / "pcb", "main.kicad_pcb", _pcb())
+    files = find_project_files(tmp_path)
+    board = parse_board(files["pcb"], tmp_path)
+    assert any("no electrical rules check" in n for n in board.limitations)
 
 
 @pytest.mark.parametrize("text", [_pcb() + ")", _pcb() + _pcb()])

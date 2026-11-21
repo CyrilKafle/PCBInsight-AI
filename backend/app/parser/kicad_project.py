@@ -8,11 +8,12 @@ S-expression file (parsed by `app.parser.sexpr`, no `pcbnew` dependency).
 
 from __future__ import annotations
 
+import math
 import re
 from pathlib import Path
 
 from app.models.board import Board, Component, CopperPour, Footprint, Net, Point, Trace, Via
-from app.parser.sexpr import SExpr, child_values, find_all, find_first, parse as parse_sexpr
+from app.parser.sexpr import NestingTooDeepError, SExpr, child_values, find_all, find_first, parse as parse_sexpr
 
 _COPPER_LAYER_TYPES = {"signal", "power", "mixed", "jumper"}
 
@@ -31,7 +32,7 @@ _AUTOSAVE_PREFIX = "_autosave-"
 
 class BoardParseError(ValueError):
     """The upload is not a readable KiCad .kicad_pcb file. The message is
-    written for the user and never includes file contents."""
+    written for the user and never includes file contents (only the file name)."""
 
 
 class MultipleBoardsError(ValueError):
@@ -74,11 +75,13 @@ def project_matches(project_dir: Path, pattern: str) -> list[Path]:
     return keep(project_dir.glob(pattern)) or keep(project_dir.rglob(pattern))
 
 
-def parse_board(pcb_file: Path) -> Board:
+def parse_board(pcb_file: Path, project_dir: Path | None = None) -> Board:
     """Parse a .kicad_pcb file into the internal Board representation.
 
     Raises BoardParseError for input that is not a readable KiCad board, so a
-    malformed upload never turns into an empty board with a perfect score."""
+    malformed upload never turns into an empty board with a perfect score.
+    project_dir: the folder find_project_files searched (default: the board's
+    folder); used for the schematic limitation note."""
     name = pcb_file.name
     try:
         text = pcb_file.read_text(encoding="utf-8-sig")  # tolerate a byte-order mark
@@ -90,23 +93,20 @@ def parse_board(pcb_file: Path) -> Board:
         raise BoardParseError(f"{name} is not a KiCad PCB file: it does not start with a parenthesized (kicad_pcb ...) list")
     try:
         root = parse_sexpr(text)
+    except (NestingTooDeepError, RecursionError) as exc:
+        raise BoardParseError(f"{name} is nested too deeply to be a KiCad board file") from exc
     except (IndexError, ValueError) as exc:
         raise BoardParseError(f"{name} is not a complete S-expression (empty, truncated or unbalanced)") from exc
-    except RecursionError as exc:
-        raise BoardParseError(f"{name} is nested too deeply to be a KiCad board file") from exc
-    if not isinstance(root, list) or not root:
-        raise BoardParseError(f"{name} is not a KiCad PCB file: it does not start with a parenthesized (kicad_pcb ...) list")
-    if root[0] != "kicad_pcb":
-        top = root[0]
-        what = f"'{top[:40]}'" if isinstance(top, str) else "a nested list"
-        raise BoardParseError(f"{name} is not a KiCad PCB file: it starts with {what}, not 'kicad_pcb'")
+    if not isinstance(root, list) or not root or root[0] != "kicad_pcb":
+        # Never echo file content in the message: it is returned to the client.
+        raise BoardParseError(f"{name} is not a KiCad PCB file: it does not start with (kicad_pcb ...)")
     try:
-        return _build_board(pcb_file, root)
-    except (ValueError, TypeError, IndexError) as exc:
+        return _build_board(pcb_file, root, project_dir or pcb_file.parent)
+    except (ValueError, TypeError, IndexError, OverflowError, RecursionError) as exc:
         raise BoardParseError(f"{name} has a value the parser cannot read ({type(exc).__name__})") from exc
 
 
-def _build_board(pcb_file: Path, root: SExpr) -> Board:
+def _build_board(pcb_file: Path, root: SExpr, project_dir: Path) -> Board:
     net_names = _net_names(root)
     traces = _parse_traces(root, net_names)
     vias = _parse_vias(root, net_names)
@@ -131,11 +131,11 @@ def _build_board(pcb_file: Path, root: SExpr) -> Board:
         components=components,
         nets=nets,
         pours=pours,
-        limitations=_limitations(root, pcb_file, has_outline=bool(edge_points)),
+        limitations=_limitations(root, project_dir, has_outline=bool(edge_points)),
     )
 
 
-def _limitations(root: SExpr, pcb_file: Path, has_outline: bool) -> list[str]:
+def _limitations(root: SExpr, project_dir: Path, has_outline: bool) -> list[str]:
     """Board-specific notes on what was skipped or approximated. The static
     list of unsupported constructs lives in docs/SUPPORTED.md."""
     notes: list[str] = []
@@ -143,7 +143,7 @@ def _limitations(root: SExpr, pcb_file: Path, has_outline: bool) -> list[str]:
     tested = ", ".join(f"{v} ({label})" for v, label in TESTED_FORMAT_VERSIONS.items())
     if not version:
         notes.append("The file has no format version, so it may not match the tested KiCad 8 format.")
-    elif not isinstance(version[0], float) or version[0] != int(version[0]):
+    elif not isinstance(version[0], float) or not math.isfinite(version[0]) or version[0] != int(version[0]):
         notes.append(f"The file's format version is not a number this parser recognizes; tested: {tested}.")
     elif int(version[0]) not in TESTED_FORMAT_VERSIONS:
         notes.append(f"File format version {int(version[0])} has not been tested; tested: {tested}.")
@@ -164,7 +164,7 @@ def _limitations(root: SExpr, pcb_file: Path, has_outline: bool) -> list[str]:
             "points, not the exact curve."
         )
 
-    if project_matches(pcb_file.parent, "*.kicad_sch"):
+    if project_matches(project_dir, "*.kicad_sch"):
         notes.append("A schematic was found but is not analyzed; no electrical rules check (ERC) was run.")
     return notes
 

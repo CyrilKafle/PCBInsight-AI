@@ -94,7 +94,7 @@ def _discover_board_dirs(root: Path) -> list[Path]:
 
 def _analyze(board_dir: Path, want_ai: bool) -> AnalysisResult:
     files = find_project_files(board_dir)
-    board = parse_board(files["pcb"])
+    board = parse_board(files["pcb"], board_dir)
     issues = run_all_checks(board)
     score = compute_score(issues)
 

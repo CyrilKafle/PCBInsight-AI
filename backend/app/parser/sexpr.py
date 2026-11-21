@@ -84,13 +84,24 @@ def _tokenize(text: str) -> list[str]:
     return tokens
 
 
-def _read(tokens: list[str], pos: int) -> tuple[SExpr | Atom, int]:
+# Real KiCad boards nest well under 20 levels. The cap keeps both this
+# reader and the recursive tree walks (find_all) far from Python's recursion limit.
+MAX_DEPTH = 200
+
+
+class NestingTooDeepError(ValueError):
+    """The document nests deeper than MAX_DEPTH."""
+
+
+def _read(tokens: list[str], pos: int, depth: int = 0) -> tuple[SExpr | Atom, int]:
     tok = tokens[pos]
     if tok == "(":
+        if depth >= MAX_DEPTH:
+            raise NestingTooDeepError(f"nesting deeper than {MAX_DEPTH} levels")
         items: SExpr = []
         pos += 1
         while tokens[pos] != ")":
-            item, pos = _read(tokens, pos)
+            item, pos = _read(tokens, pos, depth + 1)
             items.append(item)
         return items, pos + 1
     if tok == ")":

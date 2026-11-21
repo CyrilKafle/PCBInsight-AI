@@ -16,7 +16,8 @@ What the parser (`backend/app/parser/kicad_project.py`) reads from a KiCad proje
 
 - Exactly one `.kicad_pcb` file is reviewed. Files directly in the project folder are used first; subfolders are searched only when the top level has none, so a `panel/` or `old/` copy does not make a project ambiguous. If more than one candidate remains, the review stops with an error that lists them, instead of picking one silently.
 - KiCad autosave copies (`_autosave-*.kicad_pcb`) are ignored.
-- The CLI's batch mode is unchanged: each subfolder that contains a board is reviewed on its own.
+- The CLI's batch mode is unchanged: each subfolder that contains a board is reviewed on its own. A folder whose only top-level board file is an autosave copy counts as having no top-level board, so its subfolders are reviewed in batch mode.
+- Files nested deeper than 200 levels are rejected (real boards nest under 20).
 
 ## Parsed
 

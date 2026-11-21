@@ -143,7 +143,7 @@ async def review(files: list[UploadFile], include_ai_review: bool = Form(False))
             raise HTTPException(status_code=400, detail=f"Ambiguous upload: {exc}.") from exc
 
         try:
-            board = parse_board(project_files["pcb"])
+            board = parse_board(project_files["pcb"], tmp_path)
         except BoardParseError as exc:
             raise HTTPException(status_code=400, detail=f"Could not parse KiCad project: {exc}") from exc
         except Exception as exc:  # noqa: BLE001 -- an unexpected parser bug is still a clean 400, not a raw 500
