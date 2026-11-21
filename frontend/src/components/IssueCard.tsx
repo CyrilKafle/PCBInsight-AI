@@ -64,7 +64,9 @@ export function IssueCard({
             {issue.suggested_fix}
           </p>
           {issue.refs.length > 0 && <p className="text-xs text-neutral-500">Refs: {issue.refs.join(", ")}</p>}
-          <p className="text-xs text-neutral-500">Confidence: {Math.round(issue.confidence * 100)}%</p>
+          <p className="text-xs text-neutral-500" title="Hand-set per-rule number from 0 to 1, not a probability">
+            Rule weight: {issue.confidence.toFixed(2)}
+          </p>
         </div>
       )}
     </div>

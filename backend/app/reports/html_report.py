@@ -101,7 +101,7 @@ def _hero(board: Board, issues: list[Issue], score: EngineeringScore, severity_c
     unverified_cats = {issue.category.replace("_", " ") for issue in issues if issue.confidence < _CONFIDENCE_FLOOR}
     where = f" (all {next(iter(unverified_cats))})" if len(unverified_cats) == 1 else ""
     unverified_sentence = (
-        f" {unverified} of {len(issues)} fall below the {_CONFIDENCE_FLOOR} confidence line{where} and need manual verification."
+        f" {unverified} of {len(issues)} fall below the {_CONFIDENCE_FLOOR} rule-weight line{where} and need manual verification."
         if unverified
         else ""
     )
@@ -122,7 +122,7 @@ def _hero(board: Board, issues: list[Issue], score: EngineeringScore, severity_c
         <div class="hero-score-value"><span>{score.overall}</span><small>/100</small></div>
         <div class="meter" role="meter" aria-labelledby="overall-label" aria-valuetext="{score.overall} of 100" aria-valuenow="{score.overall}" aria-valuemin="0" aria-valuemax="100"><div class="meter-fill" style="width:{score.overall}%"></div></div>
         <p class="hero-score-label" id="overall-label">Overall score</p>
-        <p class="hero-score-note">{escape(overall_note(score))} Unverified findings are discounted by confidence, not excluded.</p>
+        <p class="hero-score-note">{escape(overall_note(score))} Unverified findings are discounted by their rule weight, not excluded.</p>
       </div>
     </header>
     <div class="severity-strip">{tiles}</div>
@@ -245,21 +245,22 @@ def _derivation(score: EngineeringScore, issues: list[Issue]) -> str:
     return f"""
       <div class="derivation">
         <h3>How the score is computed</h3>
-        <p class="formula"><code>subscore = 100 &minus; &Sigma; (severity points &times; confidence)</code></p>
+        <p class="formula"><code>subscore = 100 &minus; &Sigma; (severity points &times; rule weight)</code></p>
         <p class="derivation-note">Severity points: {scale}. Overall is the plain mean of the evaluated subscores, computed from the
         unrounded values and rounded once (formula v{score.formula_version}). Subscores with no checks are N/A and left out.
-        Decoupling and ground findings roll into Power. Weighting by confidence, rather than a hard cutoff, keeps
-        uncertain findings from being either ignored or counted in full. The confidence values are set by hand
-        per rule by the rule's author, not calibrated against labelled boards.</p>
+        Decoupling and ground findings roll into Power. Weighting by rule weight, rather than a hard cutoff, keeps
+        uncertain findings from being either ignored or counted in full. Rule weights are set by hand
+        per rule by the rule's author, not calibrated against labelled boards. (In the data the field is named
+        <code>confidence</code>.)</p>
         <div class="table-scroll" tabindex="0" role="region" aria-label="Score deductions table">
         <table>
-          <thead><tr><th>Finding</th><th>Subscore</th><th class="num">Deducted</th><th class="num">Severity &times; confidence</th></tr></thead>
+          <thead><tr><th>Finding</th><th>Subscore</th><th class="num">Deducted</th><th class="num">Severity &times; rule weight</th></tr></thead>
           <tbody>
             {body}
           </tbody>
         </table>
         </div>
-        <p class="derivation-note">Each row multiplies severity points by confidence, by the number of findings in the group. Overall = ({parts}) / {n} = {mean:.2f}, shown as {score.overall}.</p>
+        <p class="derivation-note">Each row multiplies severity points by rule weight, by the number of findings in the group. Overall = ({parts}) / {n} = {mean:.2f}, shown as {score.overall}.</p>
       </div>
     """
 
@@ -288,8 +289,9 @@ def _issues_section(issues: list[Issue]) -> str:
     return f"""
     <section id="findings" class="block">
       <h2><span class="h-label">02</span> Findings</h2>
-      <p class="legend"><strong>Confidence</strong> is a fixed per-rule heuristic from 0 to 1 that estimates how likely a
-      finding is to be real. It is not a statistical probability. Below {_CONFIDENCE_FLOOR}, a finding is treated as
+      <p class="legend"><strong>Rule weight</strong> (the <code>confidence</code> field) is a fixed number from 0 to 1 that the
+      rule's author set by hand to reflect how reliable that rule is. It scales the deduction. It is not a measured
+      or statistical probability. Below {_CONFIDENCE_FLOOR}, a finding is treated as
       unverified and should be checked by hand in the CAD tool; {_CONFIDENCE_FLOOR} or above is not tagged.</p>
       <div class="findings">
         {cards}
@@ -345,7 +347,7 @@ def _group_card(group: list[Issue]) -> str:
             {id_html}
             <span class="sev-tag">{escape(first.severity.value)}</span>
             <span class="finding-cat">{category}</span>
-            <span class="finding-conf">confidence {confidence}</span>
+            <span class="finding-conf">rule weight {confidence}</span>
             {unverified_tag}
           </div>
           <h3>{title}</h3>
@@ -388,7 +390,7 @@ def _ai_review_section(ai_review: str | None) -> str:
             )
         note = (
             '<p class="ai-note">Written by the LLM layer <em>over</em> the findings above and shown verbatim. It never sees '
-            "raw board geometry and cannot add findings of its own. It repeats the engine's score and confidence values and adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p>"
+            "raw board geometry and cannot add findings of its own. It repeats the engine's score and rule weights and adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p>"
         )
         content = note + f'<div class="ai-body">{content}</div>'
     else:
@@ -491,7 +493,7 @@ def _footer() -> str:
         <li>The 0 to 100 score has no pass threshold; it summarizes deductions and is not a certification.</li>
         <li>Documentation has no checks yet, so it shows N/A and is left out of the overall score. A subscore at 100 means no deductions were found, not that the area was validated.</li>
         <li>Dangling-end detection compares endpoints to pads, vias and traces within a position tolerance, so it can
-        flag ends that are actually connected. This is why those findings carry low confidence.</li>
+        flag ends that are actually connected. This is why those findings carry a low rule weight.</li>
         <li>Manufacturability checks currently cover trace width, annular ring, and via density.
         Silkscreen-over-pad and copper-sliver detection are planned once the parser captures silkscreen text
         geometry and full pour polygon shape.</li>

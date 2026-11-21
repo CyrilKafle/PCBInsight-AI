@@ -12,7 +12,7 @@ function scoreColor(value: number | null): string {
 }
 
 // Same rule as top_findings() in backend/app/analysis/scoring.py: the findings
-// at the highest severity present, higher confidence first, so the average
+// at the highest severity present, higher rule weight (confidence) first, so the average
 // below cannot hide them.
 function topFindings(issues: Issue[]): { top: Issue[]; total: number } {
   if (issues.length === 0) return { top: [], total: 0 };

@@ -21,6 +21,9 @@ class Issue(BaseModel):
     id: str = ""  # category-prefixed, e.g. "PWR-004" -- assigned by run_all_checks, not by individual check modules
     category: str  # e.g. "routing", "power", "decoupling"
     severity: Severity
+    # Rule weight, 0-1: a hand-set number per rule for how reliable that rule
+    # is. It scales the score deduction. Not a measured probability. The field
+    # keeps its original name so existing API payloads stay valid.
     confidence: float  # 0.0-1.0
     summary: str
     explanation: str  # why this matters

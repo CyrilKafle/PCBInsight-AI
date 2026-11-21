@@ -37,7 +37,7 @@ Deliberately **not** a public multi-tenant service. Concretely:
 
 ## Engineering Check Catalogue (Phase 1 scope)
 
-Organized into categories, each producing structured `Issue` objects (category, severity, confidence, explanation, principle, suggested fix, board location):
+Organized into categories, each producing structured `Issue` objects (category, severity, confidence, explanation, principle, suggested fix, board location). `confidence` is a **rule weight**: a hand-set number from 0 to 1 per rule for how reliable that rule is. It scales the score deduction and is not a measured probability; reports and the UI label it "rule weight", and the field keeps its name so API payloads stay compatible:
 
 - **Routing:** unnecessarily long traces, excessive bends, acute angles, excessive via count, inconsistent routing style, stubs/dead-ends.
 - **Power:** thin power traces relative to estimated current, daisy-chained power distribution, weak power routing, poor decoupling placement, long supply paths.

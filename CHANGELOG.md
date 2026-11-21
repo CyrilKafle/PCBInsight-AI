@@ -4,6 +4,11 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+### Changed ("confidence" is labeled as what it is, v1.1 item 4)
+- The per-finding `confidence` value is a number from 0 to 1 that each rule's author set by hand. It scales the score deduction; it was never measured against labelled boards. Reports, the PDF, the interactive demo, the dashboard and the landing page now call it **rule weight** and say it is not a probability (the dashboard showed it as a percentage before). No numbers change.
+- The field keeps the name `confidence` in the API, the `Issue` model and the LLM digest, so existing payloads stay valid and the LLM prompt is unchanged; `DESIGN.md`, the model and the report legends say that `confidence` is the rule weight.
+- New test: no visible text in the HTML report or the interactive demo calls it "confidence", apart from naming the field. Backend tests: 187 passing.
+
 ### Changed (coverage-aware scoring, formula v2, v1.1 item 3)
 - **Documentation is N/A, not 100.** A subscore that no check feeds now has `score: null`, shows "N/A" in every report, and is left out of the overall score. Before, it counted as a perfect 100 and lifted every board's average.
 - **Overall is the mean of the unrounded subscores, rounded once.** Subscores carry an `unrounded` value and reports show the exact arithmetic. Float noise is stripped to 6 decimals before rounding half to even, in both Python and the demo's JavaScript; this fixes a latent mismatch where the JS what-if simulator rounded some x.5 values differently from the engine.

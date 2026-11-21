@@ -413,7 +413,7 @@ def _view_overview(board: Board, issues: list[Issue], score: EngineeringScore, g
         <div class="hero-score-value"><span>{score.overall}</span><small>/100</small></div>
         <div class="meter"><span class="meter-fill" style="width:{score.overall}%"></span></div>
         <p class="hero-score-label">Overall score</p>
-        <p class="hero-score-note">{escape(base.overall_note(score))} {unverified} of {len(issues)} findings are low confidence and need a manual look.</p>
+        <p class="hero-score-note">{escape(base.overall_note(score))} {unverified} of {len(issues)} findings have a low rule weight and need a manual look.</p>
       </div>
     </div>
     {note}
@@ -432,9 +432,9 @@ def _view_overview(board: Board, issues: list[Issue], score: EngineeringScore, g
       <ul>
         <li>The 0 to 100 score has no pass threshold. It summarizes deductions and is not a certification.</li>
         <li>Documentation has no checks yet, so it shows N/A and is left out of the overall score. A subscore of 100 means no deductions were found, not that the area was validated.</li>
-        <li>Dangling-end detection compares endpoints to pads, vias and traces within a position tolerance, so it can flag ends that are actually connected. That is why those findings carry low confidence.</li>
+        <li>Dangling-end detection compares endpoints to pads, vias and traces within a position tolerance, so it can flag ends that are actually connected. That is why those findings carry a low rule weight.</li>
         <li>Manufacturability checks currently cover trace width, annular ring, and via density.</li>
-        <li>Confidence values are set by hand per rule, not calibrated against labelled boards.</li>
+        <li>Rule weights (the <code>confidence</code> field) are set by hand per rule, not calibrated against labelled boards.</li>
       </ul>
     </details>
     """
@@ -555,12 +555,12 @@ def _derivation_panel(score: EngineeringScore, issues: list[Issue], groups: list
     return f"""
     <details class="panel derivation">
       <summary><h3>Show the exact arithmetic</h3></summary>
-      <p class="formula"><code>area score = 100 &minus; &Sigma; (severity points &times; confidence)</code></p>
-      <p class="panel-note">Severity points: {scale}. Decoupling and ground findings roll into Power. Confidence is a hand-set
-      per-rule estimate, not a statistical probability.</p>
+      <p class="formula"><code>area score = 100 &minus; &Sigma; (severity points &times; rule weight)</code></p>
+      <p class="panel-note">Severity points: {scale}. Decoupling and ground findings roll into Power. Rule weight (the <code>confidence</code> field) is a
+      hand-set per-rule number, not a statistical probability.</p>
       <div class="table-scroll" tabindex="0" role="region" aria-label="Score deductions table">
         <table>
-          <thead><tr><th>Finding</th><th>Area</th><th class="num">Deducted</th><th class="num">Severity &times; confidence</th></tr></thead>
+          <thead><tr><th>Finding</th><th>Area</th><th class="num">Deducted</th><th class="num">Severity &times; rule weight</th></tr></thead>
           <tbody>{body}</tbody>
         </table>
       </div>
@@ -580,7 +580,7 @@ _GLOSSARY = [
     ("Decoupling capacitor", "A small capacitor placed right next to a chip's power pin to supply fast bursts of current."),
     ("Copper pour", "A large filled area of copper, usually ground, that gives current an easy return path and helps spread heat."),
     ("Differential pair", "Two traces that carry one signal as a voltage difference, like USB D+ and D-. They should match in length and shape."),
-    ("Confidence", "A fixed per-rule estimate from 0 to 1 of how likely a finding is real. It is not a statistical probability."),
+    ("Rule weight", "A fixed number from 0 to 1, set by hand per rule, reflecting how reliable that rule is. It scales the deduction. Stored in the confidence field. It is not a statistical probability."),
 ]
 
 
@@ -600,7 +600,7 @@ def _view_findings(issues: list[Issue], groups: list[list[Issue]]) -> str:
         "What is this?",
         f"<p>Each card is one problem the rule engine found. Cards that share the same explanation are grouped, so six copies of the "
         f"same warning read as one card listing six nets. Open a card to see <strong>why it matters</strong> and "
-        f"<strong>how to fix it</strong>. Findings below <strong>{_CONFIDENCE_FLOOR}</strong> confidence are marked "
+        f"<strong>how to fix it</strong>. Findings with a rule weight below <strong>{_CONFIDENCE_FLOOR}</strong> are marked "
         f"<span class=\"unverified\">unverified</span>: check them by hand in your CAD tool.</p>",
     )
     if not issues:
@@ -667,7 +667,7 @@ def _finding_card(gi: int, group: list[Issue]) -> str:
         <span class="finding-title">{title}</span>
         <span class="finding-side">
           <span class="finding-cat">{escape(_cat_label(first.category))}</span>
-          <span class="finding-conf" title="Confidence: how likely this finding is real (0 to 1)">conf {conf_text}</span>
+          <span class="finding-conf" title="Rule weight: a hand-set per-rule number from 0 to 1, not a probability">weight {conf_text}</span>
           {unv}
           <span class="finding-chev" aria-hidden="true"></span>
         </span>
@@ -717,7 +717,7 @@ def _view_ai(ai_review: str | None, ai_note: str | None = None) -> str:
                 "sentence is omitted. Everything above is verbatim.</p>"
             )
         note = (
-            '<p class="panel-note">Shown verbatim from a real LLM run. It repeats the engine\'s score and confidence values and '
+            '<p class="panel-note">Shown verbatim from a real LLM run. It repeats the engine\'s score and rule weights and '
             "adds no evidence from the board beyond them. Any general engineering background in it is the model's own.</p>"
         )
         version_note = f'<p class="ai-version-note" role="note">{ai_note}</p>' if ai_note else ""
@@ -1486,7 +1486,7 @@ _JS = r"""
       '<small>Would cost ' + f2(total) + ' points in total</small></span></div>' +
       found.map(function (f) {
         return '<div class="res-finding" style="--sev:' + DATA.severityColors[f.sev] + '"><h4>' + escapeHtml(f.title) + '</h4>' +
-          '<div class="res-meta"><span class="sevw">' + f.sev + '</span><span>' + escapeHtml(f.sub) + '</span><span>confidence ' + f.conf.toFixed(2) +
+          '<div class="res-meta"><span class="sevw">' + f.sev + '</span><span>' + escapeHtml(f.sub) + '</span><span>rule weight ' + f.conf.toFixed(2) +
           '</span><span>&minus;' + f2(P[f.sev] * f.conf) + ' pts (' + P[f.sev] + ' &times; ' + f.conf.toFixed(2) + ')</span></div>' +
           '<p><strong>Why it matters:</strong> ' + escapeHtml(f.why) + '</p><p><strong>Fix:</strong> ' + escapeHtml(f.fix) + '</p></div>';
       }).join('');

@@ -398,7 +398,7 @@
       <div class="why-card">
         <span class="mono-tag">02 · SCORE</span>
         <h3>Transparent scoring</h3>
-        <p>The 0–100 engineering score is a severity × confidence weighted deduction, computed the same way every time. "How was this score computed" has a one-sentence answer.</p>
+        <p>The 0–100 engineering score is a severity × rule-weight deduction, computed the same way every time. "How was this score computed" has a one-sentence answer.</p>
       </div>
       <div class="why-card">
         <span class="mono-tag">03 · BOUNDARY</span>
@@ -408,7 +408,7 @@
       <div class="why-card">
         <span class="mono-tag">04 · CITATIONS</span>
         <h3>Explainable findings</h3>
-        <p>Every issue carries a severity, a confidence score, the engineering principle involved, and a suggested fix. Findings below 0.5 confidence are hedged, not stated as fact.</p>
+        <p>Every issue carries a severity, a rule weight (a hand-set number for how reliable the rule is, not a probability), the engineering principle involved, and a suggested fix. Findings with a rule weight below 0.5 are hedged, not stated as fact.</p>
       </div>
     </div>
   </div>
@@ -426,7 +426,7 @@
       </div>
       <div class="step">
         <span class="step-num">02</span>
-        <div><h3>Deterministic analysis</h3><p>28 checks run automatically across 9 categories, each producing structured findings: severity, confidence, explanation, principle, suggested fix, board location.</p></div>
+        <div><h3>Deterministic analysis</h3><p>28 checks run automatically across 9 categories, each producing structured findings: severity, rule weight, explanation, principle, suggested fix, board location.</p></div>
       </div>
       <div class="step">
         <span class="step-num">03</span>
@@ -474,7 +474,7 @@
       <div class="showcase-item">
         <div class="showcase-copy">
           <h3>Expandable issue detail</h3>
-          <p>Every finding expands into why it matters, the engineering principle at stake, a suggested fix, referenced nets, and a confidence score — nothing stated without a reason attached.</p>
+          <p>Every finding expands into why it matters, the engineering principle at stake, a suggested fix, referenced nets, and its rule weight — nothing stated without a reason attached.</p>
         </div>
         <div class="showcase-img"><img src="images/screenshots/issue-detail.png" alt="Expanded issue card showing severity, explanation, principle, and suggested fix"></div>
       </div>

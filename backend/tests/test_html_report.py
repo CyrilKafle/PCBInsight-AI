@@ -99,14 +99,34 @@ def test_render_renders_ai_review_markdown_and_flags_truncation():
     assert "output limit" in html
 
 
-def test_render_shows_score_derivation_and_confidence_legend():
+def test_render_shows_score_derivation_and_rule_weight_legend():
     board = make_board(name="board")
     issues = [_issue(summary="Thin trace", category="power", severity=Severity.MEDIUM)]
     score = compute_score(issues)
     html = render(board, issues, score)
     assert "How the score is computed" in html
     assert "&minus;8.0" in html
-    assert "fixed per-rule heuristic" in html
+    assert "<strong>Rule weight</strong>" in html
+    assert "not a measured" in html
+    assert "rule weight 1.00" in html
+
+
+def test_no_user_facing_label_calls_the_rule_weight_a_confidence():
+    """Item 4: the hand-set rule weight must not be presented as a confidence
+    or probability. The data field keeps its name, so only `confidence` inside
+    <code> (the field name) or the legend's field mention may remain."""
+    import re
+
+    from app.reports import interactive_report as ir
+
+    issues = [_issue(summary="Thin trace", category="power", severity=Severity.MEDIUM)]
+    for html in (
+        render(make_board(name="board"), issues, compute_score(issues)),
+        ir.render(make_board(name="board"), issues, compute_score(issues)),
+    ):
+        visible = re.sub(r"<script.*?</script>|<style.*?</style>|<code>confidence</code>|the confidence field", "", html, flags=re.S)
+        visible = re.sub(r"<[^>]+>", " ", visible)
+        assert not re.search(r"\bconfidence\b", visible, re.I), re.findall(r".{40}confidence.{40}", visible, re.I)[:3]
 
 
 def test_render_produces_valid_utf8_string_for_larger_board():
