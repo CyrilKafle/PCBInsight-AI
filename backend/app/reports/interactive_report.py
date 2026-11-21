@@ -340,7 +340,7 @@ def _view_nav_bottom(prev_item: tuple[str, str] | None, next_item: tuple[str, st
 def _footer_bar() -> str:
     return """
     <footer class="site-footer">
-      <p>PCBInsight AI &middot; deterministic PCB design review with an evidence-constrained AI narrator.
+      <p>PCBInsight AI by Cyril Kafle &middot; deterministic design review for KiCad boards, with an optional AI explanation.
       <a href="https://github.com/CyrilKafle/PCBInsight-AI">Source on GitHub</a></p>
     </footer>
     """
@@ -906,7 +906,19 @@ def _rules_table_rows() -> str:
 # --- document shell ----------------------------------------------------------------------
 
 _EXTRA_CSS = """
-  .ai-version-note { margin: 0 0 12px; padding: 10px 12px; border-left: 3px solid #e3b341; background: var(--surface); border-radius: 3px; font-size: 0.875rem; color: var(--text); }
+  /* Neutral palette and one typeface for the public demo (matches the landing page). Severity and score
+     colours stay: they carry meaning. The downloadable report keeps its own theme. */
+  :root {
+    --bg: #0f0f0f; --surface: #161616; --surface-alt: #1d1d1d; --border: #2b2b2b;
+    --text: #e6e6e6; --text-muted: #a0a0a0;
+    --accent: #e6e6e6; --accent-dim: #6e6e6e; --ai: #8c8c8c; --ai-soft: #c8c8c8;
+    --sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: var(--sans);
+  }
+  code, pre, kbd { font-family: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace; }
+  input[type="checkbox"], input[type="range"] { accent-color: #cfcfcf !important; }
+  .btn-primary { color: #111 !important; }
+  .ai-version-note { margin: 0 0 12px; padding: 10px 12px; border-left: 3px solid #8c8c8c; background: var(--surface); border-radius: 3px; font-size: 0.875rem; color: var(--text); }
 
   html { scroll-behavior: auto; }
   body { padding-bottom: 0; }
@@ -931,6 +943,21 @@ _EXTRA_CSS = """
   .tab:focus-visible, .card:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible,
   summary:focus-visible, .marker:focus-visible, abbr:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+  @media (min-width: 861px) {
+    body { padding-left: 232px; }
+    .topbar-wrap { position: fixed; top: 0; left: 0; bottom: 0; width: 232px; overflow-y: auto;
+      background: var(--surface); backdrop-filter: none; border-bottom: 0; border-right: 1px solid var(--border); }
+    .topbar-inner { max-width: none; padding: 0; }
+    .topbar-row { flex-direction: column; align-items: flex-start; gap: 6px; padding: 16px 18px 14px;
+      border-bottom: 1px solid var(--border); }
+    .topbar-meta { margin-left: 0; white-space: normal; }
+    .tabs { flex-direction: column; gap: 0; margin: 8px 0 0; padding: 0; overflow: visible; }
+    .tabs::before { content: "Report"; display: block; padding: 8px 18px; font-size: 0.75rem; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-muted); }
+    .tab { padding: 8px 18px 8px 26px; border-bottom: 0; border-left: 2px solid transparent; font-size: 0.9rem; }
+    .tab:hover { background: var(--surface-alt); }
+    .tab[aria-selected="true"] { color: #fff; background: var(--surface-alt); border-left-color: var(--text); }
+  }
   .view-nav { display: flex; align-items: center; gap: 16px; padding: 20px 0 4px; }
   .crumbs { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); }
   .back-btn, .pager, .btn-ghost, .btn-primary, .chip-btn, .link-btn {
@@ -1000,7 +1027,7 @@ _EXTRA_CSS = """
   .sim-row { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 10px 14px;
     background: var(--surface-alt); border: 1px solid var(--border); border-left: 3px solid var(--sev); border-radius: 3px; cursor: pointer; }
   .sim-row:hover { border-color: var(--accent); }
-  .sim-row input { width: 18px; height: 18px; accent-color: #2FD9C4; }
+  .sim-row input { width: 18px; height: 18px; accent-color: #cfcfcf; }
   .sim-row:has(input:checked) { opacity: .6; }
   .sim-row:has(input:checked) .sim-title { text-decoration: line-through; }
   .sim-title { display: block; font-size: 0.9375rem; }
@@ -1018,7 +1045,7 @@ _EXTRA_CSS = """
   .select-wrap, .check-wrap { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
   select, input[type=number] { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); border-radius: 4px;
     padding: 9px 10px; font-family: var(--mono); font-size: 0.875rem; min-height: 40px; max-width: 100%; }
-  .check-wrap input { width: 16px; height: 16px; accent-color: #2FD9C4; }
+  .check-wrap input { width: 16px; height: 16px; accent-color: #cfcfcf; }
   .result-count { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); margin: 4px 0 12px; }
   .finding { padding: 0; }
   .finding > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 74px 1fr auto; gap: 14px; align-items: center; padding: 14px 20px; }
@@ -1049,7 +1076,7 @@ _EXTRA_CSS = """
   .boardmap svg { display: block; width: 100%; height: auto; max-height: 560px; background: #0c1119; border: 1px solid var(--border); border-radius: 4px; }
   .layer-toggles { display: flex; flex-wrap: wrap; gap: 6px 16px; font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); }
   .layer-toggles label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
-  .layer-toggles input { accent-color: #2FD9C4; width: 16px; height: 16px; }
+  .layer-toggles input { accent-color: #cfcfcf; width: 16px; height: 16px; }
   .outline { fill: #0f1620; stroke: #3a4656; stroke-width: 0.35; }
   .pour { fill: rgba(47,217,196,0.07); stroke: rgba(47,217,196,0.35); stroke-width: 0.2; }
   .trace { stroke-linecap: round; opacity: .9; }
@@ -1082,7 +1109,7 @@ _EXTRA_CSS = """
   .input-row input[type=number] { flex: 1; min-width: 0; }
   .input-row select { flex: 1; }
   .input-row .unit { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); min-width: 52px; }
-  .input-row input[type=checkbox] { width: 20px; height: 20px; accent-color: #2FD9C4; }
+  .input-row input[type=checkbox] { width: 20px; height: 20px; accent-color: #cfcfcf; }
   .check-field { display: flex; align-items: center; gap: 12px; font-size: 0.9375rem; cursor: pointer; min-height: 40px; }
   .presets { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
   .presets .lbl { font-family: var(--mono); font-size: 0.8125rem; color: var(--text-muted); }
@@ -1143,10 +1170,7 @@ def _wrap(title: str, body: str, data: dict) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{escape(title)} &middot; PCBInsight demo</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 fill=%27%230A0E14%27/%3E%3Cpath d=%27M2 8h4l2-4 2 8 2-4h2%27 stroke=%27%232FD9C4%27 fill=%27none%27 stroke-width=%271.5%27/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 fill=%27%23111%27/%3E%3Cpath d=%27M2 8h4l2-4 2 8 2-4h2%27 stroke=%27%23ddd%27 fill=%27none%27 stroke-width=%271.5%27/%3E%3C/svg%3E">
 <style>{base._CSS}{_EXTRA_CSS}</style>
 <noscript><style>.view[hidden] {{ display: block; }} .view-nav, .view-pager {{ display: none; }}</style></noscript>
 </head>
